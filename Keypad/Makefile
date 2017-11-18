@@ -38,7 +38,6 @@ LIBS =	$(ESP_LIBS)/ESP8266WiFi \
 	$(MYLIBS)/Timezone \
 	$(ESP_LIBS)/ESP8266mDNS \
 	${ALARMLIBS}/TFT_eSPI \
-	${ALARMLIBS}/XPT2046 \
 	${MYLIBS}/pubsubclient
 
 #=== Project specific definitions: sketch and list of needed libraries
