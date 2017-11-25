@@ -1,6 +1,3 @@
-#include <TFT_eSPI.h>
-#include <SPI.h>
-
 // Prepare for OTA software installation
 #include <ESP8266mDNS.h>
 #include <ArduinoOTA.h>
@@ -12,13 +9,15 @@ void SetupOTA();
 #define OTA_ID		"OTA-TestTouch"
 String		ips, gws;
 
+#include <Oled.h>
+
 // This is calibration data for the raw touch data to the screen coordinates
 #define TS_MINX 150
 #define TS_MINY 130
 #define TS_MAXX 3800
 #define TS_MAXY 4000
 
-TFT_eSPI tft;
+Oled oled;
 
 // Size of the color selection boxes and the paintbrush size
 #define BOXSIZE 40
@@ -37,27 +36,27 @@ void setup(void) {
   SetupOTA();
 
   Serial.println("Initialize TFT");
-  tft = TFT_eSPI();
+  oled = Oled();
 
   pinMode(led_pin, OUTPUT);
   digitalWrite(led_pin, 0);	// Display off
 
   Serial.println("Touch Paint !");
   
-  tft.begin();
+  oled.begin();
 
-  tft.fillScreen(ILI9341_BLACK);
+  oled.fillScreen(ILI9341_BLACK);
   
   // make the color selection boxes
-  tft.fillRect(0, 0, BOXSIZE, BOXSIZE, ILI9341_RED);
-  tft.fillRect(BOXSIZE, 0, BOXSIZE, BOXSIZE, ILI9341_YELLOW);
-  tft.fillRect(BOXSIZE*2, 0, BOXSIZE, BOXSIZE, ILI9341_GREEN);
-  tft.fillRect(BOXSIZE*3, 0, BOXSIZE, BOXSIZE, ILI9341_CYAN);
-  tft.fillRect(BOXSIZE*4, 0, BOXSIZE, BOXSIZE, ILI9341_BLUE);
-  tft.fillRect(BOXSIZE*5, 0, BOXSIZE, BOXSIZE, ILI9341_MAGENTA);
+  oled.fillRect(0, 0, BOXSIZE, BOXSIZE, ILI9341_RED);
+  oled.fillRect(BOXSIZE, 0, BOXSIZE, BOXSIZE, ILI9341_YELLOW);
+  oled.fillRect(BOXSIZE*2, 0, BOXSIZE, BOXSIZE, ILI9341_GREEN);
+  oled.fillRect(BOXSIZE*3, 0, BOXSIZE, BOXSIZE, ILI9341_CYAN);
+  oled.fillRect(BOXSIZE*4, 0, BOXSIZE, BOXSIZE, ILI9341_BLUE);
+  oled.fillRect(BOXSIZE*5, 0, BOXSIZE, BOXSIZE, ILI9341_MAGENTA);
  
   // select the current color 'red'
-  tft.drawRect(0, 0, BOXSIZE, BOXSIZE, ILI9341_WHITE);
+  oled.drawRect(0, 0, BOXSIZE, BOXSIZE, ILI9341_WHITE);
   currentcolor = ILI9341_RED;
 
   digitalWrite(led_pin, 1);	// Display off
@@ -76,10 +75,10 @@ void loop()
   // Pressed will be set true is there is a valid touch on the screen
   t_x = t_y = -1;
 
-  // pressed = tft.getTouch(&t_x, &t_y);
-  // pressed = tft.validTouch(&t_x, &t_y, 500);	// That's a private function.
-  pressed = tft.getTouchRaw(&t_x, &t_y);
-  t_z = tft.getTouchRawZ();
+  // pressed = oled.getTouch(&t_x, &t_y);
+  // pressed = oled.validTouch(&t_x, &t_y, 500);	// That's a private function.
+  pressed = oled.getTouchRaw(&t_x, &t_y);
+  t_z = oled.getTouchRawZ();
 
   if (pressed == 0 || t_z < 500) 
     return;
@@ -95,8 +94,8 @@ void loop()
   Serial.print("\tY = "); Serial.print(d_y);
   Serial.println("  ");
 #endif
-  // tft.fillCircle(t_x, t_y, PENRADIUS, ILI9341_RED);
-  tft.fillRect(d_x, d_y, 2, 2, ILI9341_RED);
+  // oled.fillCircle(t_x, t_y, PENRADIUS, ILI9341_RED);
+  oled.fillRect(d_x, d_y, 2, 2, ILI9341_RED);
 }
 
 void SetupOTA() {
