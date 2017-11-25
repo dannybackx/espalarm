@@ -11,12 +11,6 @@ String		ips, gws;
 
 #include <Oled.h>
 
-// This is calibration data for the raw touch data to the screen coordinates
-#define TS_MINX 150
-#define TS_MINY 130
-#define TS_MAXX 3800
-#define TS_MAXY 4000
-
 Oled oled;
 
 // Size of the color selection boxes and the paintbrush size
@@ -27,26 +21,20 @@ int oldcolor, currentcolor;
 const int led_pin = D3;
 
 void setup(void) {
-  Serial.begin(9600);
-
-  Serial.println("Starting WiFi .."); 
+				Serial.begin(9600);
+				Serial.println("Starting WiFi .."); 
   SetupWifi();
-
-  Serial.println("OTA setup ..");
+				Serial.println("Set up OTA ..");
   SetupOTA();
-
-  Serial.println("Initialize TFT");
+				Serial.print("Initializing .. ");
   oled = Oled();
-
+				// Initialize LED control pin
   pinMode(led_pin, OUTPUT);
   digitalWrite(led_pin, 0);	// Display off
 
-  Serial.println("Touch Paint !");
-  
   oled.begin();
-
   oled.fillScreen(ILI9341_BLACK);
-  
+
   // make the color selection boxes
   oled.fillRect(0, 0, BOXSIZE, BOXSIZE, ILI9341_RED);
   oled.fillRect(BOXSIZE, 0, BOXSIZE, BOXSIZE, ILI9341_YELLOW);
@@ -54,50 +42,37 @@ void setup(void) {
   oled.fillRect(BOXSIZE*3, 0, BOXSIZE, BOXSIZE, ILI9341_CYAN);
   oled.fillRect(BOXSIZE*4, 0, BOXSIZE, BOXSIZE, ILI9341_BLUE);
   oled.fillRect(BOXSIZE*5, 0, BOXSIZE, BOXSIZE, ILI9341_MAGENTA);
- 
+
   // select the current color 'red'
   oled.drawRect(0, 0, BOXSIZE, BOXSIZE, ILI9341_WHITE);
   currentcolor = ILI9341_RED;
-
-  digitalWrite(led_pin, 1);	// Display off
+				Serial.println("OLED ready.");
+  digitalWrite(led_pin, 1);	// Display on
 }
 
 
 void loop()
 {
   uint16_t	t_x, t_y, t_z;	// To store the touch coordinates
-  // uint32_t d_x, d_y;
-  uint16_t d_x, d_y;
+  uint16_t	d_x, d_y;
   uint8_t	pressed;
 
   ArduinoOTA.handle();
 
-  // Pressed will be set true is there is a valid touch on the screen
-  t_x = t_y = -1;
-
   // pressed = oled.getTouch(&t_x, &t_y);
-  // pressed = oled.validTouch(&t_x, &t_y, 500);	// That's a private function.
   pressed = oled.getTouchRaw(&t_x, &t_y);
   t_z = oled.getTouchRawZ();
 
   if (pressed == 0 || t_z < 500) 
     return;
 
-  d_x = 320 - t_y; d_y = 240 - t_x;
-
-  Serial.print("X = "); Serial.print(t_x);
-  Serial.print("\tY = "); Serial.print(t_y);
-  Serial.print("\tZ = "); Serial.println(t_z);
-#if 0
-  Serial.print(" -> ");
-  Serial.print("X = "); Serial.print(d_x);
-  Serial.print("\tY = "); Serial.print(d_y);
-  Serial.println("  ");
-#endif
-  // oled.fillCircle(t_x, t_y, PENRADIUS, ILI9341_RED);
-  oled.fillRect(d_x, d_y, 2, 2, ILI9341_RED);
+				  Serial.printf("X = %4d\tY = %4d\tZ = %4d\n", t_x, t_y, t_z);
+  oled.fillCircle(t_x, t_y, PENRADIUS, ILI9341_RED);
 }
 
+/*
+ * Prepare OTA with minimal verbosity (messages on the console)
+ */
 void SetupOTA() {
   ArduinoOTA.setPort(8266);
   ArduinoOTA.setHostname(OTA_ID);
@@ -125,33 +100,32 @@ struct mywifi {
 
 void SetupWifi() {
   int ix;
-
-  // Try to connect to WiFi
+					// Try to connect to WiFi
   WiFi.mode(WIFI_STA);
-
+					// Loop over known networks
   int wcr = WL_IDLE_STATUS;
   for (ix = 0; wcr != WL_CONNECTED && mywifi[ix].ssid != NULL; ix++) {
     int wifi_tries = 3;
     while (wifi_tries-- >= 0) {
-      Serial.printf("\nTrying (%d %d) %s .. ", ix, wifi_tries, mywifi[ix].ssid);
+      Serial.printf("\nTrying %s .. ", mywifi[ix].ssid);
       WiFi.begin(mywifi[ix].ssid, mywifi[ix].pass);
       wcr = WiFi.waitForConnectResult();
       if (wcr == WL_CONNECTED)
         break;
     }
   }
-
-  if (ix == 0) {
+					// This fails if include file not read
+  if (mywifi[0].ssid == NULL) {
     Serial.println("Configuration problem : we don't know any networks");
   }
-
+					// Aw crap
   // Reboot if we didn't manage to connect to WiFi
   if (wcr != WL_CONNECTED) {
     Serial.println("Not connected -> reboot");
     delay(2000);
     ESP.restart();
   }
-
+					// Report success
   IPAddress ip = WiFi.localIP();
   ips = ip.toString();
   IPAddress gw = WiFi.gatewayIP();
