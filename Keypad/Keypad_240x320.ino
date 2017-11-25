@@ -91,7 +91,7 @@ void setup() {
   tft.setRotation(0);
 
   // Calibrate the touch screen and retrieve the scaling factors
-  touch_calibrate();
+  // touch_calibrate();
 
   // Clear the screen
   tft.fillScreen(TFT_BLACK);
@@ -209,7 +209,7 @@ void drawKeypad()
 }
 
 //------------------------------------------------------------------------------------------
-
+#if 0
 void touch_calibrate()
 {
   uint16_t calData[5];
@@ -246,8 +246,6 @@ void touch_calibrate()
     Serial.println("No calibration file");
   }
 
-  // calDataOK = 0;	// Hack
-
   if (calDataOK && !REPEAT_CAL) {
     // calibration data valid
     tft.setTouch(calData);
@@ -260,7 +258,7 @@ void touch_calibrate()
     tft.setTextColor(TFT_WHITE, TFT_BLACK);
 
     tft.println("Touch corners as indicated");
-    Serial.println("Touch corners as incidated");
+    Serial.println("Touch corners as indicated");
 
     tft.setTextFont(1);
     tft.println();
@@ -286,6 +284,7 @@ void touch_calibrate()
     }
   }
 }
+#endif
 
 //------------------------------------------------------------------------------------------
 
