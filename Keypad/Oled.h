@@ -25,6 +25,9 @@ class Oled : public TFT_eSPI {
     uint8_t getTouchRaw(uint16_t *x, uint16_t *y);
     uint16_t getTouchRawZ(void);
     uint8_t getTouch(uint16_t *x, uint16_t *y);
+
+  private:
+    int verbose;
 };
 
 #endif

@@ -14,11 +14,11 @@ String		ips, gws;
 Oled oled;
 
 // Size of the color selection boxes and the paintbrush size
-#define BOXSIZE 40
-#define PENRADIUS 3
-int oldcolor, currentcolor;
+#define BOXSIZE		40
+#define PENRADIUS	2
 
 const int led_pin = D3;
+int currentcolor;
 
 void setup(void) {
 				Serial.begin(9600);
