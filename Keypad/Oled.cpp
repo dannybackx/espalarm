@@ -1,8 +1,12 @@
 /*
  * Helper class to make coordinates more uniform across operations
- *
  * For both TFT and Touch, the 0,0 coordinates are in the lower left corner,
  * assuming the VCC pin is on the lower left and T_IRQ is on the lower right.
+ *
+ * This is a layer above Bodmer's TFT_eSPI.
+ *
+ * adding functionality to turn on/off the LED
+ * adding screens
  *
  * Copyright (c) 2017 by Danny Backx
  */
@@ -77,4 +81,22 @@ uint16_t Oled::getTouchRawZ(void) {
 
 uint8_t Oled::getTouch(uint16_t *x, uint16_t *y) {
   return TFT_eSPI::getTouch(x, y);
+}
+
+/*
+ * Some functions to steer the LED (the TFT backlight)
+ */
+void Oled::setLED(int tm) {
+}
+
+/*
+ * Screen handling
+ */
+int Oled::addScreen(OledScreen screen) {
+}
+
+void Oled::showScreen(int) {
+}
+
+boolean Oled::isScreenVisible(int) {
 }

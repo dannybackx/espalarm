@@ -1,5 +1,9 @@
 /*
  * Helper class to make coordinates more uniform across operations
+ * This is a layer above Bodmer's TFT_eSPI.
+ *
+ * adding functionality to turn on/off the LED
+ * adding screens
  *
  * Copyright (c) 2017 by Danny Backx
  */
@@ -8,6 +12,17 @@
 
 #ifndef	_OLED_H_
 #define	_OLED_H_
+
+struct OledScreen {
+  char	*name;		// useful ?
+  int	number;
+
+  int	nbuttons;
+  char	*buttonText;
+  void	(*buttonHandler[])(void);
+
+  void	(*draw)(void);
+};
 
 class Oled : public TFT_eSPI {
   public:
@@ -26,8 +41,20 @@ class Oled : public TFT_eSPI {
     uint16_t getTouchRawZ(void);
     uint8_t getTouch(uint16_t *x, uint16_t *y);
 
+    void setLED(int tm);
+
+    int addScreen(OledScreen screen);
+    void showScreen(int);
+    boolean isScreenVisible(int);
+
   private:
     int verbose;
+    int	led_state;
+    int led_time;	// -1 is permamently on, 0 is off, another value is timeout
+
+    int screen_nr;	// screen number currently shown
+    int nscreens;	// Number of screens active
+    OledScreen *screens;
 };
 
 #endif
