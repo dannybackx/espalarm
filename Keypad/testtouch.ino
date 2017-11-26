@@ -20,6 +20,26 @@ Oled oled;
 const int led_pin = D3;
 int currentcolor;
 
+#define LABEL1_FONT &FreeSansOblique12pt7b // Key label font 1
+#define LABEL2_FONT &FreeSansBold12pt7b    // Key label font 2
+
+// Keypad start position, key sizes and spacing
+#define KEY_X		40	// Centre of key
+#define KEY_Y		20	// 96
+#define KEY_W		62	// Width and height
+#define KEY_H		30
+#define KEY_SPACING_X	18 // X and Y gap
+#define KEY_SPACING_Y	20
+#define KEY_TEXTSIZE	1   // Font size multiplier
+
+#define	NUMKEYS		3
+
+char keyLabel[NUMKEYS][5] = {"New", "Del", "Send" };
+uint16_t keyColor[NUMKEYS] = {TFT_RED, TFT_BLUE, TFT_GREEN };
+
+// Invoke the TFT_eSPI button class and create all the button objects
+TFT_eSPI_Button key[NUMKEYS];
+
 void setup(void) {
 				Serial.begin(9600);
 				Serial.println("Starting WiFi .."); 
@@ -48,6 +68,22 @@ void setup(void) {
   currentcolor = ILI9341_RED;
 				Serial.println("OLED ready.");
   digitalWrite(led_pin, 1);	// Display on
+
+  uint8_t row = 0; {
+    for (uint8_t col = 0; col < 3; col++) {
+      uint8_t b = col + row * 3;
+
+      if (b < 3) oled.setFreeFont(LABEL1_FONT);
+      else oled.setFreeFont(LABEL2_FONT);
+
+      key[b].initButton(&oled,
+        KEY_X + col * (KEY_W + KEY_SPACING_X),
+	KEY_Y + row * (KEY_H + KEY_SPACING_Y), // x, y, w, h, outline, fill, text
+	KEY_W, KEY_H, TFT_WHITE, keyColor[b], TFT_WHITE,
+	keyLabel[b], KEY_TEXTSIZE);
+      key[b].drawButton();
+    }
+  }
 }
 
 
