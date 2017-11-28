@@ -19,6 +19,7 @@ Oled::Oled(int16_t _W, int16_t _H) {
 
 void Oled::init(void) {
   TFT_eSPI::init();
+  screens = std::vector<OledScreen>(0);
 }
 
 void Oled::begin(void) {
@@ -93,10 +94,21 @@ void Oled::setLED(int tm) {
  * Screen handling
  */
 int Oled::addScreen(OledScreen screen) {
+  screens.push_back(screen);
+  if (verbose) Serial.printf("addScreen(%s) -> pos %d\n", screen.name.c_str(), screens.size()-1);
+  return screens.size()-1;
 }
 
-void Oled::showScreen(int) {
+void Oled::showScreen(int ix) {
+  curr_screen = ix;
+  if (verbose) Serial.printf("ShowScreen(%d) %s\n", ix, screens[ix].name.c_str());
+
+  // fillScreen(TFT_BLACK);			// Clear the screen
+  if (screens[curr_screen].draw != 0) {
+    screens[curr_screen].draw(&screens[curr_screen]);
+  }
 }
 
-boolean Oled::isScreenVisible(int) {
+boolean Oled::isScreenVisible(int ix) {
+  return (curr_screen == ix);
 }

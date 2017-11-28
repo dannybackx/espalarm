@@ -1,18 +1,72 @@
 /*
- * Test program to develop / validate basic OLED display and touch, and coordinate transformation
+ * Test program to develop / debug the multi-screen feature with
  */
 // Prepare for OTA software installation
 #include <ESP8266mDNS.h>
 #include <ArduinoOTA.h>
 #include "secrets.h"
+#include <Oled.h>
+
+void s1b1(struct OledScreen *scr, int button) {
+  Serial.printf("s1b1: screen %s button %d %s\n", scr->name.c_str(), button, scr->buttonText[button].c_str());
+}
+
+void s1b2(struct OledScreen *scr, int button) {
+  Serial.printf("s1b2: screen %s button %d %s\n", scr->name.c_str(), button, scr->buttonText[button].c_str());
+}
+
+void s1b3(struct OledScreen *scr, int button) {
+  Serial.printf("s1b3: screen %s button %d %s\n", scr->name.c_str(), button, scr->buttonText[button].c_str());
+}
+
+void s2b1(struct OledScreen *scr, int button) {
+  Serial.printf("s2b1: screen %s button %d %s\n", scr->name.c_str(), button, scr->buttonText[button].c_str());
+}
+
+void s2b2(struct OledScreen *scr, int button) {
+  Serial.printf("s2b2: screen %s button %d %s\n", scr->name.c_str(), button, scr->buttonText[button].c_str());
+}
+
+void s2b3(struct OledScreen *scr, int button) {
+  Serial.printf("s2b3: screen %s button %d %s\n", scr->name.c_str(), button, scr->buttonText[button].c_str());
+}
+
+void s1draw(OledScreen *pscr) {
+  Serial.printf("s1draw: drawing screen %s\n", pscr->name.c_str());
+}
+
+void s2draw(OledScreen *pscr) {
+  Serial.printf("s2draw: drawing screen %s\n", pscr->name.c_str());
+}
+
+String xxx[] = { "yes", "no", "maybe" };
+
+void (*yyy[])(struct OledScreen *, int) = { s1b1, s1b2, s1b3, NULL };
+void (*zzz[])(struct OledScreen *, int) = { s2b1, s2b2, s2b3, NULL };
+
+OledScreen screen1 = {
+  "home",				// name
+  0,					// number
+  3,					// #buttons
+  0, // { "yes", "no", "maybe" },
+  0, // { s1b1, s1b2, s1b3 },
+  s1draw
+};
+OledScreen screen2 = {
+  "detail",
+  0,
+  3,
+  0, 
+  0,
+  s2draw
+};
+int	s1, s2;
 
 void SetupWifi();
 void SetupOTA();
 
 #define OTA_ID		"OTA-TestTouch"
 String		ips, gws;
-
-#include <Oled.h>
 
 Oled oled;
 
@@ -87,6 +141,12 @@ void setup(void) {
       key[b].drawButton();
     }
   }
+
+  screen1.buttonText = xxx;
+  screen1.buttonHandler = yyy;
+  s1 = oled.addScreen(screen1);
+  s2 = oled.addScreen(screen2);
+  oled.showScreen(s1);
 }
 
 

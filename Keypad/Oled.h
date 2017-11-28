@@ -9,19 +9,20 @@
  */
 #include <TFT_eSPI.h>
 #include <SPI.h>
+#include <vector>
 
 #ifndef	_OLED_H_
 #define	_OLED_H_
 
 struct OledScreen {
-  char	*name;		// useful ?
-  int	number;
+  String	name;		// useful ?
+  int		number;
 
-  int	nbuttons;
-  char	*buttonText;
-  void	(*buttonHandler[])(void);
+  int		nbuttons;
+  String	*buttonText;
+  void		(**buttonHandler)(struct OledScreen *, int);
 
-  void	(*draw)(void);
+  void		(*draw)(struct OledScreen *);
 };
 
 class Oled : public TFT_eSPI {
@@ -52,9 +53,9 @@ class Oled : public TFT_eSPI {
     int	led_state;
     int led_time;	// -1 is permamently on, 0 is off, another value is timeout
 
-    int screen_nr;	// screen number currently shown
-    int nscreens;	// Number of screens active
-    OledScreen *screens;
+    int curr_screen;	// screen number currently shown
+
+    std::vector<OledScreen> screens;
 };
 
 #endif
