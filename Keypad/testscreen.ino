@@ -7,37 +7,14 @@
 #include "secrets.h"
 #include <Oled.h>
 
-void s1b1(struct OledScreen *scr, int button) {
-  Serial.printf("s1b1: screen %s button %d %s\n", scr->name.c_str(), button, scr->buttonText[button].c_str());
-}
-
-void s1b2(struct OledScreen *scr, int button) {
-  Serial.printf("s1b2: screen %s button %d %s\n", scr->name.c_str(), button, scr->buttonText[button].c_str());
-}
-
-void s1b3(struct OledScreen *scr, int button) {
-  Serial.printf("s1b3: screen %s button %d %s\n", scr->name.c_str(), button, scr->buttonText[button].c_str());
-}
-
-void s2b1(struct OledScreen *scr, int button) {
-  Serial.printf("s2b1: screen %s button %d %s\n", scr->name.c_str(), button, scr->buttonText[button].c_str());
-}
-
-void s2b2(struct OledScreen *scr, int button) {
-  Serial.printf("s2b2: screen %s button %d %s\n", scr->name.c_str(), button, scr->buttonText[button].c_str());
-}
-
-void s2b3(struct OledScreen *scr, int button) {
-  Serial.printf("s2b3: screen %s button %d %s\n", scr->name.c_str(), button, scr->buttonText[button].c_str());
-}
-
-void s1draw(OledScreen *pscr) {
-  Serial.printf("s1draw: drawing screen %s\n", pscr->name.c_str());
-}
-
-void s2draw(OledScreen *pscr) {
-  Serial.printf("s2draw: drawing screen %s\n", pscr->name.c_str());
-}
+void s1b1(struct OledScreen *scr, int button);
+void s1b2(struct OledScreen *scr, int button);
+void s1b3(struct OledScreen *scr, int button);
+void s2b1(struct OledScreen *scr, int button);
+void s2b2(struct OledScreen *scr, int button);
+void s2b3(struct OledScreen *scr, int button);
+void s1draw(OledScreen *pscr);
+void s2draw(OledScreen *pscr);
 
 String xxx[] = { "yes", "no", "maybe" };
 
@@ -77,18 +54,6 @@ Oled oled;
 const int led_pin = D3;
 int currentcolor;
 
-#define LABEL1_FONT &FreeSansOblique12pt7b // Key label font 1
-#define LABEL2_FONT &FreeSansBold12pt7b    // Key label font 2
-
-// Keypad start position, key sizes and spacing
-#define KEY_X		40	// Centre of key
-#define KEY_Y		20	// 96
-#define KEY_W		62	// Width and height
-#define KEY_H		30
-#define KEY_SPACING_X	18 // X and Y gap
-#define KEY_SPACING_Y	20
-#define KEY_TEXTSIZE	1   // Font size multiplier
-
 #define	NUMKEYS		3
 
 char keyLabel[NUMKEYS][5] = {"New", "Del", "Send" };
@@ -110,43 +75,14 @@ void setup(void) {
   digitalWrite(led_pin, 0);	// Display off
 
   oled.begin();
-  oled.fillScreen(ILI9341_BLACK);
-
-  // make the color selection boxes
-  oled.fillRect(0, 0, BOXSIZE, BOXSIZE, ILI9341_RED);
-  oled.fillRect(BOXSIZE, 0, BOXSIZE, BOXSIZE, ILI9341_YELLOW);
-  oled.fillRect(BOXSIZE*2, 0, BOXSIZE, BOXSIZE, ILI9341_GREEN);
-  oled.fillRect(BOXSIZE*3, 0, BOXSIZE, BOXSIZE, ILI9341_CYAN);
-  oled.fillRect(BOXSIZE*4, 0, BOXSIZE, BOXSIZE, ILI9341_BLUE);
-  oled.fillRect(BOXSIZE*5, 0, BOXSIZE, BOXSIZE, ILI9341_MAGENTA);
-
-  // select the current color 'red'
-  oled.drawRect(0, 0, BOXSIZE, BOXSIZE, ILI9341_WHITE);
-  currentcolor = ILI9341_RED;
-				Serial.println("OLED ready.");
-  digitalWrite(led_pin, 1);	// Display on
-
-  uint8_t row = 0; {
-    for (uint8_t col = 0; col < 3; col++) {
-      uint8_t b = col + row * 3;
-
-      if (b < 3) oled.setFreeFont(LABEL1_FONT);
-      else oled.setFreeFont(LABEL2_FONT);
-
-      key[b].initButton(&oled,
-        KEY_X + col * (KEY_W + KEY_SPACING_X),
-	KEY_Y + row * (KEY_H + KEY_SPACING_Y), // x, y, w, h, outline, fill, text
-	KEY_W, KEY_H, TFT_WHITE, keyColor[b], TFT_WHITE,
-	keyLabel[b], KEY_TEXTSIZE);
-      key[b].drawButton();
-    }
-  }
 
   screen1.buttonText = xxx;
   screen1.buttonHandler = yyy;
   s1 = oled.addScreen(screen1);
   s2 = oled.addScreen(screen2);
   oled.showScreen(s1);
+
+  digitalWrite(led_pin, 1);	// Display on
 }
 
 
@@ -230,4 +166,51 @@ void SetupWifi() {
   IPAddress gw = WiFi.gatewayIP();
   gws = gw.toString();
   Serial.printf("SSID {%s}, IP %s, GW %s\n", WiFi.SSID().c_str(), ips.c_str(), gws.c_str());
+}
+
+void s1b1(struct OledScreen *scr, int button) {
+  Serial.printf("s1b1: screen %s button %d %s\n", scr->name.c_str(), button, scr->buttonText[button].c_str());
+}
+
+void s1b2(struct OledScreen *scr, int button) {
+  Serial.printf("s1b2: screen %s button %d %s\n", scr->name.c_str(), button, scr->buttonText[button].c_str());
+}
+
+void s1b3(struct OledScreen *scr, int button) {
+  Serial.printf("s1b3: screen %s button %d %s\n", scr->name.c_str(), button, scr->buttonText[button].c_str());
+}
+
+void s2b1(struct OledScreen *scr, int button) {
+  Serial.printf("s2b1: screen %s button %d %s\n", scr->name.c_str(), button, scr->buttonText[button].c_str());
+}
+
+void s2b2(struct OledScreen *scr, int button) {
+  Serial.printf("s2b2: screen %s button %d %s\n", scr->name.c_str(), button, scr->buttonText[button].c_str());
+}
+
+void s2b3(struct OledScreen *scr, int button) {
+  Serial.printf("s2b3: screen %s button %d %s\n", scr->name.c_str(), button, scr->buttonText[button].c_str());
+}
+
+void s1draw(OledScreen *pscr) {
+  Serial.printf("s1draw: drawing screen %s\n", pscr->name.c_str());
+
+  oled.fillScreen(ILI9341_BLACK);
+
+  // make the color selection boxes
+  oled.fillRect(0, 0, BOXSIZE, BOXSIZE, ILI9341_RED);
+  oled.fillRect(BOXSIZE, 0, BOXSIZE, BOXSIZE, ILI9341_YELLOW);
+  oled.fillRect(BOXSIZE*2, 0, BOXSIZE, BOXSIZE, ILI9341_GREEN);
+  oled.fillRect(BOXSIZE*3, 0, BOXSIZE, BOXSIZE, ILI9341_CYAN);
+  oled.fillRect(BOXSIZE*4, 0, BOXSIZE, BOXSIZE, ILI9341_BLUE);
+  oled.fillRect(BOXSIZE*5, 0, BOXSIZE, BOXSIZE, ILI9341_MAGENTA);
+
+  // select the current color 'red'
+  oled.drawRect(0, 0, BOXSIZE, BOXSIZE, ILI9341_WHITE);
+  currentcolor = ILI9341_RED;
+				Serial.println("OLED ready.");
+}
+
+void s2draw(OledScreen *pscr) {
+  Serial.printf("s2draw: drawing screen %s\n", pscr->name.c_str());
 }

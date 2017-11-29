@@ -99,14 +99,56 @@ int Oled::addScreen(OledScreen screen) {
   return screens.size()-1;
 }
 
+#define LABEL1_FONT &FreeSansOblique12pt7b // Key label font 1
+#define LABEL2_FONT &FreeSansBold12pt7b    // Key label font 2
+
+// Keypad start position, key sizes and spacing
+#define KEY_X		40	// Centre of key
+#define KEY_Y		20	// 96
+#define KEY_W		62	// Width and height
+#define KEY_H		30
+#define KEY_SPACING_X	18 // X and Y gap
+#define KEY_SPACING_Y	20
+#define KEY_TEXTSIZE	1   // Font size multiplier
+
+void Oled::showScreenButtons(int ix) {
+  uint8_t row = 0;
+  if (current->key == 0)
+    current->key = (TFT_eSPI_Button **)calloc(sizeof(TFT_eSPI_Button *), current->nbuttons+1);
+  for (uint8_t col = 0; col < current->nbuttons; col++) {
+    uint8_t b = col + row * 3;
+
+    if (current->key[b] == nullptr) {
+      TFT_eSPI_Button *btn = new TFT_eSPI_Button();
+      current->key[b] = btn;
+    }
+
+    if (b < 3)
+      setFreeFont(LABEL1_FONT);
+    else
+      setFreeFont(LABEL2_FONT);
+
+    current->key[b]->initButton(this,
+      KEY_X + col * (KEY_W + KEY_SPACING_X),
+      KEY_Y + row * (KEY_H + KEY_SPACING_Y), // x, y, w, h, outline, fill, text
+      KEY_W, KEY_H, TFT_WHITE, TFT_RED /* keyColor[b] */, TFT_WHITE,
+      (char *)current->buttonText[b].c_str(), KEY_TEXTSIZE);
+    current->key[b]->drawButton();
+  }
+}
+
 void Oled::showScreen(int ix) {
   curr_screen = ix;
+  current = &screens[curr_screen];
+
   if (verbose) Serial.printf("ShowScreen(%d) %s\n", ix, screens[ix].name.c_str());
 
-  // fillScreen(TFT_BLACK);			// Clear the screen
+  fillScreen(TFT_BLACK);			// Clear the screen
   if (screens[curr_screen].draw != 0) {
     screens[curr_screen].draw(&screens[curr_screen]);
   }
+
+  showScreenButtons(ix);
 }
 
 boolean Oled::isScreenVisible(int ix) {

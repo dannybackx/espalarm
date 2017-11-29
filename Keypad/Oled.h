@@ -23,6 +23,7 @@ struct OledScreen {
   void		(**buttonHandler)(struct OledScreen *, int);
 
   void		(*draw)(struct OledScreen *);
+  TFT_eSPI_Button **key;
 };
 
 class Oled : public TFT_eSPI {
@@ -56,6 +57,9 @@ class Oled : public TFT_eSPI {
     int curr_screen;	// screen number currently shown
 
     std::vector<OledScreen> screens;
+
+    void showScreenButtons(int);
+    OledScreen *current;
 };
 
 #endif
