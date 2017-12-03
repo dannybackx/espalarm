@@ -60,15 +60,15 @@ char keyLabel[NUMKEYS][5] = {"New", "Del", "Send" };
 uint16_t keyColor[NUMKEYS] = {TFT_RED, TFT_BLUE, TFT_GREEN };
 
 // Invoke the TFT_eSPI button class and create all the button objects
-TFT_eSPI_Button key[NUMKEYS];
+OledButton key[NUMKEYS];
 
 void setup(void) {
 				Serial.begin(9600);
-				Serial.println("Starting WiFi .."); 
+				Serial.print("Starting WiFi "); 
   SetupWifi();
-				Serial.println("Set up OTA ..");
+				Serial.printf("Set up OTA (id %s) ..", OTA_ID);
   SetupOTA();
-				Serial.print("Initializing .. ");
+				Serial.print(" done\nInitializing .. ");
   oled = Oled();
 				// Initialize LED control pin
   pinMode(led_pin, OUTPUT);
@@ -93,6 +93,8 @@ void loop()
   uint8_t	pressed;
 
   ArduinoOTA.handle();
+
+  oled.loop();
 
   // pressed = oled.getTouch(&t_x, &t_y);
   pressed = oled.getTouchRaw(&t_x, &t_y);
@@ -142,7 +144,8 @@ void SetupWifi() {
   for (ix = 0; wcr != WL_CONNECTED && mywifi[ix].ssid != NULL; ix++) {
     int wifi_tries = 3;
     while (wifi_tries-- >= 0) {
-      Serial.printf("\nTrying %s .. ", mywifi[ix].ssid);
+      // Serial.printf("\nTrying %s .. ", mywifi[ix].ssid);
+      Serial.print(".");
       WiFi.begin(mywifi[ix].ssid, mywifi[ix].pass);
       wcr = WiFi.waitForConnectResult();
       if (wcr == WL_CONNECTED)
@@ -165,7 +168,7 @@ void SetupWifi() {
   ips = ip.toString();
   IPAddress gw = WiFi.gatewayIP();
   gws = gw.toString();
-  Serial.printf("SSID {%s}, IP %s, GW %s\n", WiFi.SSID().c_str(), ips.c_str(), gws.c_str());
+  Serial.printf(" -> SSID {%s}, IP %s, GW %s\n", WiFi.SSID().c_str(), ips.c_str(), gws.c_str());
 }
 
 void s1b1(struct OledScreen *scr, int button) {

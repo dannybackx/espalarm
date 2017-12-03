@@ -27,25 +27,13 @@ void Oled::begin(void) {
 }
 
 void Oled::drawRect(int32_t x, int32_t y, int32_t w, int32_t h, uint32_t color) {
-#if 0
-  // Unchanged
-  if (verbose) Serial.printf("drawRect(%d,%d,%d,%d, %08x)\n", x, y, w, h, color);
-  TFT_eSPI::drawRect(x, y, w, h, color);
-#else
   if (verbose) Serial.printf("drawRect(%d,%d,%d,%d, %08x)\n", x, 320 - y - h, w, h, color);
   TFT_eSPI::drawRect(x, 320 - y - h, w, h, color);
-#endif
 }
 
 void Oled::fillRect(int32_t x, int32_t y, int32_t w, int32_t h, uint32_t color) {
-#if 0
-  // Unchanged
-  if (verbose) Serial.printf("fillRect(%d,%d,%d,%d, %08x)\n", x, y, w, h, color);
-  TFT_eSPI::fillRect(x, y, w, h, color);
-#else
   if (verbose) Serial.printf("fillRect(%d,%d,%d,%d, %08x)\n", x, 320 - y - h, w, h, color);
   TFT_eSPI::fillRect(x, 320 - y - h, w, h, color);
-#endif
 }
 
 void Oled::setRotation(uint8_t r) {
@@ -70,8 +58,11 @@ uint8_t Oled::getTouchRaw(uint16_t *x, uint16_t *y) {
   uint16_t a, b;
   uint8_t r = TFT_eSPI::getTouchRaw(&a, &b);
 
-  *x = 240 - 240 * (a - 150) / 4000;
-  *y = 320 - 320 * (b - 150) / 4000;
+  *x = 240 - 240 * a / 4000;
+  *y = 320 - 320 * b / 4000;
+
+  // *x = 240 - 240 * (a - 150) / 4000;
+  // *y = 320 - 320 * (b - 150) / 4000;
 
   return r;
 }
@@ -99,12 +90,14 @@ int Oled::addScreen(OledScreen screen) {
   return screens.size()-1;
 }
 
-#define LABEL1_FONT &FreeSansOblique12pt7b // Key label font 1
-#define LABEL2_FONT &FreeSansBold12pt7b    // Key label font 2
+// FIX ME needs cleanup
+
+#define	LABEL_FONT		&FreeSansBold12pt7b
+#define	LABEL_FONT_OBLIQUE	&FreeSansOblique12pt7b
 
 // Keypad start position, key sizes and spacing
 #define KEY_X		40	// Centre of key
-#define KEY_Y		20	// 96
+#define KEY_Y		300	// 96
 #define KEY_W		62	// Width and height
 #define KEY_H		30
 #define KEY_SPACING_X	18 // X and Y gap
@@ -114,25 +107,29 @@ int Oled::addScreen(OledScreen screen) {
 void Oled::showScreenButtons(int ix) {
   uint8_t row = 0;
   if (current->key == 0)
-    current->key = (TFT_eSPI_Button **)calloc(sizeof(TFT_eSPI_Button *), current->nbuttons+1);
+    current->key = (OledButton **)calloc(sizeof(OledButton *), current->nbuttons+1);
   for (uint8_t col = 0; col < current->nbuttons; col++) {
     uint8_t b = col + row * 3;
 
     if (current->key[b] == nullptr) {
-      TFT_eSPI_Button *btn = new TFT_eSPI_Button();
+      OledButton *btn = new OledButton();
       current->key[b] = btn;
     }
 
-    if (b < 3)
-      setFreeFont(LABEL1_FONT);
-    else
-      setFreeFont(LABEL2_FONT);
+    setFreeFont(LABEL_FONT);
 
+    // if (verbose)
+      Serial.printf("initButton(x %d, y %d, w %d, h %d) %s\n",
+        KEY_X + col * (KEY_W + KEY_SPACING_X),
+        KEY_Y + row * (KEY_H + KEY_SPACING_Y),
+        KEY_W, KEY_H,
+        (char *)current->buttonText[b].c_str());
     current->key[b]->initButton(this,
-      KEY_X + col * (KEY_W + KEY_SPACING_X),
-      KEY_Y + row * (KEY_H + KEY_SPACING_Y), // x, y, w, h, outline, fill, text
-      KEY_W, KEY_H, TFT_WHITE, TFT_RED /* keyColor[b] */, TFT_WHITE,
-      (char *)current->buttonText[b].c_str(), KEY_TEXTSIZE);
+      KEY_X + col * (KEY_W + KEY_SPACING_X),	// x
+      KEY_Y + row * (KEY_H + KEY_SPACING_Y),	// y
+      KEY_W, KEY_H,				// w, h
+      TFT_WHITE, TFT_RED, TFT_WHITE,		// outline, fill, text colours
+      (char *)current->buttonText[b].c_str(), KEY_TEXTSIZE);	// text, size
     current->key[b]->drawButton();
   }
 }
@@ -153,4 +150,28 @@ void Oled::showScreen(int ix) {
 
 boolean Oled::isScreenVisible(int ix) {
   return (curr_screen == ix);
+}
+
+/*
+ * When called periodically, this triggers button callback functions
+ */
+void Oled::loop(void) {
+  if (getTouchRawZ() > 500) {
+    uint16_t tx, ty;
+    (void) getTouch(&tx, &ty);
+
+    for (int btn=0; btn<current->nbuttons; btn++)
+      if (current->key[btn]->contains(tx, 320 - ty)) {
+        current->buttonHandler[btn](current, btn);
+      }
+  }
+}
+
+OledButton:: OledButton(void) {
+  // TFT_eSPI_Button::TFT_eSPI_Button();
+}
+
+void OledButton::initButton(TFT_eSPI *gfx, int16_t x, int16_t y, uint16_t w, uint16_t h,
+	uint16_t outline, uint16_t fill, uint16_t textcolor, char *label, uint8_t textsize) {
+  TFT_eSPI_Button::initButton(gfx, x, 320 - y, w, h, outline, fill, textcolor, label, textsize);
 }
