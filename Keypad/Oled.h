@@ -78,10 +78,10 @@ class Oled : public TFT_eSPI {
  */
 class OledButton : public TFT_eSPI_Button {
  public:
-  OledButton(void);
   // "Classic" initButton() uses center & size
   void     initButton(TFT_eSPI *gfx, int16_t x, int16_t y, uint16_t w, uint16_t h,
 		uint16_t outline, uint16_t fill,
 		uint16_t textcolor, char *label, uint8_t textsize);
+  boolean contains(int16_t x, int16_t y);
 };
 #endif

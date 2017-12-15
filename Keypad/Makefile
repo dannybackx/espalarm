@@ -28,7 +28,7 @@ HWTYPE=	nodemcu
 # SKETCH	= $(HOME)/src/sketchbook/esp8266/Alarm/Keypad/test.ino
 # SKETCH	= $(HOME)/src/sketchbook/esp8266/Alarm/Keypad/testtouch.ino
 SKETCH		= $(HOME)/src/sketchbook/esp8266/Alarm/Keypad/testscreen.ino
-EXTRA_SRC	= Oled.cpp
+EXTRA_SRC	= Oled.cpp Clock.cpp
 
 UPLOAD_AVAHI_NAME = OTA-TestTouch.local
 
@@ -41,7 +41,9 @@ LIBS =	$(ESP_LIBS)/ESP8266WiFi \
 	$(MYLIBS)/Timezone \
 	$(ESP_LIBS)/ESP8266mDNS \
 	${ALARMLIBS}/TFT_eSPI \
-	${MYLIBS}/pubsubclient
+	${MYLIBS}/pubsubclient \
+	${MYLIBS}/Timezone \
+	${ALARMLIBS}/tzstuff
 
 #=== Project specific definitions: sketch and list of needed libraries
 

@@ -12,6 +12,8 @@
  */
 #include <Oled.h>
 
+const int ctrx = 1;	// Translate coordinates ?
+
 Oled::Oled(int16_t _W, int16_t _H) {
   TFT_eSPI(_W, _H);
   verbose = 0;
@@ -28,12 +30,18 @@ void Oled::begin(void) {
 
 void Oled::drawRect(int32_t x, int32_t y, int32_t w, int32_t h, uint32_t color) {
   if (verbose) Serial.printf("drawRect(%d,%d,%d,%d, %08x)\n", x, 320 - y - h, w, h, color);
-  TFT_eSPI::drawRect(x, 320 - y - h, w, h, color);
+  if (ctrx)
+    TFT_eSPI::drawRect(x, 320 - y - h, w, h, color);
+  else
+    TFT_eSPI::drawRect(x, y, w, h, color);
 }
 
 void Oled::fillRect(int32_t x, int32_t y, int32_t w, int32_t h, uint32_t color) {
   if (verbose) Serial.printf("fillRect(%d,%d,%d,%d, %08x)\n", x, 320 - y - h, w, h, color);
-  TFT_eSPI::fillRect(x, 320 - y - h, w, h, color);
+  if (ctrx)
+    TFT_eSPI::fillRect(x, 320 - y - h, w, h, color);
+  else
+    TFT_eSPI::fillRect(x, y, w, h, color);
 }
 
 void Oled::setRotation(uint8_t r) {
@@ -42,12 +50,18 @@ void Oled::setRotation(uint8_t r) {
 
 void Oled::drawCircle(int32_t x0, int32_t y0, int32_t r, uint32_t color) {
   if (verbose) Serial.printf("drawCircle(%d,%d,%d,%d, %08x)\n", x0, 320 - y0, r, color);
-  TFT_eSPI::drawCircle(x0, 320 - y0, r, color);
+  if (ctrx)
+    TFT_eSPI::drawCircle(x0, 320 - y0, r, color);
+  else
+    TFT_eSPI::drawCircle(x0, y0, r, color);
 }
 
 void Oled::fillCircle(int32_t x0, int32_t y0, int32_t r, uint32_t color) {
   if (verbose) Serial.printf("fillCircle(%d,%d,%d,%d, %08x)\n", x0, 320 - y0, r, color);
-  TFT_eSPI::fillCircle(x0, 320 - y0, r, color);
+  if (ctrx)
+    TFT_eSPI::fillCircle(x0, 320 - y0, r, color);
+  else
+    TFT_eSPI::fillCircle(x0, y0, r, color);
 }
 
 void Oled::fillScreen(uint32_t color) {
@@ -58,11 +72,13 @@ uint8_t Oled::getTouchRaw(uint16_t *x, uint16_t *y) {
   uint16_t a, b;
   uint8_t r = TFT_eSPI::getTouchRaw(&a, &b);
 
-  *x = 240 - 240 * a / 4000;
-  *y = 320 - 320 * b / 4000;
-
-  // *x = 240 - 240 * (a - 150) / 4000;
-  // *y = 320 - 320 * (b - 150) / 4000;
+  if (ctrx) {
+    *x = 240 - 240 * (a - 300) / 3460;
+    *y = 320 - 320 * (b - 300) / 3460;
+  } else {
+    *x = a;
+    *y = b;
+  }
 
   return r;
 }
@@ -92,7 +108,8 @@ int Oled::addScreen(OledScreen screen) {
 
 // FIX ME needs cleanup
 
-#define	LABEL_FONT		&FreeSansBold12pt7b
+#define	LABEL_FONT		&FreeSans12pt7b
+// #define	LABEL_FONT		&FreeSansBold12pt7b
 #define	LABEL_FONT_OBLIQUE	&FreeSansOblique12pt7b
 
 // Keypad start position, key sizes and spacing
@@ -158,20 +175,58 @@ boolean Oled::isScreenVisible(int ix) {
 void Oled::loop(void) {
   if (getTouchRawZ() > 500) {
     uint16_t tx, ty;
-    (void) getTouch(&tx, &ty);
+    (void) getTouchRaw(&tx, &ty);
 
     for (int btn=0; btn<current->nbuttons; btn++)
+      if (ctrx) {
       if (current->key[btn]->contains(tx, 320 - ty)) {
         current->buttonHandler[btn](current, btn);
+      }
+      } else {
+      if (current->key[btn]->contains(tx, ty)) {
+        current->buttonHandler[btn](current, btn);
+      }
       }
   }
 }
 
-OledButton:: OledButton(void) {
-  // TFT_eSPI_Button::TFT_eSPI_Button();
-}
-
 void OledButton::initButton(TFT_eSPI *gfx, int16_t x, int16_t y, uint16_t w, uint16_t h,
 	uint16_t outline, uint16_t fill, uint16_t textcolor, char *label, uint8_t textsize) {
-  TFT_eSPI_Button::initButton(gfx, x, 320 - y, w, h, outline, fill, textcolor, label, textsize);
+  if (ctrx)
+    TFT_eSPI_Button::initButton(gfx, x, 320 - y, w, h, outline, fill, textcolor, label, textsize);
+  else
+    TFT_eSPI_Button::initButton(gfx, x, y, w, h, outline, fill, textcolor, label, textsize);
+}
+
+/*
+ *
+ * Note the debug code relies on _x1 etc variables which are private in the superclass.
+ * So this only works by editing that class definition so they're protected instead of private.
+ * acer: {914} diff TFT_eSPI.h~ TFT_eSPI.h
+ * 523,524c523
+ * <  private:
+ * <   TFT_eSPI *_gfx;
+ * ---
+ * >  protected:
+ * 526a526,528
+ * > 
+ * >  private:
+ * >   TFT_eSPI *_gfx;
+ *
+ */
+boolean OledButton::contains(int16_t x, int16_t y) {
+#if 1
+  y = 320 - y;
+
+  boolean r = ((x >= _x1) && (x < (_x1 + _w)) && (y >= _y1) && (y < (_y1 + _h)));
+  Serial.printf("Contains ? {%d,%d} [%d .. %d, %d .. %d] -> %s\n",
+    // this->name,
+    x, y,
+    _x1, _x1 + _w,
+    _y1, _y1 + _h,
+    r ? "yes" : "no");
+  return ((x >= _x1) && (x < (_x1 + _w)) && (y >= _y1) && (y < (_y1 + _h)));
+#else
+  return TFT_eSPI_Button::contains(x, y);
+#endif
 }

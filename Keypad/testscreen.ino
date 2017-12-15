@@ -5,7 +5,9 @@
 #include <ESP8266mDNS.h>
 #include <ArduinoOTA.h>
 #include "secrets.h"
+
 #include <Oled.h>
+#include <Clock.h>
 
 void s1b1(struct OledScreen *scr, int button);
 void s1b2(struct OledScreen *scr, int button);
@@ -46,6 +48,7 @@ void SetupOTA();
 String		ips, gws;
 
 Oled oled;
+Clock	*clock;
 
 // Size of the color selection boxes and the paintbrush size
 #define BOXSIZE		40
@@ -83,6 +86,8 @@ void setup(void) {
   oled.showScreen(s1);
 
   digitalWrite(led_pin, 1);	// Display on
+
+  clock = new Clock(&oled);
 }
 
 
@@ -95,8 +100,8 @@ void loop()
   ArduinoOTA.handle();
 
   oled.loop();
+  clock->loop();
 
-  // pressed = oled.getTouch(&t_x, &t_y);
   pressed = oled.getTouchRaw(&t_x, &t_y);
   t_z = oled.getTouchRawZ();
 
@@ -142,14 +147,16 @@ void SetupWifi() {
 					// Loop over known networks
   int wcr = WL_IDLE_STATUS;
   for (ix = 0; wcr != WL_CONNECTED && mywifi[ix].ssid != NULL; ix++) {
-    int wifi_tries = 3;
-    while (wifi_tries-- >= 0) {
-      // Serial.printf("\nTrying %s .. ", mywifi[ix].ssid);
+    int wifi_tries = 5;
+
+    Serial.printf("\nTrying %s ", mywifi[ix].ssid);
+    while (wifi_tries-- > 0) {
       Serial.print(".");
       WiFi.begin(mywifi[ix].ssid, mywifi[ix].pass);
       wcr = WiFi.waitForConnectResult();
       if (wcr == WL_CONNECTED)
         break;
+      delay(250);
     }
   }
 					// This fails if include file not read
@@ -200,6 +207,7 @@ void s1draw(OledScreen *pscr) {
 
   oled.fillScreen(ILI9341_BLACK);
 
+#if 0
   // make the color selection boxes
   oled.fillRect(0, 0, BOXSIZE, BOXSIZE, ILI9341_RED);
   oled.fillRect(BOXSIZE, 0, BOXSIZE, BOXSIZE, ILI9341_YELLOW);
@@ -211,6 +219,7 @@ void s1draw(OledScreen *pscr) {
   // select the current color 'red'
   oled.drawRect(0, 0, BOXSIZE, BOXSIZE, ILI9341_WHITE);
   currentcolor = ILI9341_RED;
+#endif
 				Serial.println("OLED ready.");
 }
 
