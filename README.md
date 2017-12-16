@@ -23,3 +23,18 @@ Wiring diagram
 Wiring is currently based on the wiring diagram in http://nailbuster.com/?page_id=341 .
 A copy is wiring/MyTouchSPIShield.png but this is created by david@nailbuster.com .
 
+Several hardware configurations
+
+1. Secure environment control panel
+  This is for "safe" places, places that you can't get to without passing detection.
+  When you're here, you can turn off the alarm without authentication.
+
+2. Full fledged control panel
+  This is a perimeter control panel : you can turn the alarm off only after authentication.
+  Both a keyboard/pin based and a RFID tag based authentication are possible.
+
+3. Remote sensors
+  Several remote sensors can be hooked up via either RF transmitter/receiver pairs,
+  or modules based on this framework which communicate via WiFi.
+
+  Some sensors can feed information into the system, others just trigger the alarm (if it's on).

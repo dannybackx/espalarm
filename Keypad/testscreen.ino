@@ -197,7 +197,7 @@ void SetupWifi() {
   ips = ip.toString();
   IPAddress gw = WiFi.gatewayIP();
   gws = gw.toString();
-  Serial.printf(" -> SSID {%s}, IP %s, GW %s\n", WiFi.SSID().c_str(), ips.c_str(), gws.c_str());
+  Serial.printf(" -> IP %s gw %s\n", ips.c_str(), gws.c_str());
 }
 
 void s1b1(struct OledScreen *scr, int button) {
