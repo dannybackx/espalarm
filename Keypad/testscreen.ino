@@ -27,6 +27,7 @@
 #include <ESP8266mDNS.h>
 #include <ArduinoOTA.h>
 #include "secrets.h"
+#include <ThingSpeakLogger.h>
 
 #include <Oled.h>
 #include <Clock.h>
@@ -69,8 +70,9 @@ void SetupOTA();
 #define OTA_ID		"OTA-TestTouch"
 String		ips, gws;
 
-Oled oled;
-Clock	*clock;
+Oled			oled;
+Clock			*clock;
+ThingSpeakLogger	*tsl;
 
 // Size of the color selection boxes and the paintbrush size
 #define BOXSIZE		40
@@ -110,6 +112,8 @@ void setup(void) {
   digitalWrite(led_pin, 1);	// Display on
 
   clock = new Clock(&oled);
+
+  tsl = new ThingSpeakLogger(TS_CHANNEL_ID, TS_WRITE_KEY);
 }
 
 
@@ -123,6 +127,7 @@ void loop()
 
   oled.loop();
   clock->loop();
+  tsl->loop(0);
 
   pressed = oled.getTouchRaw(&t_x, &t_y);
   t_z = oled.getTouchRawZ();
