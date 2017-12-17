@@ -24,10 +24,10 @@
  */
 
 // Prepare for OTA software installation
-#include <ESP8266mDNS.h>
 #include <ArduinoOTA.h>
 #include "secrets.h"
 #include <ThingSpeakLogger.h>
+#include <BackLight.h>
 
 #include <Oled.h>
 #include <Clock.h>
@@ -73,6 +73,9 @@ String		ips, gws;
 Oled			oled;
 Clock			*clock;
 ThingSpeakLogger	*tsl;
+BackLight		*backlight;
+
+time_t			nowts;
 
 // Size of the color selection boxes and the paintbrush size
 #define BOXSIZE		40
@@ -97,11 +100,9 @@ void setup(void) {
   SetupOTA();
 				Serial.print(" done\nInitializing .. ");
   oled = Oled();
-				// Initialize LED control pin
-  pinMode(led_pin, OUTPUT);
-  digitalWrite(led_pin, 0);	// Display off
 
   oled.begin();
+  backlight = new BackLight(led_pin);
 
   screen1.buttonText = xxx;
   screen1.buttonHandler = yyy;
@@ -109,7 +110,8 @@ void setup(void) {
   s2 = oled.addScreen(screen2);
   oled.showScreen(s1);
 
-  digitalWrite(led_pin, 1);	// Display on
+  backlight->SetStatus(BACKLIGHT_ON);	// Display on
+  backlight->SetTimeout(10);		// Hardcoded timeout in seconds
 
   clock = new Clock(&oled);
 
@@ -125,9 +127,12 @@ void loop()
 
   ArduinoOTA.handle();
 
+  nowts = now();
+
   oled.loop();
   clock->loop();
   tsl->loop(0);
+  backlight->loop(nowts);
 
   pressed = oled.getTouchRaw(&t_x, &t_y);
   t_z = oled.getTouchRawZ();

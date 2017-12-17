@@ -28,7 +28,7 @@ HWTYPE=	nodemcu
 # SKETCH	= $(HOME)/src/sketchbook/esp8266/Alarm/Keypad/test.ino
 # SKETCH	= $(HOME)/src/sketchbook/esp8266/Alarm/Keypad/testtouch.ino
 SKETCH		= $(HOME)/src/sketchbook/esp8266/Alarm/Keypad/testscreen.ino
-EXTRA_SRC	= Oled.cpp Clock.cpp ThingSpeakLogger.cpp
+EXTRA_SRC	= Oled.cpp Clock.cpp ThingSpeakLogger.cpp BackLight.cpp
 
 UPLOAD_AVAHI_NAME = OTA-TestTouch.local
 
@@ -38,8 +38,8 @@ MYLIBS = $(HOME)/src/sketchbook/esp8266/libraries
 LIBS =	$(ESP_LIBS)/ESP8266WiFi \
 	$(ESP_LIBS)/SPI \
 	$(ESP_LIBS)/ArduinoOTA \
-	$(MYLIBS)/Timezone \
 	$(ESP_LIBS)/ESP8266mDNS \
+	$(MYLIBS)/Timezone \
 	${ALARMLIBS}/TFT_eSPI \
 	${MYLIBS}/pubsubclient \
 	${MYLIBS}/Timezone \
