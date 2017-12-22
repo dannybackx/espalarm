@@ -28,9 +28,9 @@ HWTYPE=	nodemcu
 # SKETCH	= $(HOME)/src/sketchbook/esp8266/Alarm/Keypad/test.ino
 # SKETCH	= $(HOME)/src/sketchbook/esp8266/Alarm/Keypad/testtouch.ino
 SKETCH		= $(HOME)/src/sketchbook/esp8266/Alarm/Keypad/testscreen.ino
-EXTRA_SRC	= Oled.cpp Clock.cpp ThingSpeakLogger.cpp BackLight.cpp
+EXTRA_SRC	= Oled.cpp Clock.cpp ThingSpeakLogger.cpp BackLight.cpp Sensors.cpp
 
-UPLOAD_AVAHI_NAME = OTA-TestTouch.local
+UPLOAD_AVAHI_NAME = OTA-Keypad.local
 
 ALARMLIBS = $(HOME)/src/sketchbook/esp8266/Alarm/libraries
 MYLIBS = $(HOME)/src/sketchbook/esp8266/libraries
@@ -44,6 +44,7 @@ LIBS =	$(ESP_LIBS)/ESP8266WiFi \
 	${MYLIBS}/pubsubclient \
 	${MYLIBS}/Timezone \
 	${ALARMLIBS}/tzstuff \
+	${ALARMLIBS}/rcswitch \
 	${ALARMLIBS}/thingspeak
 
 #=== Project specific definitions: sketch and list of needed libraries
