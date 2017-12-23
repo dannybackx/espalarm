@@ -1,7 +1,5 @@
 /*
- * This module manages wireless sensors, e.g. Kerui PIR motion detectors or smoke detectors.
- *
- * This is not a per sensor class, it manages a list of sensors.
+ * This module keeps a list of its peer controllers.
  *
  * Copyright (c) 2017 Danny Backx
  *
@@ -26,7 +24,7 @@
  */
 
 #include <Arduino.h>
-#include <Sensors.h>
+#include <Peers.h>
 #include <secrets.h>
 #include <Config.h>
 
@@ -35,53 +33,28 @@ using namespace std;
 
 #include <RCSwitch.h>
 
-Sensors::Sensors() {
-  sensorlist = new list<Sensor>();
+Peers::Peers() {
+  peerlist = new list<Peer>();
 
-  // 
-  radioPin = config->GetRadioPin();
-  if (radioPin < 0) {
-    radio = 0;
-    return;
-  }
-
-  //
-  radio = new RCSwitch();
-  radio->enableReceive(radioPin);
-
-  // Add sensors predefined in secrets.h
-  AddSensor(SENSOR_1_ID, SENSOR_1_NAME);
-  AddSensor(SENSOR_2_ID, SENSOR_2_NAME);
-  AddSensor(SENSOR_3_ID, SENSOR_3_NAME);
-  AddSensor(SENSOR_4_ID, SENSOR_4_NAME);
-  AddSensor(SENSOR_5_ID, SENSOR_5_NAME);
-  AddSensor(SENSOR_6_ID, SENSOR_6_NAME);
 }
 
-Sensors::~Sensors() {
+Peers::~Peers() {
 }
 
-void Sensors::AddSensor(int id, const char *name) {
+void Peers::AddPeer(int id, const char *name) {
   if (id == 0)
     return;	// an undefined sensor
 
   Serial.printf("Adding sensor {%s} 0x%08x\n", name, id);
 
-  Sensor *sp = new Sensor();
-  sp->id = id;
-  sp->name = (char *)name;
-  sensorlist->push_back(*sp);
+  Peer *pp = new Peer();
+  pp->id = id;
+  pp->name = (char *)name;
+  peerlist->push_back(*pp);
 }
 
 /*
  * Report environmental information periodically
  */
-void Sensors::loop(time_t nowts) {
-    if (radio && radio->available()) {
-      Serial.print("Received ");
-      int x = radio->getReceivedValue();
-      Serial.printf(" %d (0x%08X) / %d bit, protocol %d\n",
-        x, x, radio->getReceivedBitlength(), radio->getReceivedProtocol());
-      radio->resetAvailable();
-    }
+void Peers::loop(time_t nowts) {
 }

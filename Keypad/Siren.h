@@ -1,5 +1,5 @@
 /*
- * This module manages configuration data on local flash storage
+ * This module sounds a siren or flashes a light
  *
  * Copyright (c) 2017 Danny Backx
  *
@@ -23,29 +23,25 @@
  *   THE SOFTWARE.
  */
 
-#ifndef	_CONFIG_H_
-#define	_CONFIG_H_
+#ifndef	_SIREN_H_
+#define	_SIREN_H_
 
-class Config {
-public:
-  Config();
-  ~Config();
-
-  int GetRadioPin();
-  int GetSirenPin();
-
-  void SetRadioPin(int);
-  void SetSirenPin(int);
-
-private:
-  int siren_pin;
-  int radio_pin;
-
-  int dirty;
-  void ReadConfig();
-  void WriteConfig();
+enum SirenStatus {
+  ALARM_OFF,
+  ALARM_ON,
+  // ??
 };
 
-extern Config *config;
+class Siren {
+public:
+  Siren();
+  ~Siren();
+  void loop(time_t);
+  void SoundSiren(const char *sensor);
 
-#endif	/* _CONFIG_H_ */
+private:
+  enum SirenStatus	state;
+
+  int siren_pin;
+};
+#endif	/* _SIREN_H_ */

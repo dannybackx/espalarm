@@ -1,5 +1,5 @@
 /*
- * This module manages configuration data on local flash storage
+ * This module keeps a list of its peer controllers.
  *
  * Copyright (c) 2017 Danny Backx
  *
@@ -23,29 +23,28 @@
  *   THE SOFTWARE.
  */
 
-#ifndef	_CONFIG_H_
-#define	_CONFIG_H_
+#ifndef	_PEER_H_
+#define	_PEER_H_
 
-class Config {
-public:
-  Config();
-  ~Config();
+#include <list>
+using namespace std;
 
-  int GetRadioPin();
-  int GetSirenPin();
-
-  void SetRadioPin(int);
-  void SetSirenPin(int);
-
-private:
-  int siren_pin;
-  int radio_pin;
-
-  int dirty;
-  void ReadConfig();
-  void WriteConfig();
+struct Peer {
+  int		id;
+  char		*name;
+  uint32_t	ip;
+  int		radio, siren, secure;
 };
 
-extern Config *config;
+class Peers {
+public:
+  Peers();
+  ~Peers();
+  void loop(time_t);
+  void AddPeer(int id, const char *name);
 
-#endif	/* _CONFIG_H_ */
+private:
+  list<Peer>		*peerlist;
+};
+
+#endif	/* _PEER_H_ */

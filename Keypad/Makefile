@@ -28,9 +28,9 @@ HWTYPE=	nodemcu
 # SKETCH	= $(HOME)/src/sketchbook/esp8266/Alarm/Keypad/test.ino
 # SKETCH	= $(HOME)/src/sketchbook/esp8266/Alarm/Keypad/testtouch.ino
 SKETCH		= $(HOME)/src/sketchbook/esp8266/Alarm/Keypad/Keypad.ino
-EXTRA_SRC	= Alarm.cpp Config.cpp \
-		  Oled.cpp Clock.cpp \
-		  ThingSpeakLogger.cpp BackLight.cpp Sensors.cpp
+EXTRA_SRC	= Alarm.cpp Config.cpp Peers.cpp ThingSpeakLogger.cpp \
+		  Oled.cpp Clock.cpp Siren.cpp \
+		  BackLight.cpp Sensors.cpp
 
 UPLOAD_AVAHI_NAME = OTA-Keypad.local
 
@@ -47,6 +47,7 @@ LIBS =	$(ESP_LIBS)/ESP8266WiFi \
 	${MYLIBS}/Timezone \
 	${ALARMLIBS}/tzstuff \
 	${ALARMLIBS}/rcswitch \
+	${ALARMLIBS}/arduinojson \
 	${ALARMLIBS}/thingspeak
 
 #=== Project specific definitions: sketch and list of needed libraries
@@ -120,9 +121,10 @@ CORE_LIB = $(OBJ_DIR)/core.ar
 
 # User defined compilation units
 USER_SRC = $(SKETCH) ${EXTRA_SRC} $(shell find $(LIBS) -name examples -prune -false -o -name "*.cpp" -o -name "*.c")
+USER_SRC2 = $(SKETCH) ${EXTRA_SRC} $(shell find $(LIBS) -name examples -prune -false -o -name "*.cpp" -o -name "*.c" -o -name "*.h")
 # Object file suffix seems to be significant for the linker...
 USER_OBJ = $(subst .ino,.cpp,$(patsubst %,$(OBJ_DIR)/%$(OBJ_EXT),$(notdir $(USER_SRC))))
-USER_DIRS = $(sort $(dir $(USER_SRC)))
+USER_DIRS = $(sort $(dir $(USER_SRC2)))
 
 VPATH += $(shell find $(CORE_DIR) -type d) $(USER_DIRS)
 

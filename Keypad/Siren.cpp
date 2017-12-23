@@ -1,5 +1,5 @@
 /*
- * This module manages configuration data on local flash storage
+ * This module sounds a siren or flashes a light
  *
  * Copyright (c) 2017 Danny Backx
  *
@@ -23,29 +23,25 @@
  *   THE SOFTWARE.
  */
 
-#ifndef	_CONFIG_H_
-#define	_CONFIG_H_
+#include <Arduino.h>
+#include <Siren.h>
+#include <secrets.h>
+#include <Config.h>
 
-class Config {
-public:
-  Config();
-  ~Config();
+Siren::Siren() {
+  state = ALARM_OFF;
 
-  int GetRadioPin();
-  int GetSirenPin();
+  siren_pin = config->GetSirenPin();
+}
 
-  void SetRadioPin(int);
-  void SetSirenPin(int);
+Siren::~Siren() {
+}
 
-private:
-  int siren_pin;
-  int radio_pin;
+void Siren::SoundSiren(const char *sensor) {
+}
 
-  int dirty;
-  void ReadConfig();
-  void WriteConfig();
-};
-
-extern Config *config;
-
-#endif	/* _CONFIG_H_ */
+/*
+ * Report environmental information periodically
+ */
+void Siren::loop(time_t nowts) {
+}

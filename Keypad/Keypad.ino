@@ -69,7 +69,7 @@ int	s1, s2;
 void SetupWifi();
 void SetupOTA();
 
-#define OTA_ID		"OTA-TestTouch"
+#define OTA_ID		"OTA-KeypadSecure"
 String		ips, gws;
 
 Config			*config;
