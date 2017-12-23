@@ -28,7 +28,9 @@ HWTYPE=	nodemcu
 # SKETCH	= $(HOME)/src/sketchbook/esp8266/Alarm/Keypad/test.ino
 # SKETCH	= $(HOME)/src/sketchbook/esp8266/Alarm/Keypad/testtouch.ino
 SKETCH		= $(HOME)/src/sketchbook/esp8266/Alarm/Keypad/Keypad.ino
-EXTRA_SRC	= Oled.cpp Clock.cpp ThingSpeakLogger.cpp BackLight.cpp Sensors.cpp Alarm.cpp
+EXTRA_SRC	= Alarm.cpp Config.cpp \
+		  Oled.cpp Clock.cpp \
+		  ThingSpeakLogger.cpp BackLight.cpp Sensors.cpp
 
 UPLOAD_AVAHI_NAME = OTA-Keypad.local
 

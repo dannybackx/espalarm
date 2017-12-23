@@ -1,5 +1,5 @@
 /*
- * This module manages wireless sensors, e.g. Kerui PIR motion detectors or smoke detectors.
+ * This module manages configuration data on local flash storage
  *
  * Copyright (c) 2017 Danny Backx
  *
@@ -23,36 +23,16 @@
  *   THE SOFTWARE.
  */
 
-#ifndef	_WIRELESS_SENSOR_H_
-#define	_WIRELESS_SENSOR_H_
+#include <Arduino.h>
+#include <Config.h>
+#include <secrets.h>
 
-#include "RCSwitch.h"
-#include <list>
-using namespace std;
+Config::Config() {
+}
 
-enum SensorStatus {
-  SENSOR_
-};
+Config::~Config() {
+}
 
-struct Sensor {
-  int id;
-  char *name;
-};
-
-class Sensors {
-public:
-  Sensors();
-  ~Sensors();
-  void loop(time_t);
-  void AddSensor(int id, const char *name);
-
-private:
-  enum SensorStatus	status;
-  int			radioPin;
-
-  RCSwitch		*radio;
-
-  list<Sensor>		*sl;
-};
-
-#endif	/* _WIRELESS_SENSOR_H_ */
+int Config::GetRadioPin() {
+  return A0;
+}

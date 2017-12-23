@@ -32,6 +32,7 @@
 #include <Oled.h>
 #include <Clock.h>
 #include <Alarm.h>
+#include <Config.h>
 
 void s1b1(struct OledScreen *scr, int button);
 void s1b2(struct OledScreen *scr, int button);
@@ -71,6 +72,7 @@ void SetupOTA();
 #define OTA_ID		"OTA-TestTouch"
 String		ips, gws;
 
+Config			*config;
 Oled			oled;
 Clock			*clock;
 ThingSpeakLogger	*tsl;
@@ -102,6 +104,8 @@ void setup(void) {
 				Serial.printf("Set up OTA (id %s) ..", OTA_ID);
   SetupOTA();
 				Serial.print(" done\nInitializing .. ");
+
+  config = new Config();
   oled = Oled();
 
   oled.begin();

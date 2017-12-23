@@ -28,6 +28,8 @@
 #include <Arduino.h>
 #include <Sensors.h>
 #include <secrets.h>
+#include <Config.h>
+#include <Keypad.h>
 
 #include <list>
 using namespace std;
@@ -37,9 +39,16 @@ using namespace std;
 Sensors::Sensors() {
   sl = new list<Sensor>();
 
+  // 
+  radioPin = config->GetRadioPin();
+  if (radioPin < 0) {
+    radio = 0;
+    return;
+  }
+
   //
-  radio = RCSwitch();
-  radio.enableReceive(A0);
+  radio = new RCSwitch();
+  radio->enableReceive(radioPin);
 
   // Add sensors predefined in secrets.h
   AddSensor(SENSOR_1_ID, SENSOR_1_NAME);
@@ -69,11 +78,11 @@ void Sensors::AddSensor(int id, const char *name) {
  * Report environmental information periodically
  */
 void Sensors::loop(time_t nowts) {
-    if (radio.available()) {
+    if (radio && radio->available()) {
       Serial.print("Received ");
-      int x = radio.getReceivedValue();
+      int x = radio->getReceivedValue();
       Serial.printf(" %d (0x%08X) / %d bit, protocol %d\n",
-        x, x, radio.getReceivedBitlength(), radio.getReceivedProtocol());
-      radio.resetAvailable();
+        x, x, radio->getReceivedBitlength(), radio->getReceivedProtocol());
+      radio->resetAvailable();
     }
 }
