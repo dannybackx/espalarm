@@ -1,5 +1,5 @@
 /*
- * This module manages wireless sensors, e.g. Kerui PIR motion detectors or smoke detectors.
+ * This module manages Alarm state and signaling
  *
  * Copyright (c) 2017 Danny Backx
  *
@@ -23,44 +23,40 @@
  *   THE SOFTWARE.
  */
 
-#ifndef	_WIRELESS_SENSOR_H_
-#define	_WIRELESS_SENSOR_H_
+#ifndef	_ALARM_STATE_H_
+#define	_ALARM_STATE_H_
 
-#include "RCSwitch.h"
-#include <list>
-using namespace std;
-
-enum SensorStatus {
-  SENSOR_
+enum AlarmStatus {
+  ALARM_OFF,
+  ALARM_ON,
+  // ??
 };
 
-struct Sensor {
-  int id;
-  char *name;
+enum AlarmZone {
+  ZONE_NONE,
+  ZONE_SECURE,
+  ZONE_PERIMETER,
+  ZONE_ALWAYS,
 };
 
-class Sensors {
+class Alarm {
 public:
-  Sensors();
-  ~Sensors();
+  Alarm();
+  ~Alarm();
+  void SetState(AlarmStatus);
   void loop(time_t);
-  void AddSensor(int id, const char *name);
-
-  // void SetStatus(BackLightStatus);
-  // void Trigger(time_t);
-  // void SetTimeout(int);
+  void Signal(const char *sensor, AlarmZone zone);	// Still to decide based on zone
+  void SoundAlarm(const char *sensor);			// We've decided : just start yelling
 
 private:
   // time_t trigger_ts;
-  enum SensorStatus	status;
+  enum AlarmStatus	state;
   int			id;
 
-  RCSwitch		radio;
-
-  list<Sensor>		*sl;
+  // RCSwitch		radio;
 
   // int led_pin;
   // int timeout;		// number of seconds for backlight to stay lit
 };
 
-#endif	/* _WIRELESS_SENSOR_H_ */
+#endif	/* _ALARM_STATE_H_ */

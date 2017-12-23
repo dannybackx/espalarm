@@ -1,5 +1,5 @@
 /*
- * Test program to develop / debug the multi-screen feature with
+ * Secure keypad : one that doesn't need unlock codes
  *
  * Copyright (c) 2017 Danny Backx
  *
@@ -31,6 +31,7 @@
 #include <Sensors.h>
 #include <Oled.h>
 #include <Clock.h>
+#include <Alarm.h>
 
 void s1b1(struct OledScreen *scr, int button);
 void s1b2(struct OledScreen *scr, int button);
@@ -75,6 +76,7 @@ Clock			*clock;
 ThingSpeakLogger	*tsl;
 BackLight		*backlight;
 Sensors			*sensors;
+Alarm			*alarm;
 
 time_t			nowts;
 
@@ -119,6 +121,7 @@ void setup(void) {
   tsl = new ThingSpeakLogger(TS_CHANNEL_ID, TS_WRITE_KEY);
 
   sensors = new Sensors();
+  alarm = new Alarm();
 }
 
 
@@ -137,6 +140,7 @@ void loop()
   tsl->loop(0);
   backlight->loop(nowts);
   sensors->loop(nowts);
+  alarm->loop(nowts);
 
   pressed = oled.getTouchRaw(&t_x, &t_y);
   t_z = oled.getTouchRawZ();

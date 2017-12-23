@@ -1,7 +1,5 @@
 /*
- * This module manages wireless sensors, e.g. Kerui PIR motion detectors or smoke detectors.
- *
- * This is not a per sensor class, it manages a list of sensors.
+ * This module manages Alarm state and signaling
  *
  * Copyright (c) 2017 Danny Backx
  *
@@ -26,54 +24,30 @@
  */
 
 #include <Arduino.h>
-#include <Sensors.h>
+#include <Alarm.h>
 #include <secrets.h>
 
-#include <list>
-using namespace std;
-
-#include <RCSwitch.h>
-
-Sensors::Sensors() {
-  sl = new list<Sensor>();
-
-  //
-  radio = RCSwitch();
-  radio.enableReceive(A0);
-
-  // Add sensors predefined in secrets.h
-  AddSensor(SENSOR_1_ID, SENSOR_1_NAME);
-  AddSensor(SENSOR_2_ID, SENSOR_2_NAME);
-  AddSensor(SENSOR_3_ID, SENSOR_3_NAME);
-  AddSensor(SENSOR_4_ID, SENSOR_4_NAME);
-  AddSensor(SENSOR_5_ID, SENSOR_5_NAME);
-  AddSensor(SENSOR_6_ID, SENSOR_6_NAME);
+Alarm::Alarm() {
+  state = ALARM_OFF;
 }
 
-Sensors::~Sensors() {
+Alarm::~Alarm() {
 }
 
-void Sensors::AddSensor(int id, const char *name) {
-  if (id == 0)
-    return;	// an undefined sensor
+void Alarm::SetState(AlarmStatus s) {
+  state = s;
+}
 
-  Serial.printf("Adding sensor {%s} 0x%08x\n", name, id);
+// Still to decide based on zone
+void Alarm::Signal(const char *sensor, AlarmZone zone) {
+}
 
-  Sensor *sp = new Sensor();
-  sp->id = id;
-  sp->name = (char *)name;
-  sl->push_back(*sp);
+// We've decided : just start yelling
+void Alarm::SoundAlarm(const char *sensor) {
 }
 
 /*
  * Report environmental information periodically
  */
-void Sensors::loop(time_t nowts) {
-    if (radio.available()) {
-      Serial.print("Received ");
-      int x = radio.getReceivedValue();
-      Serial.printf(" %d (0x%08X) / %d bit, protocol %d\n",
-        x, x, radio.getReceivedBitlength(), radio.getReceivedProtocol());
-      radio.resetAvailable();
-    }
+void Alarm::loop(time_t nowts) {
 }
