@@ -28,6 +28,12 @@
 #ifndef _CLOCK_H_
 #define _CLOCK_H_
 
+enum DstHandled {
+  DST_NONE,
+  DST_BUSY,
+  DST_OK
+};
+
 class Clock {
 public:
   Clock(Oled *);
@@ -36,19 +42,22 @@ public:
 protected:
 
 private:
-  Oled *oled;
-  void draw(void);
-  char buffer[32];
-  char hr, min, sec;
-  int first;
+  Oled		*oled;
+  void		draw(void);
+  char		buffer[32];
+  char		hr, min, sec;
+  int		first;
+  DstHandled	dstHandled;
+  void HandleDST1();
+  void HandleDST2();
 
   bool IsDST(int day, int month, int dow);
   int _isdst = 0;
   void Debug(const char *format, ...);
   time_t mySntpInit();
 
-  int	counter;
-  int	oldminute, newminute, oldhour, newhour;
+  int		counter;
+  int		oldminute, newminute, oldhour, newhour;
   time_t	the_time;
 };
 #endif

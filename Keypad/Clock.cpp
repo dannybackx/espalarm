@@ -47,10 +47,23 @@ Clock::Clock(Oled *oled) {
   sntp_setservername(0, (char *)"ntp.scarlet.be");
   sntp_setservername(1, (char *)"ntp.belnet.be");
 
-  mySntpInit();
+  dstHandled = DST_NONE;
 }
 
 void Clock::loop() {
+  // Basically try to get the time, do nothing until you have that.
+  if (dstHandled != DST_OK) {
+    // Try to kick us a step further
+    if (dstHandled == DST_NONE)
+      HandleDST1();
+    else if (dstHandled == DST_BUSY)
+      HandleDST2();
+
+    // Return unless we have decent time settings
+    if (dstHandled != DST_OK)
+      return;
+  }
+
   // Only do this once per second or so (given the delay 100)
   if (counter++ % 10 == 0) {
     counter = 0;
@@ -87,7 +100,6 @@ void Clock::draw() {
   oled->drawString(buffer, 10, 50);
 }
 
-
 bool Clock::IsDST(int day, int month, int dow)
 {
   dow--;	// Convert this to POSIX convention (Day Of Week = 0-6, Sunday = 0)
@@ -111,16 +123,14 @@ bool Clock::IsDST(int day, int month, int dow)
   return previousSunday <= 0;
 }
 
-time_t Clock::mySntpInit() {
+void Clock::HandleDST1() {
   time_t t;
 
   // Wait for a correct time, and report it
 
   t = sntp_get_current_timestamp();
-  while (t < 0x1000) {
-    delay(1000);
-    t = sntp_get_current_timestamp();
-  }
+  if (t < 0x1000)
+    return;
 
   // DST handling
   if (IsDST(day(t), month(t), dayOfWeek(t))) {
@@ -132,14 +142,15 @@ time_t Clock::mySntpInit() {
 
     // Re-initialize/fetch
     sntp_init();
-    t = sntp_get_current_timestamp();
-    while (t < 0x1000) {
-      delay(1000);
-      t = sntp_get_current_timestamp();
-    }
+    dstHandled = DST_BUSY;
   } else {
     t = sntp_get_current_timestamp();
+    dstHandled = DST_OK;
   }
+}
 
-  return t;
+void Clock::HandleDST2() {
+  time_t t = sntp_get_current_timestamp();
+  if (t > 0x1000)
+      dstHandled = DST_OK;
 }
