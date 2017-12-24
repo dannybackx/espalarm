@@ -31,9 +31,46 @@
 
 Config::Config() {
   SPIFFS.begin();
+
+  radio_pin = A0;
+  siren_pin = -1;
+
+  ReadConfig();
+}
+
+Config::~Config() {
+  SPIFFS.end();
+}
+
+int Config::GetRadioPin() {
+  return radio_pin;
+}
+
+void Config::SetRadioPin(int pin) {
+  radio_pin = pin;
+  WriteConfig();
+}
+
+int Config::GetSirenPin() {
+  return siren_pin;
+}
+
+void Config::SetSirenPin(int pin) {
+  siren_pin = pin;
+  WriteConfig();
+}
+
+void Config::ReadConfig() {
   File f = SPIFFS.open("config.json", "r");
   if (!f) {
     Serial.println("Config: can not open config.xml");
+#if 0
+    FSInfo fsi;
+    SPIFFS.info(fsi);
+    Serial.printf("SPIFFS total %d (%d M) used %d (%d M)\n",
+      fsi.totalBytes, fsi.totalBytes / 1024 / 1024,
+      fsi.usedBytes, fsi.usedBytes / 1024 / 1024);
+#endif
     return;
   }
 
@@ -49,26 +86,6 @@ Config::Config() {
   radio_pin = json["radioPin"] | A0;
 
   f.close();
-}
-
-Config::~Config() {
-}
-
-int Config::GetRadioPin() {
-  return A0;
-}
-
-void Config::SetRadioPin(int pin) {
-}
-
-int Config::GetSirenPin() {
-  return -1;
-}
-
-void Config::SetSirenPin(int pin) {
-}
-
-void Config::ReadConfig() {
 }
 
 void Config::WriteConfig() {

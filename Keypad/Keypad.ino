@@ -33,6 +33,7 @@
 #include <Clock.h>
 #include <Alarm.h>
 #include <Config.h>
+#include <Peers.h>
 
 void s1b1(struct OledScreen *scr, int button);
 void s1b2(struct OledScreen *scr, int button);
@@ -79,6 +80,7 @@ ThingSpeakLogger	*tsl;
 BackLight		*backlight;
 Sensors			*sensors;
 Alarm			*alarm;
+Peers			*peers;
 
 time_t			nowts;
 
@@ -98,7 +100,7 @@ uint16_t keyColor[NUMKEYS] = {TFT_RED, TFT_BLUE, TFT_GREEN };
 OledButton key[NUMKEYS];
 
 void setup(void) {
-				Serial.begin(9600);
+				Serial.begin(115200);
 				Serial.print("Starting WiFi "); 
   SetupWifi();
 				Serial.printf("Set up OTA (id %s) ..", OTA_ID);
@@ -126,6 +128,7 @@ void setup(void) {
 
   sensors = new Sensors();
   alarm = new Alarm();
+  peers = new Peers();
 }
 
 
@@ -145,6 +148,7 @@ void loop()
   backlight->loop(nowts);
   sensors->loop(nowts);
   alarm->loop(nowts);
+  peers->loop(nowts);
 
   pressed = oled.getTouchRaw(&t_x, &t_y);
   t_z = oled.getTouchRawZ();
