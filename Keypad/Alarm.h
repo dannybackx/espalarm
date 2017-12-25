@@ -37,6 +37,7 @@ enum AlarmZone {
   ZONE_SECURE,
   ZONE_PERIMETER,
   ZONE_ALWAYS,
+  ZONE_FROMPEER,	// Already evaluated, this is a real alarm passed from a peer controller
 };
 
 class Alarm {
@@ -59,4 +60,5 @@ private:
   // int timeout;		// number of seconds for backlight to stay lit
 };
 
+extern Alarm *alarm;
 #endif	/* _ALARM_STATE_H_ */

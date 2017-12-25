@@ -1,5 +1,11 @@
 /*
  * This module manages Alarm state and signaling
+ *	Alarms need to be passed to peer controllers
+ *	Alarms passed from peer controllers don't need to be forwarded
+ *	Sirens (which may be flash lights as well as audible devices) need triggering.
+ *	We could potentially connect/messsage to a smartphone app
+ *	We could send e-mail
+ *	User interface (the Oled modules) needs to show this as well
  *
  * Copyright (c) 2017 Danny Backx
  *
@@ -38,11 +44,25 @@ void Alarm::SetState(AlarmStatus s) {
   state = s;
 }
 
-// Still to decide based on zone
+/*
+ * Still to decide based on zone
+ * However, if ZONE_FROMPEER then don't forward to peers, don't decide, just do :-)
+ */
 void Alarm::Signal(const char *sensor, AlarmZone zone) {
+  if (zone != ZONE_FROMPEER) {
+    // Evaluate based on the zone
+
+    // Forward alarm to peers
+  }
+
+  // Now we should start signalling
+  SoundAlarm(sensor);
 }
 
-// We've decided : just start yelling
+/*
+ * We've decided : just start yelling.
+ * Local only (don't forward to peers, this was in a prior phase).
+ */
 void Alarm::SoundAlarm(const char *sensor) {
 }
 

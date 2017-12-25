@@ -40,8 +40,5 @@ Siren::~Siren() {
 void Siren::SoundSiren(const char *sensor) {
 }
 
-/*
- * Report environmental information periodically
- */
 void Siren::loop(time_t nowts) {
 }

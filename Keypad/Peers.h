@@ -26,11 +26,14 @@
 #ifndef	_PEER_H_
 #define	_PEER_H_
 
+#include <ESP8266WiFi.h>
+#include <WiFiUdp.h>
+
 #include <list>
 using namespace std;
 
 struct Peer {
-  int		id;
+  // int		id;
   char		*name;
   uint32_t	ip;
   int		radio, siren, secure;
@@ -41,10 +44,29 @@ public:
   Peers();
   ~Peers();
   void loop(time_t);
-  void AddPeer(int id, const char *name);
+  void AddPeer(const char *name, IPAddress ip);
 
 private:
   list<Peer>		*peerlist;
+
+  void RestSetup();
+  void RestLoop();
+  void MulticastSetup();
+  void QueryPeers();
+  void MulticastLoop();
+  void HandleQuery(const char *str);
+
+  void SetMyName();
+  char *MyName;
+
+  WiFiServer	*srv;
+
+  const unsigned int localPort = 23456; // local port to listen for UDP packets
+  byte packetBuffer[512]; //buffer to hold incoming and outgoing packets
+  WiFiUDP Udp;
+  // IPAddress ipMulti(224, 0, 0, 251);
+  IPAddress ipMulti;
+  const unsigned int portMulti = 23456; // local port to listen on
 };
 
 #endif	/* _PEER_H_ */

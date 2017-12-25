@@ -106,7 +106,6 @@ void setup(void) {
 				Serial.printf("Set up OTA (id %s) ..", OTA_ID);
   SetupOTA();
 				Serial.print(" done\nInitializing .. ");
-
   config = new Config();
   oled = Oled();
 
@@ -129,6 +128,8 @@ void setup(void) {
   sensors = new Sensors();
   alarm = new Alarm();
   peers = new Peers();
+
+  Serial.println(" done");
 }
 
 

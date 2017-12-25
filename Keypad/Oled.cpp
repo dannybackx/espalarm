@@ -235,7 +235,7 @@ void OledButton::initButton(TFT_eSPI *gfx, int16_t x, int16_t y, uint16_t w, uin
  *
  */
 boolean OledButton::contains(int16_t x, int16_t y) {
-#if 1
+#if 0
   y = 320 - y;
 
   boolean r = ((x >= _x1) && (x < (_x1 + _w)) && (y >= _y1) && (y < (_y1 + _h)));
