@@ -105,7 +105,7 @@ void setup(void) {
   SetupWifi();
 				Serial.printf("Set up OTA (id %s) ..", OTA_ID);
   SetupOTA();
-				Serial.print(" done\nInitializing .. ");
+				Serial.print(" done\nInitializing .. \n");
   config = new Config();
   oled = Oled();
 
@@ -129,7 +129,7 @@ void setup(void) {
   alarm = new Alarm();
   peers = new Peers();
 
-  Serial.println(" done");
+  Serial.println("Ready");
 }
 
 

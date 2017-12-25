@@ -63,7 +63,7 @@ void Peers::AddPeer(const char *name, IPAddress ip) {
   if (name == 0 || strlen(name) == 0)
     return;				// No name ? should not happen
 
-  Serial.printf("Adding peer controller {%s} 0x%08x\n", name, ip.toString().c_str());
+  Serial.printf("Adding peer controller {%s} %s\n", name, ip.toString().c_str());
 
   Peer *pp = new Peer();
   pp->ip = ip;
@@ -118,6 +118,7 @@ void Peers::RestLoop() {
   client.stop();
 }
 
+/* Handle incoming notifications */
 void Peers::HandleQuery(const char *str) {
   DynamicJsonBuffer jb;
   JsonObject &json = jb.parseObject(str);
@@ -180,42 +181,36 @@ void Peers::MulticastSetup()
 
 void Peers::MulticastLoop()
 {
-  int noBytes = Udp.parsePacket();
-  if ( noBytes ) {
-    //////// dk notes
-    /////// UDP packet can be a multicast packet or a specific to this device's own IP
-    Serial.print("Packet of ");
-    Serial.print(noBytes);
-    Serial.print(" bytes received from ");
-    Serial.print(Udp.remoteIP());
-    Serial.print(":");
-    Serial.println(Udp.remotePort());
-
-    //////////////////////////////////////////////////////////////////////
-    // We've received a packet, read the data from it
-    //////////////////////////////////////////////////////////////////////
-    Udp.read(packetBuffer,noBytes); // read the packet into the buffer
+  int len = Udp.parsePacket();
+  if (len) {
+    Udp.read(packetBuffer, len);
     Serial.printf("Received : %s\n", packetBuffer);
 
-#if 0
-    // display the packet contents in HEX
-    for (int i=1;i<=noBytes;i++){
-      Serial.print(packetBuffer[i-1],HEX);
-      if (i % 32 == 0){
-        Serial.println();
-      } else
-        Serial.print(' ');
-    } // end for
-    Serial.println();
-    //////////////////////////////////////////////////////////////////////
-    // send a reply, to the IP address and port that sent us the packet we received
-    // the receipient will get a packet with this device's specific IP and port
-    //////////////////////////////////////////////////////////////////////
+    // Analyse incoming packet, expect JSON like { "announce" : "name" }
+    DynamicJsonBuffer jb;
+    JsonObject &json = jb.parseObject(packetBuffer);
+
+    if (! json.success())	// Could not parse JSON
+      return;
+
+    const char *node = json["announce"];	// Name of the sending node
+    if (! node)					// It's not a query in this format
+      return;
+
+    // Record announced modules
+    AddPeer(node, Udp.remoteIP());
+
+    // Send : { "acknowledge" : "my name" }
+    DynamicJsonBuffer jb2;
+    JsonObject &j2 = jb2.createObject();
+    j2["acknowledge"] = MyName;
+    char ob[48];				// FIXME how do you best do this ?
+    j2.printTo(ob, 48);
+
+    Serial.printf("Replying %s\n", ob);
     Udp.beginPacket(Udp.remoteIP(), Udp.remotePort());
-    Udp.write("My ChipId:");
-    Udp.write(ESP.getChipId());
+    Udp.write(ob);
     Udp.endPacket();
-#endif
   }
 }
 
