@@ -87,7 +87,7 @@ void Clock::loop() {
 void Clock::draw() {
   if (first == 0) {
     oled->setTextColor(ILI9341_BLACK);
-    oled->drawString(buffer, 10, 50);
+    oled->drawString(buffer, 3, 50);
     oled->setTextColor(ILI9341_WHITE);
   }
   first = 0;
@@ -97,7 +97,7 @@ void Clock::draw() {
   strftime(buffer, sizeof(buffer), "%a %d.%m.%Y %H:%M", ptm);
 
   oled->setTextSize(1);
-  oled->drawString(buffer, 10, 50);
+  oled->drawString(buffer, 3, 50);
 }
 
 bool Clock::IsDST(int day, int month, int dow)

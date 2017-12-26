@@ -32,7 +32,7 @@
 Config::Config() {
   SPIFFS.begin();
 
-  radio_pin = A0;
+  radio_pin = D2;
   siren_pin = -1;
 
   ReadConfig();

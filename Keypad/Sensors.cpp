@@ -29,6 +29,7 @@
 #include <Sensors.h>
 #include <secrets.h>
 #include <Config.h>
+#include <Alarm.h>
 
 #include <list>
 using namespace std;
@@ -77,11 +78,21 @@ void Sensors::AddSensor(int id, const char *name) {
  * Report environmental information periodically
  */
 void Sensors::loop(time_t nowts) {
-    if (radio && radio->available()) {
-      Serial.print("Received ");
-      int x = radio->getReceivedValue();
-      Serial.printf(" %d (0x%08X) / %d bit, protocol %d\n",
-        x, x, radio->getReceivedBitlength(), radio->getReceivedProtocol());
-      radio->resetAvailable();
-    }
+  int sv;
+
+  if (radio && radio->available()) {
+    sv = radio->getReceivedValue();
+
+    Serial.printf("Received %d (0x%08X) / %d bit, protocol %d\n",
+      sv, sv, radio->getReceivedBitlength(), radio->getReceivedProtocol());
+
+    radio->resetAvailable();
+
+    for (Sensor s : *sensorlist)
+      if (s.id == sv) {
+        alarm->Signal(s.name, ZONE_SECURE);
+	return;
+      }
+    Serial.printf("Sensor not recognized\n");
+  }
 }

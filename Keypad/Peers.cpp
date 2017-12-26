@@ -8,7 +8,7 @@
  *
  * They exchange information via JSON queries.
  *	Example : {"status" : "armed", "name" : "keypad02"}
- *	Example : {"status" : "alarm", "name" : "keypad02", "sensors" : "Kitchen motion detector"}
+ *	Example : {"status" : "alarm", "name" : "keypad02", "sensor" : "Kitchen motion detector"}
  *
  * TODO : implement keepalive checks
  *
@@ -105,7 +105,65 @@ void Peers::loop(time_t nowts) {
  * Send messages to our peers
  *
  *********************************************************************************/
+void Peers::AlarmSetState(AlarmStatus state) {
+  const char *s;
+  switch (state) {
+  case ALARM_ON:
+    s = "armed";
+    break;
+  case ALARM_OFF:
+    s = "disarmed";
+    break;
+  }
 
+  // Send : {"status" : "armed", "name" : "keypad02"}
+  DynamicJsonBuffer jb;
+  JsonObject &jo = jb.createObject();
+  jo["status"] = s;
+  jo["name"] = MyName;
+  jo.printTo(output, sizeof(output));
+
+  CallPeers(output);
+}
+
+void Peers::AlarmSignal(const char *sensor, AlarmZone zone) {
+  // Send : {"status" : "alarm", "sensor" : "PIR 1"}
+  DynamicJsonBuffer jb;
+  JsonObject &jo = jb.createObject();
+  jo["status"] = "alarm";
+  jo["name"] = MyName;
+  jo["sensor"] = sensor;
+  jo.printTo(output, sizeof(output));
+
+  CallPeers(output);
+}
+
+void Peers::CallPeers(char *json) {
+  for (Peer peer : *peerlist)
+    CallPeer(peer, json);
+}
+
+void Peers::CallPeer(Peer peer, char *json) {
+  Serial.printf("CallPeer(%s, %s)\n", peer.name, json);
+
+  WiFiClient client;
+  if (! client.connect(peer.ip, localPort)) {
+    Serial.printf("Connect to %s failed\n", peer.name);
+    return;
+  }
+  client.print(json);
+  unsigned long timeout = millis();		// Check for timeouts
+  while (client.available() == 0) {
+    if (millis() - timeout > 5000) {
+      Serial.printf("Timeout talking to peer %s\n", peer.name);
+      client.stop();
+      return;
+    }
+  }
+  String line = client.readStringUntil('\r');
+  client.stop();
+  Serial.printf("Received from peer : %s\n", line.c_str());
+}
 
 /*********************************************************************************
  * This bit of code implements a server that receives, handles, and answers
@@ -158,16 +216,28 @@ char *Peers::HandleQuery(const char *str) {
 
   const char *query;
 
+  // {"status" : "armed", "name" : "keypad02"}
   if (query = json["status"]) {
     const char *device_name = json["name"];
     Serial.printf("Query -> %s (from %s)\n", query, device_name);
 
     if (strcmp(query, "alarm") == 0) {
+      // Example : {"status" : "alarm", "name" : "keypad02", "sensor" : "Kitchen motion detector"}
       const char *sensor_name = json["sensor"];
       alarm->Signal(sensor_name, ZONE_FROMPEER);
+      return (char *)"100 Ok";
+    } else if (strcmp(query, "armed")) {
+      // {"status" : "armed", "name" : "keypad02"}
+      alarm->SetState(ALARM_ON, ZONE_FROMPEER);
+    } else if (strcmp(query, "disarmed")) {
+      // {"status" : "disarmed", "name" : "keypad02"}
+      alarm->SetState(ALARM_OFF, ZONE_FROMPEER);
+    } else {
+      return (char *)"400 Invalid query";
     }
-    return (char *)"Yow !";
   } else if (query = json["announce"]) {
+    // {"announce" : "node-name"}
+
     // Record announced modules
     AddPeer(query, mcsrv.remoteIP());
 

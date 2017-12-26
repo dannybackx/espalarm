@@ -28,16 +28,18 @@
 
 #include <ESP8266WiFi.h>
 #include <WiFiUdp.h>
+#include <Alarm.h>
 
 #include <list>
 using namespace std;
 
 struct Peer {
-  // int		id;
   char		*name;
   uint32_t	ip;
   int		radio, siren, secure;
 };
+
+typedef list<Peer> PeerList;
 
 class Peers {
 public:
@@ -45,6 +47,9 @@ public:
   ~Peers();
   void loop(time_t);
   void AddPeer(const char *name, IPAddress ip);
+
+  void AlarmSetState(AlarmStatus state);
+  void AlarmSignal(const char *sensor, AlarmZone zone);
 
 private:
   list<Peer>		*peerlist;
@@ -56,6 +61,8 @@ private:
   void ServerSocketLoop();
   void ClientSocketLoop();
   char *HandleQuery(const char *str);
+  void CallPeers(char *json);
+  void CallPeer(Peer, char *json);
 
   void SetMyName();
   char *MyName;
@@ -72,4 +79,6 @@ private:
 };
 
 const unsigned int udp_client_port = 4567;
+
+extern Peers *peers;
 #endif	/* _PEER_H_ */

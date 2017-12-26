@@ -39,6 +39,8 @@ struct Sensor {
   char *name;
 };
 
+typedef list<Sensor> SensorList;
+
 class Sensors {
 public:
   Sensors();

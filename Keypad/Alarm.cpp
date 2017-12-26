@@ -31,6 +31,7 @@
 
 #include <Arduino.h>
 #include <Alarm.h>
+#include <Peers.h>
 #include <secrets.h>
 
 Alarm::Alarm() {
@@ -44,15 +45,25 @@ void Alarm::SetState(AlarmStatus s) {
   state = s;
 }
 
+void Alarm::SetState(AlarmStatus s, AlarmZone zone) {
+  state = s;
+  if (zone != ZONE_FROMPEER) {
+    peers->AlarmSetState(s);
+  }
+}
+
 /*
  * Still to decide based on zone
  * However, if ZONE_FROMPEER then don't forward to peers, don't decide, just do :-)
  */
 void Alarm::Signal(const char *sensor, AlarmZone zone) {
+  Serial.printf("Got alarm from sensor %s\n", sensor);
+
   if (zone != ZONE_FROMPEER) {
     // Evaluate based on the zone
 
     // Forward alarm to peers
+    peers->AlarmSignal(sensor, zone);
   }
 
   // Now we should start signalling
