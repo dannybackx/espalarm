@@ -115,7 +115,7 @@ void Peers::loop(time_t nowts) {
  *********************************************************************************/
 
 void Peers::RestSetup() {
-  srv = new WiFiServer(80);
+  srv = new WiFiServer(localPort);
   srv->begin();
 }
 
@@ -131,7 +131,7 @@ void Peers::RestLoop() {
   int len = client.read(query, sz);
   if (len > 0) {
     query[len] = 0;
-    Serial.printf("JSON query {%s}\n", query);
+    Serial.printf("JSON query %s\n", query);
   }
 
   char *reply = HandleQuery((const char *)query);
@@ -186,30 +186,26 @@ char *Peers::HandleQuery(const char *str) {
  *	then add them to the list (with some additional data?).
  *
  *********************************************************************************/
-int status = WL_IDLE_STATUS;
-
 // Send out a multicast packet to search peers
 void Peers::QueryPeers() {
   char query[48];
   sprintf(query, "{ \"announce\" : \"%s\" }", MyName);
   int len = strlen(query);
 
-  sendudp.begin(4567);
-  Serial.printf("Sending %s from local port ", query);
-  Serial.print(local);
-  Serial.print(":");
-  Serial.println(sendudp.localPort());
+  sendudp.begin(udp_client_port);
+		  Serial.printf("Sending %s from local port ", query);
+		  Serial.print(local);
+		  Serial.print(":");
+		  Serial.println(sendudp.localPort());
   sendudp.beginPacketMulticast(ipMulti, portMulti, local);
   sendudp.write(query, len+1);
   sendudp.endPacket();
-  // Serial.print("+");
   delay(200);
 
 // twice
   sendudp.beginPacketMulticast(ipMulti, portMulti, local);
   sendudp.write(query, len+1);
   sendudp.endPacket();
-  // Serial.println("+");
 }
 
 void Peers::MulticastSetup()

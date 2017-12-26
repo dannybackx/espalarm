@@ -62,8 +62,8 @@ private:
 
   WiFiServer	*srv;
 
-  const unsigned int localPort = 23456;		// local port to listen for UDP packets
-  const unsigned int portMulti = 23456;		// local port to listen on
+  const unsigned int localPort = 23456;		// local server port (both UDP and TCP)
+  const unsigned int portMulti = 23456;		// multicast port
   byte packetBuffer[512];			// buffer to hold incoming and outgoing packets
   WiFiUDP mcsrv, sendudp;			// a server and a client port
   IPAddress ipMulti, local;
@@ -71,4 +71,5 @@ private:
   char output[128];
 };
 
+const unsigned int udp_client_port = 4567;
 #endif	/* _PEER_H_ */
