@@ -24,10 +24,11 @@ LIBCPP=-lstdc++
 # HWTYPE=	d1_mini
 HWTYPE=	nodemcu
 
-SKETCH = $(HOME)/src/sketchbook/esp8266/Alarm/AlarmController/alarm.ino
-#EXTRA_SRC =
+SKETCH		= $(HOME)/src/sketchbook/esp8266/Alarm/AlarmController/Controller.ino
+EXTRA_SRC	= Alarm.cpp Config.cpp Peers.cpp ThingSpeakLogger.cpp \
+		  Siren.cpp Sensors.cpp
 
-UPLOAD_AVAHI_NAME = OTA-testoled.local
+UPLOAD_AVAHI_NAME = OTA-Controller.local
 
 ALARMLIBS = $(HOME)/src/sketchbook/esp8266/Alarm/libraries
 MYLIBS = $(HOME)/src/sketchbook/esp8266/libraries
@@ -36,9 +37,14 @@ LIBS =	$(ESP_LIBS)/ESP8266WiFi \
 	$(ESP_LIBS)/SPI \
 	$(ESP_LIBS)/ArduinoOTA \
 	$(ESP_LIBS)/ESP8266mDNS \
+	$(MYLIBS)/Timezone \
 	${ALARMLIBS}/TFT_eSPI \
+	${MYLIBS}/pubsubclient \
 	${MYLIBS}/Timezone \
-	${MYLIBS}/pubsubclient
+	${ALARMLIBS}/tzstuff \
+	${ALARMLIBS}/rcswitch \
+	${ALARMLIBS}/arduinojson \
+	${ALARMLIBS}/thingspeak
 
 #=== Project specific definitions: sketch and list of needed libraries
 
@@ -96,7 +102,7 @@ DEBUG=-Os -g
 
 INCLUDE_DIRS += $(SDK_ROOT)/include ${LWIP_SDK_ROOT}/include $(CORE_DIR) $(ESP_ROOT)/variants/${HWTYPE} $(OBJ_DIR) ${EXTRA_INCLUDE}
 C_DEFINES = -D__ets__ -DICACHE_FLASH -U__STRICT_ANSI__ -DF_CPU=80000000L -DARDUINO=10605 -DARDUINO_ESP8266_ESP01 -DARDUINO_ARCH_ESP8266 -DESP8266
-C_INCLUDES = $(foreach dir,$(INCLUDE_DIRS) $(USER_DIRS),-I$(dir)) -I..
+C_INCLUDES = -I.. $(foreach dir,$(INCLUDE_DIRS) $(USER_DIRS),-I$(dir))
 C_FLAGS ?= -c ${DEBUG} -Wpointer-arith -Wno-implicit-function-declaration -Wl,-EL -fno-inline-functions -nostdlib -mlongcalls -mtext-section-literals -falign-functions=4 -MMD -std=gnu99 -ffunction-sections -fdata-sections
 CPP_FLAGS ?= -c ${DEBUG} -mlongcalls -mtext-section-literals -fno-exceptions -fno-rtti -falign-functions=4 -std=c++11 -MMD -ffunction-sections -fdata-sections
 S_FLAGS ?= -c ${DEBUG} -x assembler-with-cpp -MMD -mlongcalls
@@ -111,9 +117,10 @@ CORE_LIB = $(OBJ_DIR)/core.ar
 
 # User defined compilation units
 USER_SRC = $(SKETCH) ${EXTRA_SRC} $(shell find $(LIBS) -name examples -prune -false -o -name "*.cpp" -o -name "*.c")
+USER_SRC2 = $(SKETCH) ${EXTRA_SRC} $(shell find $(LIBS) -name examples -prune -false -o -name "*.cpp" -o -name "*.c" -o -name "*.h")
 # Object file suffix seems to be significant for the linker...
 USER_OBJ = $(subst .ino,.cpp,$(patsubst %,$(OBJ_DIR)/%$(OBJ_EXT),$(notdir $(USER_SRC))))
-USER_DIRS = $(sort $(dir $(USER_SRC)))
+USER_DIRS = $(sort $(dir $(USER_SRC2)))
 
 VPATH += $(shell find $(CORE_DIR) -type d) $(USER_DIRS)
 
