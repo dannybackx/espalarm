@@ -55,7 +55,7 @@ private:
   void QueryPeers();
   void ServerSocketLoop();
   void ClientSocketLoop();
-  void HandleQuery(const char *str);
+  char *HandleQuery(const char *str);
 
   void SetMyName();
   char *MyName;
@@ -67,6 +67,8 @@ private:
   byte packetBuffer[512];			// buffer to hold incoming and outgoing packets
   WiFiUDP mcsrv, sendudp;			// a server and a client port
   IPAddress ipMulti, local;
+
+  char output[128];
 };
 
 #endif	/* _PEER_H_ */

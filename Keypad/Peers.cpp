@@ -66,7 +66,7 @@ void Peers::AddPeer(const char *name, IPAddress ip) {
   if (name == 0 || strlen(name) == 0)
     return;				// No name ? should not happen
 
-  Serial.printf("Adding peer controller {%s} %s\n", name, ip.toString().c_str());
+  Serial.printf("Adding peer controller {%s} %s ... ", name, ip.toString().c_str());
 
   Peer *pp = new Peer();
   pp->ip = ip;
@@ -83,6 +83,13 @@ void Peers::AddPeer(const char *name, IPAddress ip) {
 
   // Add at the end of the list
   peerlist->push_back(*pp);
+
+  int count = 0;
+  node = peerlist->begin();
+  while (node != peerlist->end()) {
+    node++; count++;
+  }
+  Serial.printf("now %d peers in the list\n", count);
 }
 
 /*
@@ -126,32 +133,51 @@ void Peers::RestLoop() {
     query[len] = 0;
     Serial.printf("JSON query {%s}\n", query);
   }
-  HandleQuery((const char *)query);
+
+  char *reply = HandleQuery((const char *)query);
 
   // Answer
-  client.println("Yow !");
+  client.println(reply);
   client.stop();
 }
 
-/* Handle incoming notifications */
-void Peers::HandleQuery(const char *str) {
+/*
+ * Handle incoming notifications
+ *
+ * This is one function to handle both the UDP (multicast) queries, and TCP based REST calls.
+ * The latter are kept as a separate service because of protocol reliability.
+ */
+char *Peers::HandleQuery(const char *str) {
   DynamicJsonBuffer jb;
   JsonObject &json = jb.parseObject(str);
   if (! json.success()) {
-    Serial.println("Could not parse JSON");
-    return;
+    char *reply = (char *)"Could not parse JSON";
+    Serial.println(reply);
+    return reply;
   }
 
-  const char *query = json["status"];
-  const char *device_name = json["name"];
-  Serial.printf("Query -> %s (from %s)\n", query, device_name);
+  const char *query;
 
-  if (strcmp(query, "alarm") == 0) {
-    const char *sensor_name = json["sensor"];
-    alarm->Signal(sensor_name, ZONE_FROMPEER);
+  if (query = json["status"]) {
+    const char *device_name = json["name"];
+    Serial.printf("Query -> %s (from %s)\n", query, device_name);
+
+    if (strcmp(query, "alarm") == 0) {
+      const char *sensor_name = json["sensor"];
+      alarm->Signal(sensor_name, ZONE_FROMPEER);
+    }
+    return (char *)"Yow !";
+  } else if (query = json["announce"]) {
+    // Record announced modules
+    AddPeer(query, mcsrv.remoteIP());
+
+    // Send : { "acknowledge" : "my name" }
+    DynamicJsonBuffer jb2;
+    JsonObject &j2 = jb2.createObject();
+    j2["acknowledge"] = MyName;
+    j2.printTo(output, sizeof(output));
+    return output;
   }
-  // siren_pin = json["sirenPin"] | -1;
-  // radio_pin = json["radioPin"] | A0;
 }
 
 /*********************************************************************************
@@ -206,37 +232,16 @@ void Peers::ServerSocketLoop()
   if (len) {
     mcsrv.read(packetBuffer, len);
     packetBuffer[len] = 0;
-    Serial.printf("Received : %s\n", packetBuffer);
+		    Serial.printf("Received : %s\n", packetBuffer);
 
-    // Analyse incoming packet, expect JSON like { "announce" : "name" }
-    DynamicJsonBuffer jb;
-    JsonObject &json = jb.parseObject(packetBuffer);
+    char *reply = HandleQuery((char *)packetBuffer);
 
-    if (! json.success())			// Could not parse JSON
-      return;
-
-    const char *node = json["announce"];	// Name of the sending node
-    if (! node) {				// It's not a query in this format
-      Serial.printf("Unknown packet %s\n", packetBuffer);
-      return;
-    }
-
-    // Record announced modules
-    AddPeer(node, mcsrv.remoteIP());
-
-    // Send : { "acknowledge" : "my name" }
-    DynamicJsonBuffer jb2;
-    JsonObject &j2 = jb2.createObject();
-    j2["acknowledge"] = MyName;
-    char ob[48];				// FIXME how do you best do this ?
-    j2.printTo(ob, 48);
-
-    Serial.printf("Replying %s to peer at ", ob);
-    Serial.print(mcsrv.remoteIP());
-    Serial.print(":");
-    Serial.println(mcsrv.remotePort());
+		    Serial.printf("Replying %s to peer at ", reply);
+		    Serial.print(mcsrv.remoteIP());
+		    Serial.print(":");
+		    Serial.println(mcsrv.remotePort());
     mcsrv.beginPacket(mcsrv.remoteIP(), mcsrv.remotePort());
-    mcsrv.write(ob);
+    mcsrv.write(reply);
     mcsrv.endPacket();
   }
 }
@@ -270,7 +275,18 @@ void Peers::ClientSocketLoop()
   }
 }
 
-// For use in SetMyName().
+/*
+ * For use in SetMyName().
+ *
+ * This is a cheap way to get modules to know their names.
+ * Alternatives would be to implement UI code to allow you to configure a name from
+ * the panel (for nodes that have that), or a secure (sigh) way to remotely configure
+ * some stuff on the nodes.
+ *
+ * So instead of all that stuff, we're basically hardcoding node names, linked to MAC addresses.
+ * Nodes not specifically named will identify as "Controller xyz" where xyz is the MAC address.
+ * Macro definitions should go in secrets.h .
+ */
 struct MAC2Name {
   const char *id, *name;
 } MAC2Name [] = {
@@ -299,12 +315,9 @@ struct MAC2Name {
  * Determine our name based on MAC address and the secrets.h file
  */
 void Peers::SetMyName() {
-  // Serial.println("SetMyName()"); delay(1000);
   String mac = WiFi.macAddress();
-  // Serial.printf("MAC is %s\n", mac.c_str()); delay(1000);
 
   for (int i=0; MAC2Name[i].id; i++) {
-    // Serial.printf("Entry %d %s , %s\n", i, MAC2Name[i].id, MAC2Name[i].name); delay(1000);
     if (strcasecmp(MAC2Name[i].id, mac.c_str()) == 0) {
       MyName = (char *)MAC2Name[i].name;
       Serial.printf("My name is \"%s\"\n", MyName);
