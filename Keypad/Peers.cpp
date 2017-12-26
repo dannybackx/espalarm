@@ -10,6 +10,8 @@
  *	Example : {"status" : "armed", "name" : "keypad02"}
  *	Example : {"status" : "alarm", "name" : "keypad02", "sensors" : "Kitchen motion detector"}
  *
+ * TODO : implement keepalive checks
+ *
  * Copyright (c) 2017 Danny Backx
  *
  * License (MIT license):
@@ -68,6 +70,17 @@ void Peers::AddPeer(const char *name, IPAddress ip) {
   Peer *pp = new Peer();
   pp->ip = ip;
   pp->name = strdup((char *)name);
+
+  // Remove existing items with same name or IP address
+  list<Peer>::iterator node = peerlist->begin();
+  while (node != peerlist->end()) {
+    if (strcmp(node->name, name) == 0 || node->ip == ip)
+      node = peerlist->erase(node);
+    else
+      node++;
+  }
+
+  // Add at the end of the list
   peerlist->push_back(*pp);
 }
 
@@ -194,8 +207,16 @@ void Peers::MulticastLoop()
       return;
 
     const char *node = json["announce"];	// Name of the sending node
-    if (! node)					// It's not a query in this format
+    if (! node) {				// It's not a query in this format
+      // See if it's { "acknowledge" : "node" }
+      const char *ack = json["acknowledge"];
+      if (! ack) {
+        Serial.printf("Unknown packet %s\n", packetBuffer);
+	return;
+      }
+      AddPeer(ack, Udp.remoteIP());
       return;
+    }
 
     // Record announced modules
     AddPeer(node, Udp.remoteIP());
