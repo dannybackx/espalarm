@@ -52,6 +52,7 @@ using namespace std;
 Peers::Peers() {
   peerlist = new list<Peer>();
   SetMyName();
+  local = WiFi.localIP();
 
   RestSetup();
   MulticastSetup();
@@ -89,7 +90,8 @@ void Peers::AddPeer(const char *name, IPAddress ip) {
  */
 void Peers::loop(time_t nowts) {
   RestLoop();
-  MulticastLoop();
+  ServerSocketLoop();
+  ClientSocketLoop();
 }
 
 /*********************************************************************************
@@ -160,25 +162,28 @@ void Peers::HandleQuery(const char *str) {
  *********************************************************************************/
 int status = WL_IDLE_STATUS;
 
+// Send out a multicast packet to search peers
 void Peers::QueryPeers() {
-  // Send something too
-  WiFiUDP sendudp;
-  IPAddress local = WiFi.localIP();
-
   char query[48];
   sprintf(query, "{ \"announce\" : \"%s\" }", MyName);
   int len = strlen(query);
 
+  sendudp.begin(4567);
+  Serial.printf("Sending %s from local port ", query);
+  Serial.print(local);
+  Serial.print(":");
+  Serial.println(sendudp.localPort());
   sendudp.beginPacketMulticast(ipMulti, portMulti, local);
   sendudp.write(query, len+1);
   sendudp.endPacket();
-  Serial.print("+");
+  // Serial.print("+");
   delay(200);
 
+// twice
   sendudp.beginPacketMulticast(ipMulti, portMulti, local);
   sendudp.write(query, len+1);
   sendudp.endPacket();
-  Serial.println("+");
+  // Serial.println("+");
 }
 
 void Peers::MulticastSetup()
@@ -188,15 +193,64 @@ void Peers::MulticastSetup()
   Serial.print("Udp Multicast listener starting at : ");
   Serial.print(ipMulti);
   Serial.print(":");
-  Serial.print(portMulti);
-  Udp.beginMulticast(WiFi.localIP(), ipMulti, portMulti);
+  Serial.println(portMulti);
+  mcsrv.beginMulticast(local, ipMulti, portMulti);
 }
 
-void Peers::MulticastLoop()
+/*
+ * Receive unsollicited queries from peers, handle them and reply to them
+ */
+void Peers::ServerSocketLoop()
 {
-  int len = Udp.parsePacket();
+  int len = mcsrv.parsePacket();
   if (len) {
-    Udp.read(packetBuffer, len);
+    mcsrv.read(packetBuffer, len);
+    packetBuffer[len] = 0;
+    Serial.printf("Received : %s\n", packetBuffer);
+
+    // Analyse incoming packet, expect JSON like { "announce" : "name" }
+    DynamicJsonBuffer jb;
+    JsonObject &json = jb.parseObject(packetBuffer);
+
+    if (! json.success())			// Could not parse JSON
+      return;
+
+    const char *node = json["announce"];	// Name of the sending node
+    if (! node) {				// It's not a query in this format
+      Serial.printf("Unknown packet %s\n", packetBuffer);
+      return;
+    }
+
+    // Record announced modules
+    AddPeer(node, mcsrv.remoteIP());
+
+    // Send : { "acknowledge" : "my name" }
+    DynamicJsonBuffer jb2;
+    JsonObject &j2 = jb2.createObject();
+    j2["acknowledge"] = MyName;
+    char ob[48];				// FIXME how do you best do this ?
+    j2.printTo(ob, 48);
+
+    Serial.printf("Replying %s to peer at ", ob);
+    Serial.print(mcsrv.remoteIP());
+    Serial.print(":");
+    Serial.println(mcsrv.remotePort());
+    mcsrv.beginPacket(mcsrv.remoteIP(), mcsrv.remotePort());
+    mcsrv.write(ob);
+    mcsrv.endPacket();
+  }
+}
+
+/*
+ * Receive replies to our query to search peer nodes
+ * Only expect the format { "acknowledge" : "node" }
+ */
+void Peers::ClientSocketLoop()
+{
+  int len = sendudp.parsePacket();
+  if (len) {
+    sendudp.read(packetBuffer, len);
+    packetBuffer[len] = 0;
     Serial.printf("Received : %s\n", packetBuffer);
 
     // Analyse incoming packet, expect JSON like { "announce" : "name" }
@@ -206,32 +260,13 @@ void Peers::MulticastLoop()
     if (! json.success())	// Could not parse JSON
       return;
 
-    const char *node = json["announce"];	// Name of the sending node
-    if (! node) {				// It's not a query in this format
-      // See if it's { "acknowledge" : "node" }
-      const char *ack = json["acknowledge"];
-      if (! ack) {
-        Serial.printf("Unknown packet %s\n", packetBuffer);
-	return;
-      }
-      AddPeer(ack, Udp.remoteIP());
+    // See if it's { "acknowledge" : "node" }
+    const char *ack = json["acknowledge"];
+    if (! ack) {
+      Serial.printf("Unknown packet %s\n", packetBuffer);
       return;
     }
-
-    // Record announced modules
-    AddPeer(node, Udp.remoteIP());
-
-    // Send : { "acknowledge" : "my name" }
-    DynamicJsonBuffer jb2;
-    JsonObject &j2 = jb2.createObject();
-    j2["acknowledge"] = MyName;
-    char ob[48];				// FIXME how do you best do this ?
-    j2.printTo(ob, 48);
-
-    Serial.printf("Replying %s\n", ob);
-    Udp.beginPacket(Udp.remoteIP(), Udp.remotePort());
-    Udp.write(ob);
-    Udp.endPacket();
+    AddPeer(ack, sendudp.remoteIP());
   }
 }
 
