@@ -49,18 +49,28 @@ Sensors::Sensors() {
   radio->enableReceive(radioPin);
 
   // Add sensors predefined in secrets.h
-  AddSensor(SENSOR_1_ID, SENSOR_1_NAME);
-  AddSensor(SENSOR_2_ID, SENSOR_2_NAME);
-  AddSensor(SENSOR_3_ID, SENSOR_3_NAME);
-  AddSensor(SENSOR_4_ID, SENSOR_4_NAME);
-  AddSensor(SENSOR_5_ID, SENSOR_5_NAME);
-  AddSensor(SENSOR_6_ID, SENSOR_6_NAME);
+  AddSensor(SENSOR_1_ID, SENSOR_1_NAME, SENSOR_1_ZONE);
+  AddSensor(SENSOR_2_ID, SENSOR_2_NAME, SENSOR_2_ZONE);
+  AddSensor(SENSOR_3_ID, SENSOR_3_NAME, SENSOR_3_ZONE);
+  AddSensor(SENSOR_4_ID, SENSOR_4_NAME, SENSOR_4_ZONE);
+  AddSensor(SENSOR_5_ID, SENSOR_5_NAME, SENSOR_5_ZONE);
+  AddSensor(SENSOR_6_ID, SENSOR_6_NAME, SENSOR_6_ZONE);
 }
 
 Sensors::~Sensors() {
 }
 
-void Sensors::AddSensor(int id, const char *name) {
+AlarmZone Sensors::AlarmZone2Zone(const char *zone) {
+  AlarmZone r = ZONE_NONE;
+
+  if (strcasecmp(zone, "secure") == 0) r = ZONE_SECURE;
+  else if (strcasecmp(zone, "perimeter") == 0) r = ZONE_PERIMETER;
+  else if (strcasecmp(zone, "always") == 0) r = ZONE_ALWAYS;
+
+  return r;
+}
+
+void Sensors::AddSensor(int id, const char *name, const char *zone) {
   if (id == 0)
     return;	// an undefined sensor
 
@@ -69,6 +79,7 @@ void Sensors::AddSensor(int id, const char *name) {
   Sensor *sp = new Sensor();
   sp->id = id;
   sp->name = (char *)name;
+  sp->zone = AlarmZone2Zone(zone);
   sensorlist.push_back(*sp);
 }
 

@@ -26,6 +26,7 @@
 #ifndef	_WIRELESS_SENSOR_H_
 #define	_WIRELESS_SENSOR_H_
 
+#include <Alarm.h>
 #include "RCSwitch.h"
 #include <list>
 using namespace std;
@@ -35,8 +36,9 @@ enum SensorStatus {
 };
 
 struct Sensor {
-  int id;
-  char *name;
+  int			id;
+  char			*name;
+  enum AlarmZone	zone;
 };
 
 typedef list<Sensor> SensorList;
@@ -46,7 +48,7 @@ public:
   Sensors();
   ~Sensors();
   void loop(time_t);
-  void AddSensor(int id, const char *name);
+  void AddSensor(int id, const char *name, const char *zone);
 
 private:
   enum SensorStatus	status;
@@ -55,6 +57,7 @@ private:
   RCSwitch		*radio;
 
   list<Sensor>		sensorlist;
+  AlarmZone AlarmZone2Zone(const char *);
 };
 
 #endif	/* _WIRELESS_SENSOR_H_ */

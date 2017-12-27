@@ -27,16 +27,20 @@
 #define	_ALARM_STATE_H_
 
 enum AlarmStatus {
-  ALARM_OFF,
-  ALARM_ON,
+  ALARM_OFF,		// Only ZONE_ALWAYS triggers the alarm
+  ALARM_ON,		// Any sensor triggers the alarm
+  ALARM_NIGHT,		// ZONE_SECURE sensors won't trigger alarm
   // ??
 };
 
+// A characteristic of both sensors and controllers
 enum AlarmZone {
   ZONE_NONE,
-  ZONE_SECURE,
-  ZONE_PERIMETER,
-  ZONE_ALWAYS,
+  ZONE_SECURE,		// Sensors that you'll walk by at night
+  			// A controller not in the perimeter (no need to authenticate)
+  ZONE_PERIMETER,	// Most sensors are here
+  			// Controllers require authentication before accepting actions
+  ZONE_ALWAYS,		// Sensors that always trigger alarm (e.g. fire)
   ZONE_FROMPEER,	// Already evaluated, this is a real alarm passed from a peer controller
 };
 
