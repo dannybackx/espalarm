@@ -37,8 +37,6 @@ using namespace std;
 #include <RCSwitch.h>
 
 Sensors::Sensors() {
-  sensorlist = new list<Sensor>();
-
   // 
   radioPin = config->GetRadioPin();
   if (radioPin < 0) {
@@ -71,7 +69,7 @@ void Sensors::AddSensor(int id, const char *name) {
   Sensor *sp = new Sensor();
   sp->id = id;
   sp->name = (char *)name;
-  sensorlist->push_back(*sp);
+  sensorlist.push_back(*sp);
 }
 
 /*
@@ -88,7 +86,7 @@ void Sensors::loop(time_t nowts) {
 
     radio->resetAvailable();
 
-    for (Sensor s : *sensorlist)
+    for (Sensor s : sensorlist)
       if (s.id == sv) {
         alarm->Signal(s.name, ZONE_SECURE);
 	return;

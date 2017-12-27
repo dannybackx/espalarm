@@ -54,7 +54,7 @@ private:
 
   RCSwitch		*radio;
 
-  list<Sensor>		*sensorlist;
+  list<Sensor>		sensorlist;
 };
 
 #endif	/* _WIRELESS_SENSOR_H_ */
