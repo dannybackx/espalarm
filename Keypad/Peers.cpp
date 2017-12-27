@@ -50,7 +50,6 @@ using namespace std;
 #include <RCSwitch.h>
 
 Peers::Peers() {
-  peerlist = new list<Peer>();
   SetMyName();
   local = WiFi.localIP();
 
@@ -73,20 +72,20 @@ void Peers::AddPeer(const char *name, IPAddress ip) {
   pp->name = strdup((char *)name);
 
   // Remove existing items with same name or IP address
-  list<Peer>::iterator node = peerlist->begin();
-  while (node != peerlist->end()) {
+  list<Peer>::iterator node = peerlist.begin();
+  while (node != peerlist.end()) {
     if (strcmp(node->name, name) == 0 || node->ip == ip)
-      node = peerlist->erase(node);
+      node = peerlist.erase(node);
     else
       node++;
   }
 
   // Add at the end of the list
-  peerlist->push_back(*pp);
+  peerlist.push_back(*pp);
 
   int count = 0;
-  node = peerlist->begin();
-  while (node != peerlist->end()) {
+  node = peerlist.begin();
+  while (node != peerlist.end()) {
     node++; count++;
   }
   Serial.printf("now %d peers in the list\n", count);
@@ -139,7 +138,7 @@ void Peers::AlarmSignal(const char *sensor, AlarmZone zone) {
 }
 
 void Peers::CallPeers(char *json) {
-  for (Peer peer : *peerlist)
+  for (Peer peer : peerlist)
     CallPeer(peer, json);
 }
 

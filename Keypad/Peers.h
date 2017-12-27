@@ -52,7 +52,7 @@ public:
   void AlarmSignal(const char *sensor, AlarmZone zone);
 
 private:
-  list<Peer>		*peerlist;
+  list<Peer>		peerlist;
 
   void RestSetup();
   void RestLoop();
