@@ -39,6 +39,13 @@ using namespace std;
 Sensors::Sensors() {
   // 
   radioPin = config->GetRadioPin();
+#if defined(ESP8266)
+  if (radioPin == D0) {
+    // interrupts can be attached to any GPIO except GPIO16, so not D0 or A0.
+    Serial.println("Not possible to use GPIO16 (D0) for the radio on ESP8266");
+    return;
+  }
+#endif
   if (radioPin < 0) {
     radio = 0;
     return;

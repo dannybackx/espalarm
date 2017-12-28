@@ -88,7 +88,7 @@
 //#define TOUCH_CS PIN_D1     // Chip select pin (T_CS) of touch screen
 
 // Danny
-#define TOUCH_CS PIN_D2     // Chip select pin (T_CS) of touch screen
+#define TOUCH_CS PIN_D0     // Chip select pin (T_CS) of touch screen
 #define TFT_CS   PIN_D8  // Chip select control pin D8
 #define TFT_DC   PIN_D4  // Data Command control pin
 #define TFT_RST  -1  // Set TFT_RST to -1 if the display RESET is connected to NodeMCU RST or 3.3V
