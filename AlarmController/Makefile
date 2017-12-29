@@ -26,7 +26,7 @@ HWTYPE=	nodemcu
 
 SKETCH		= $(HOME)/src/sketchbook/esp8266/Alarm/AlarmController/Controller.ino
 EXTRA_SRC	= Alarm.cpp Config.cpp Peers.cpp ThingSpeakLogger.cpp \
-		  Siren.cpp Sensors.cpp
+		  Siren.cpp Sensors.cpp Rfid.cpp
 
 UPLOAD_AVAHI_NAME = OTA-Controller.local
 
@@ -44,6 +44,7 @@ LIBS =	$(ESP_LIBS)/ESP8266WiFi \
 	${ALARMLIBS}/tzstuff \
 	${ALARMLIBS}/rcswitch \
 	${ALARMLIBS}/arduinojson \
+	${ALARMLIBS}/rfid \
 	${ALARMLIBS}/thingspeak
 
 #=== Project specific definitions: sketch and list of needed libraries

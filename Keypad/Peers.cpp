@@ -104,7 +104,7 @@ void Peers::loop(time_t nowts) {
  * Send messages to our peers
  *
  *********************************************************************************/
-void Peers::AlarmSetState(AlarmStatus state) {
+void Peers::AlarmSetArmed(AlarmStatus state) {
   const char *s;
   switch (state) {
   case ALARM_ON:
@@ -227,10 +227,11 @@ char *Peers::HandleQuery(const char *str) {
       return (char *)"100 Ok";
     } else if (strcmp(query, "armed")) {
       // {"status" : "armed", "name" : "keypad02"}
-      alarm->SetState(ALARM_ON, ZONE_FROMPEER);
+      alarm->SetArmed(ALARM_ON, ZONE_FROMPEER);
     } else if (strcmp(query, "disarmed")) {
       // {"status" : "disarmed", "name" : "keypad02"}
-      alarm->SetState(ALARM_OFF, ZONE_FROMPEER);
+      alarm->SetArmed(ALARM_OFF, ZONE_FROMPEER);
+      alarm->Reset(device_name);
     } else {
       return (char *)"400 Invalid query";
     }

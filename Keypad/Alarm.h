@@ -48,21 +48,19 @@ class Alarm {
 public:
   Alarm();
   ~Alarm();
-  void SetState(AlarmStatus);
-  void SetState(AlarmStatus s, AlarmZone zone);
   void loop(time_t);
+
+  void SetArmed(AlarmStatus);
+  void SetArmed(AlarmStatus s, AlarmZone zone);
+
   void Signal(const char *sensor, AlarmZone zone);	// Still to decide based on zone
   void SoundAlarm(const char *sensor);			// We've decided : just start yelling
+  void Reset(const char *module);			// From a peer controller
+  void Reset();						// Local
 
 private:
-  // time_t trigger_ts;
-  enum AlarmStatus	state;
-  int			id;
-
-  // RCSwitch		radio;
-
-  // int led_pin;
-  // int timeout;		// number of seconds for backlight to stay lit
+  enum AlarmStatus	armed;	// Armed or not
+  boolean alert;
 };
 
 extern Alarm *alarm;

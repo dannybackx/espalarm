@@ -35,20 +35,21 @@
 #include <secrets.h>
 
 Alarm::Alarm() {
-  state = ALARM_OFF;
+  armed = ALARM_OFF;
+  alert = false;
 }
 
 Alarm::~Alarm() {
 }
 
-void Alarm::SetState(AlarmStatus s) {
-  state = s;
+void Alarm::SetArmed(AlarmStatus s) {
+  armed = s;
 }
 
-void Alarm::SetState(AlarmStatus s, AlarmZone zone) {
-  state = s;
+void Alarm::SetArmed(AlarmStatus s, AlarmZone zone) {
+  armed = s;
   if (zone != ZONE_FROMPEER) {
-    peers->AlarmSetState(s);
+    peers->AlarmSetArmed(s);
   }
 }
 
@@ -59,22 +60,42 @@ void Alarm::SetState(AlarmStatus s, AlarmZone zone) {
 void Alarm::Signal(const char *sensor, AlarmZone zone) {
   Serial.printf("Got alarm from sensor %s\n", sensor);
 
-  if (zone != ZONE_FROMPEER) {
-    // Evaluate based on the zone
-
-    // Forward alarm to peers
-    peers->AlarmSignal(sensor, zone);
+  if (zone == ZONE_FROMPEER) {
+    SoundAlarm(sensor);
+    return;
   }
 
-  // Now we should start signalling
+  // A locally generated (a sensor) alarm : evaluate based on the zone and alarm state
+  // Return from the function in combinations that don't throw alarms.
+  if (armed == ALARM_OFF && zone != ZONE_ALWAYS)
+    return;
+  if (zone == ZONE_SECURE && armed == ALARM_NIGHT)
+    return;
+
+  // If we get here, we're hitting the alarm.
   SoundAlarm(sensor);
+  peers->AlarmSignal(sensor, zone); // Forward alarm to peers
 }
 
 /*
  * We've decided : just start yelling.
- * Local only (don't forward to peers, this was in a prior phase).
+ * Local only (don't forward to peers, this happened in an earlier phase).
  */
 void Alarm::SoundAlarm(const char *sensor) {
+  alert = true;
+}
+
+/*
+ * This is to be called from Peers.cpp, so ZONE_FROMPEER.
+ */
+void Alarm::Reset(const char *module) {
+}
+
+/*
+ * Reset originates from the local user interface
+ */
+void Alarm::Reset() {
+  alert = false;
 }
 
 /*

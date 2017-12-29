@@ -28,6 +28,7 @@
 #include <secrets.h>
 #include <FS.h>
 #include <ArduinoJson.h>
+#include <preferences.h>
 
 Config::Config() {
   SPIFFS.begin();
@@ -61,9 +62,9 @@ void Config::SetSirenPin(int pin) {
 }
 
 void Config::ReadConfig() {
-  File f = SPIFFS.open("config.json", "r");
+  File f = SPIFFS.open(PREF_CONFIG_FN, "r");
   if (!f) {
-    Serial.println("Config: can not open config.xml");
+    Serial.printf("Config: can not open %s\n", PREF_CONFIG_FN);
 #if 0
     FSInfo fsi;
     SPIFFS.info(fsi);
@@ -89,11 +90,11 @@ void Config::ReadConfig() {
 }
 
 void Config::WriteConfig() {
-  SPIFFS.remove("config.json");
+  SPIFFS.remove(PREF_CONFIG_FN);
 
-  File f = SPIFFS.open("config.json", "w");
+  File f = SPIFFS.open(PREF_CONFIG_FN, "w");
   if (!f) {
-    Serial.println("Failed to save config");
+    Serial.printf("Failed to save config to %s\n", PREF_CONFIG_FN);
     return;
   }
   DynamicJsonBuffer jb;
@@ -106,7 +107,7 @@ void Config::WriteConfig() {
   json["radioPin"] = radio_pin_s;
 
   if (json.printTo(f) == 0) {
-    Serial.println("Failed to write to config file");
+    Serial.printf("Failed to write to config file %s\n", PREF_CONFIG_FN);
     return;
   }
   f.close();

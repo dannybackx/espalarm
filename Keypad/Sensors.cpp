@@ -109,6 +109,6 @@ void Sensors::loop(time_t nowts) {
         alarm->Signal(s.name, ZONE_SECURE);
 	return;
       }
-    Serial.printf("Sensor not recognized\n");
+    Serial.printf("Sensor %d not recognized\n", sv);
   }
 }

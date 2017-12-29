@@ -33,6 +33,7 @@
 #include <Alarm.h>
 #include <Config.h>
 #include <Peers.h>
+#include <Rfid.h>
 
 void SetupWifi();
 void SetupOTA();
@@ -46,6 +47,7 @@ ThingSpeakLogger	*tsl;
 Sensors			*sensors;
 Alarm			*alarm;
 Peers			*peers;
+Rfid			*rfid;
 
 time_t			nowts;
 
@@ -68,6 +70,9 @@ void setup(void) {
   alarm = new Alarm();
   peers = new Peers();
 
+  SPI.begin();
+  rfid = new Rfid();
+
   Serial.println("Ready");
 }
 
@@ -86,6 +91,7 @@ void loop()
   sensors->loop(nowts);
   alarm->loop(nowts);
   peers->loop(nowts);
+  rfid->loop(nowts);
 }
 
 /*

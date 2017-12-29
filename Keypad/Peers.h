@@ -48,7 +48,7 @@ public:
   void loop(time_t);
   void AddPeer(const char *name, IPAddress ip);
 
-  void AlarmSetState(AlarmStatus state);
+  void AlarmSetArmed(AlarmStatus state);
   void AlarmSignal(const char *sensor, AlarmZone zone);
 
 private:
