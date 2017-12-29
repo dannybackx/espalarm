@@ -125,6 +125,17 @@ void Peers::AlarmSetArmed(AlarmStatus state) {
   CallPeers(output);
 }
 
+void Peers::AlarmReset(const char *user) {
+  // Send : {"status" : "reset", "name" : "keypad02"}
+  DynamicJsonBuffer jb;
+  JsonObject &jo = jb.createObject();
+  jo["status"] = "reset";
+  jo["name"] = user;
+  jo.printTo(output, sizeof(output));
+
+  CallPeers(output);
+}
+
 void Peers::AlarmSignal(const char *sensor, AlarmZone zone) {
   // Send : {"status" : "alarm", "sensor" : "PIR 1"}
   DynamicJsonBuffer jb;
@@ -148,6 +159,10 @@ void Peers::CallPeer(Peer peer, char *json) {
   WiFiClient client;
   if (! client.connect(peer.ip, localPort)) {
     Serial.printf("Connect to %s failed\n", peer.name);
+    Serial.print("  ");
+    Serial.print(peer.ip);
+    Serial.print(" : ");
+    Serial.println(localPort);
     return;
   }
   client.print(json);
@@ -230,6 +245,10 @@ char *Peers::HandleQuery(const char *str) {
       alarm->SetArmed(ALARM_ON, ZONE_FROMPEER);
     } else if (strcmp(query, "disarmed")) {
       // {"status" : "disarmed", "name" : "keypad02"}
+      alarm->SetArmed(ALARM_OFF, ZONE_FROMPEER);
+      alarm->Reset(device_name);
+    } else if (strcmp(query, "reset")) {
+      // {"status" : "reset", "name" : "keypad02"}
       alarm->SetArmed(ALARM_OFF, ZONE_FROMPEER);
       alarm->Reset(device_name);
     } else {

@@ -26,13 +26,25 @@
 #include <SPI.h>
 #include <MFRC522.h>
 
+#include <list>
+using namespace std;
+
+struct rfidcard {
+  char *user;
+  MFRC522::Uid uid;
+
+  rfidcard(const char *, const char *);
+};
+
 class Rfid {
   public:
     Rfid();
     void loop(time_t nowts);
+    void AddCard(const char *id, const char *name);
 
   private:
     MFRC522	*mfrc522;
     int		rst_pin;
     int		ss_pin;
+    list<rfidcard> cardlist;
 };

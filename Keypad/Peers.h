@@ -35,7 +35,8 @@ using namespace std;
 
 struct Peer {
   char		*name;
-  uint32_t	ip;
+  // uint32_t	ip;
+  IPAddress	ip;
   int		radio, siren, secure;
 };
 
@@ -50,6 +51,8 @@ public:
 
   void AlarmSetArmed(AlarmStatus state);
   void AlarmSignal(const char *sensor, AlarmZone zone);
+
+  void AlarmReset(const char *user);		// Pass the user name
 
 private:
   list<Peer>		peerlist;

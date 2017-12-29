@@ -56,7 +56,7 @@ public:
   void Signal(const char *sensor, AlarmZone zone);	// Still to decide based on zone
   void SoundAlarm(const char *sensor);			// We've decided : just start yelling
   void Reset(const char *module);			// From a peer controller
-  void Reset();						// Local
+  void Reset(time_t nowts, const char *user);		// Local
 
 private:
   enum AlarmStatus	armed;	// Armed or not

@@ -89,13 +89,16 @@ void Alarm::SoundAlarm(const char *sensor) {
  * This is to be called from Peers.cpp, so ZONE_FROMPEER.
  */
 void Alarm::Reset(const char *module) {
+  alert = false;
 }
 
 /*
  * Reset originates from the local user interface
  */
-void Alarm::Reset() {
+void Alarm::Reset(time_t nowts, const char *user) {
   alert = false;
+
+  peers->AlarmReset(user);
 }
 
 /*
