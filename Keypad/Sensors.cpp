@@ -99,14 +99,14 @@ void Sensors::loop(time_t nowts) {
   if (radio && radio->available()) {
     sv = radio->getReceivedValue();
 
-    Serial.printf("Received %d (0x%08X) / %d bit, protocol %d\n",
-      sv, sv, radio->getReceivedBitlength(), radio->getReceivedProtocol());
+    // Serial.printf("Received %d (0x%08X) / %d bit, protocol %d\n",
+    //   sv, sv, radio->getReceivedBitlength(), radio->getReceivedProtocol());
 
     radio->resetAvailable();
 
     for (Sensor s : sensorlist)
       if (s.id == sv) {
-        alarm->Signal(s.name, ZONE_SECURE);
+        _alarm->Signal(s.name, ZONE_SECURE);
 	return;
       }
     Serial.printf("Sensor %d not recognized\n", sv);

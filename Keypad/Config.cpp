@@ -31,7 +31,11 @@
 #include <preferences.h>
 
 Config::Config() {
+#ifdef ESP32
+  FS.begin();
+#else
   SPIFFS.begin();
+#endif
 
   radio_pin = D2;
   siren_pin = -1;

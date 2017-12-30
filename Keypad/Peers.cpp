@@ -154,10 +154,14 @@ void Peers::CallPeers(char *json) {
 }
 
 void Peers::CallPeer(Peer peer, char *json) {
-  Serial.printf("CallPeer(%s, %s)\n", peer.name, json);
-
+  Serial.printf("CallPeer(%s ", peer.name);
+  Serial.print(peer.ip);
+  Serial.printf(":%d, %s)\n", portMulti, json);
+#if 1
   WiFiClient client;
+
   if (! client.connect(peer.ip, localPort)) {
+    client.stop();
     Serial.printf("Connect to %s failed\n", peer.name);
     Serial.print("  ");
     Serial.print(peer.ip);
@@ -177,6 +181,15 @@ void Peers::CallPeer(Peer peer, char *json) {
   String line = client.readStringUntil('\r');
   client.stop();
   Serial.printf("Received from peer : %s\n", line.c_str());
+#else
+  sendudp.beginPacket(peer.ip, portMulti);
+  sendudp.write(json, strlen(json)+1);
+  sendudp.endPacket();
+  delay(200);
+  sendudp.beginPacket(peer.ip, portMulti);
+  sendudp.write(json, strlen(json)+1);
+  sendudp.endPacket();
+#endif
 }
 
 /*********************************************************************************
@@ -238,19 +251,18 @@ char *Peers::HandleQuery(const char *str) {
     if (strcmp(query, "alarm") == 0) {
       // Example : {"status" : "alarm", "name" : "keypad02", "sensor" : "Kitchen motion detector"}
       const char *sensor_name = json["sensor"];
-      alarm->Signal(sensor_name, ZONE_FROMPEER);
-      return (char *)"100 Ok";
+      _alarm->Signal(sensor_name, ZONE_FROMPEER);
     } else if (strcmp(query, "armed")) {
       // {"status" : "armed", "name" : "keypad02"}
-      alarm->SetArmed(ALARM_ON, ZONE_FROMPEER);
+      _alarm->SetArmed(ALARM_ON, ZONE_FROMPEER);
     } else if (strcmp(query, "disarmed")) {
       // {"status" : "disarmed", "name" : "keypad02"}
-      alarm->SetArmed(ALARM_OFF, ZONE_FROMPEER);
-      alarm->Reset(device_name);
+      _alarm->SetArmed(ALARM_OFF, ZONE_FROMPEER);
+      _alarm->Reset(device_name);
     } else if (strcmp(query, "reset")) {
       // {"status" : "reset", "name" : "keypad02"}
-      alarm->SetArmed(ALARM_OFF, ZONE_FROMPEER);
-      alarm->Reset(device_name);
+      _alarm->SetArmed(ALARM_OFF, ZONE_FROMPEER);
+      _alarm->Reset(device_name);
     } else {
       return (char *)"400 Invalid query";
     }
@@ -267,6 +279,8 @@ char *Peers::HandleQuery(const char *str) {
     j2.printTo(output, sizeof(output));
     return output;
   }
+
+  return (char *)"100 Ok";
 }
 
 /*********************************************************************************
@@ -281,7 +295,7 @@ void Peers::QueryPeers() {
   sprintf(query, "{ \"announce\" : \"%s\" }", MyName);
   int len = strlen(query);
 
-  sendudp.begin(udp_client_port);
+  sendudp.begin(client_port);
 		  Serial.printf("Sending %s from local port ", query);
 		  Serial.print(local);
 		  Serial.print(":");

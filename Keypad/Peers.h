@@ -26,7 +26,11 @@
 #ifndef	_PEER_H_
 #define	_PEER_H_
 
+#ifdef	ESP8266
 #include <ESP8266WiFi.h>
+#else
+#include <WiFi.h>
+#endif
 #include <WiFiUdp.h>
 #include <Alarm.h>
 
@@ -72,8 +76,8 @@ private:
 
   WiFiServer	*srv;
 
-  const unsigned int localPort = 23456;		// local server port (both UDP and TCP)
-  const unsigned int portMulti = 23456;		// multicast port
+  const uint16_t localPort = 23456;		// local server port (both UDP and TCP)
+  const uint16_t portMulti = 23456;		// multicast port
   byte packetBuffer[512];			// buffer to hold incoming and outgoing packets
   WiFiUDP mcsrv, sendudp;			// a server and a client port
   IPAddress ipMulti, local;
@@ -81,7 +85,7 @@ private:
   char output[128];
 };
 
-const unsigned int udp_client_port = 4567;
+const uint16_t client_port = 4567;
 
 extern Peers *peers;
 #endif	/* _PEER_H_ */

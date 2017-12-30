@@ -23,7 +23,7 @@
  *   THE SOFTWARE.
  */
 
-// Prepare for OTA software installation
+#include <Arduino.h>
 #include <ArduinoOTA.h>
 #include "secrets.h"
 #include <ThingSpeakLogger.h>
@@ -42,18 +42,15 @@ void SetupOTA();
 String		ips, gws;
 
 Config			*config;
-Clock			*clock;
+Clock			*Clock;
 ThingSpeakLogger	*tsl;
 Sensors			*sensors;
-Alarm			*alarm;
+Alarm			*_alarm;
 Peers			*peers;
 Rfid			*rfid;
 
 time_t			nowts;
 
-
-const int led_pin = D3;
-int currentcolor;
 
 void setup(void) {
 				Serial.begin(115200);
@@ -67,13 +64,15 @@ void setup(void) {
   tsl = new ThingSpeakLogger(TS_CHANNEL_ID, TS_WRITE_KEY);
 
   sensors = new Sensors();
-  alarm = new Alarm();
+  _alarm = new Alarm();
   peers = new Peers();
 
   SPI.begin();
   rfid = new Rfid();
 
   Serial.println("Ready");
+
+  _alarm->SetArmed(ALARM_ON);
 }
 
 
@@ -89,7 +88,7 @@ void loop()
 
   tsl->loop(0);
   sensors->loop(nowts);
-  alarm->loop(nowts);
+  _alarm->loop(nowts);
   peers->loop(nowts);
   rfid->loop(nowts);
 }
@@ -100,7 +99,11 @@ void loop()
 void SetupOTA() {
   ArduinoOTA.setPort(8266);
   ArduinoOTA.setHostname(OTA_ID);
+#ifdef ESP32
+  WiFi.setHostname(OTA_ID);
+#else
   WiFi.hostname(OTA_ID);
+#endif
   ArduinoOTA.begin();
 }
 

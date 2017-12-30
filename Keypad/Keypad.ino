@@ -79,7 +79,7 @@ Clock			*clock;
 ThingSpeakLogger	*tsl;
 BackLight		*backlight;
 Sensors			*sensors;
-Alarm			*alarm;
+Alarm			*_alarm;
 Peers			*peers;
 
 time_t			nowts;
@@ -126,7 +126,7 @@ void setup(void) {
   tsl = new ThingSpeakLogger(TS_CHANNEL_ID, TS_WRITE_KEY);
 
   sensors = new Sensors();
-  alarm = new Alarm();
+  _alarm = new Alarm();
   peers = new Peers();
 
   Serial.println("Ready");
@@ -148,7 +148,7 @@ void loop()
   tsl->loop(0);
   backlight->loop(nowts);
   sensors->loop(nowts);
-  alarm->loop(nowts);
+  _alarm->loop(nowts);
   peers->loop(nowts);
 
   pressed = oled.getTouchRaw(&t_x, &t_y);

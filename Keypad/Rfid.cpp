@@ -26,6 +26,7 @@
  *   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *   THE SOFTWARE.
  */
+#warning "This hardware setup seems to interfere with the rest. ESP8266 + RFID-RC522 reader won't talk to another ESP over the network, CallPeer() fails to make connection."
 
 #include <Rfid.h>
 #include <SPI.h>
@@ -74,7 +75,7 @@ void Rfid::loop(time_t nowts) {
      && memcmp(card.uid.uidByte, mfrc522->uid.uidByte, card.uid.size) == 0) {
       Serial.printf("Card recognized : %s\n", card.user);
 
-      alarm->Reset(nowts, card.user);
+      _alarm->Reset(nowts, card.user);
     }
   }
 

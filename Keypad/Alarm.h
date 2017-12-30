@@ -63,5 +63,5 @@ private:
   boolean alert;
 };
 
-extern Alarm *alarm;
+extern Alarm *_alarm;
 #endif	/* _ALARM_STATE_H_ */
