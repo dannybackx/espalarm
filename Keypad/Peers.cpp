@@ -35,7 +35,11 @@
  */
 
 #include <Arduino.h>
+#ifdef ESP8266
 #include <ESP8266WiFi.h>
+#else
+#include <WiFi.h>
+#endif
 #include <WiFiUdp.h>
 
 #include <list>
@@ -296,18 +300,30 @@ void Peers::QueryPeers() {
   int len = strlen(query);
 
   sendudp.begin(client_port);
+#if 0
 		  Serial.printf("Sending %s from local port ", query);
 		  Serial.print(local);
 		  Serial.print(":");
 		  Serial.println(sendudp.localPort());
+#endif
+#if defined(ESP8266)
   sendudp.beginPacketMulticast(ipMulti, portMulti, local);
-  sendudp.write(query, len+1);
+#else
+  sendudp.beginMulticast(ipMulti, portMulti);
+  sendudp.beginMulticastPacket();
+#endif
+  sendudp.write((const uint8_t *)query, len+1);
   sendudp.endPacket();
   delay(200);
 
 // twice
+#if defined(ESP8266)
   sendudp.beginPacketMulticast(ipMulti, portMulti, local);
-  sendudp.write(query, len+1);
+#else
+  sendudp.beginMulticast(ipMulti, portMulti);
+  sendudp.beginMulticastPacket();
+#endif
+  sendudp.write((const uint8_t *)query, len+1);
   sendudp.endPacket();
 }
 
@@ -319,7 +335,11 @@ void Peers::MulticastSetup()
   Serial.print(ipMulti);
   Serial.print(":");
   Serial.println(portMulti);
+#if defined(ESP8266)
   mcsrv.beginMulticast(local, ipMulti, portMulti);
+#else
+  mcsrv.beginMulticast(ipMulti, portMulti);
+#endif
 }
 
 /*
@@ -340,7 +360,7 @@ void Peers::ServerSocketLoop()
 		    Serial.print(":");
 		    Serial.println(mcsrv.remotePort());
     mcsrv.beginPacket(mcsrv.remoteIP(), mcsrv.remotePort());
-    mcsrv.write(reply);
+    mcsrv.write((const uint8_t *)reply, strlen(reply)+1);
     mcsrv.endPacket();
   }
 }

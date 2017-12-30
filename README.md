@@ -38,3 +38,15 @@ Several hardware configurations
   or modules based on this framework which communicate via WiFi.
 
   Some sensors can feed information into the system, others just trigger the alarm (if it's on).
+
+Overview of directories
+
+Keypad
+  Main development directory
+  This contains code for a Oled + esp8266 + Radio combination
+
+AlarmController
+  This contains a stripped down version of Keypad, with the Oled related modules removed.
+
+Controller32
+  This is a port of AlarmController to the ESP32 platform

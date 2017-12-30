@@ -27,17 +27,20 @@
 #include <Config.h>
 #include <secrets.h>
 #include <FS.h>
+#if defined(ESP32)
+#include <SPIFFS.h>
+#endif
 #include <ArduinoJson.h>
 #include <preferences.h>
 
 Config::Config() {
-#ifdef ESP32
-  FS.begin();
-#else
   SPIFFS.begin();
-#endif
 
+#if defined(ESP32)
+  radio_pin = 2;
+#elif defined(ESP8266)
   radio_pin = D2;
+#endif
   siren_pin = -1;
 
   ReadConfig();

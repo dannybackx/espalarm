@@ -35,8 +35,13 @@
 #include <Alarm.h>
 
 Rfid::Rfid() {
+#if defined(ESP8266)
   rst_pin = D3;
   ss_pin = D8;
+#elif defined(ESP32)
+  rst_pin = 3;
+  ss_pin = 8;
+#endif
 
   mfrc522 = new MFRC522(ss_pin, rst_pin);
   if (mfrc522)
