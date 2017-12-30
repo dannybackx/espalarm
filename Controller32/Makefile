@@ -72,7 +72,7 @@ MAIN_EXE = $(BUILD_ROOT)/$(MAIN_NAME).bin
 MAIN_ELF = $(OBJ_DIR)/$(MAIN_NAME).elf
 SRC_GIT_VERSION = $(call git_description,$(dir $(SKETCH)))
 
-# esp8266 arduino directories
+# esp32 arduino directories
 ESP_GIT_VERSION = $(call git_description,$(ESP_ROOT))
 ESP_LIBS = $(ESP_ROOT)/libraries
 TOOLS_ROOT = $(ESP_ROOT)/tools
@@ -90,7 +90,6 @@ CC = xtensa-esp32-elf-gcc
 CPP = xtensa-esp32-elf-g++
 LD =  $(CC)
 AR = xtensa-esp32-elf-ar
-RANLIB = xtensa-esp32-elf-ranlib
 ESP_TOOL = /home/danny/src/arduino/arduino-1.8.5/hardware/espressif/esp32/tools/esptool.py
 
 # DEBUG=-g
@@ -103,14 +102,38 @@ C_DEFINES	= -D__ets__ -DICACHE_FLASH -U__STRICT_ANSI__ \
 		  -DARDUINO=10805 -DARDUINO_ARCH_ESP32  -DESP32 \
 		  -DCORE_DEBUG_LEVEL=0 \
 		  -DF_CPU=240000000L \
-		  -DARDUINO_MH_ET_LIVE_ESP32MINIKIT
+		  -DARDUINO_MH_ET_LIVE_ESP32MINIKIT \
+		  -MMD
 
 C_INCLUDES = -I.. $(foreach dir,$(INCLUDE_DIRS) $(USER_DIRS),-I$(dir))
-C_FLAGS ?= -c ${DEBUG} -std=gnu99 -fno-exceptions -Wpointer-arith -ffunction-sections -fdata-sections -fstrict-volatile-bitfields -mlongcalls -nostdlib -w -Wno-error=unused-function -Wno-error=unused-but-set-variable -Wno-error=unused-variable -Wno-error=deprecated-declarations -Wno-unused-parameter -Wno-sign-compare -fno-rtti  -w
-CPP_FLAGS ?= -c ${DEBUG} -std=gnu++11 -fno-exceptions -Os -g3 -Wpointer-arith -ffunction-sections -fdata-sections -fstrict-volatile-bitfields -mlongcalls -nostdlib -w -Wno-error=unused-function -Wno-error=unused-but-set-variable -Wno-error=unused-variable -Wno-error=deprecated-declarations -Wno-unused-parameter -Wno-sign-compare -fno-rtti -w -x c++
+C_FLAGS ?= -c ${DEBUG} -std=gnu99 \
+	   -fno-exceptions -Wpointer-arith -ffunction-sections -fdata-sections \
+	   -fstrict-volatile-bitfields -mlongcalls -nostdlib -w -Wno-error=unused-function \
+	   -Wno-error=unused-but-set-variable -Wno-error=unused-variable \
+	   -Wno-error=deprecated-declarations -Wno-unused-parameter -Wno-sign-compare \
+	   -fno-rtti  -w
+CPP_FLAGS ?= -c ${DEBUG} -std=gnu++11 -fno-exceptions -Os -g3 -Wpointer-arith \
+	     -ffunction-sections -fdata-sections -fstrict-volatile-bitfields -mlongcalls \
+	     -nostdlib -w -Wno-error=unused-function -Wno-error=unused-but-set-variable \
+	     -Wno-error=unused-variable -Wno-error=deprecated-declarations \
+	     -Wno-unused-parameter -Wno-sign-compare -fno-rtti -w -x c++
 S_FLAGS ?= -c ${DEBUG} -x assembler-with-cpp -MMD -mlongcalls
-LD_FLAGS ?= -w ${DEBUG} -nostdlib -Wl,--no-check-sections -u call_user_start -Wl,-static -L$(SDK_ROOT)/lib -L$(SDK_ROOT)/ld -T$(FLASH_LAYOUT) -T esp32.common.ld -T esp32.rom.ld -T esp32.peripherals.ld -T esp32.rom.spiram_incompatible_fns.ld -u ld_include_panic_highint_hdl -u call_user_start_cpu0 -Wl,--gc-sections -Wl,-static -Wl,--undefined=uxTopUsedPriority  -u __cxa_guard_dummy 
-LD_STD_LIBS ?= -lgcc -lcxx -lstdc++ -lapp_trace -lapp_update -lbootloader_support -lbt -lbtdm_app -lc -lc_nano -lcoap -lcoexist -lconsole -lcore -ldriver -lesp32 -lesp_adc_cal -lespnow -lethernet -lexpat -lfatfs -lfreertos -lhal -lheap -ljsmn -ljson -llog -llwip -lm -lmbedtls -lmdns -lmicro-ecc -lnet80211 -lnewlib -lnghttp -lnvs_flash -lopenssl -lphy -lpp -lpthread -lrtc -lsdmmc -lsmartconfig -lsoc -lspi_flash -lspiffs -ltcpip_adapter -lulp -lvfs -lwear_levelling -lwpa -lwpa2 -lwpa_supplicant -lwps -lxtensa-debug-module ${LIBCPP}
+LD_FLAGS ?= -w ${DEBUG} -nostdlib -Wl,--no-check-sections -u call_user_start \
+	    -Wl,-static -L$(SDK_ROOT)/lib -L$(SDK_ROOT)/ld \
+	    -T$(FLASH_LAYOUT) -T esp32.common.ld -T esp32.rom.ld -T esp32.peripherals.ld \
+	    -T esp32.rom.spiram_incompatible_fns.ld -u ld_include_panic_highint_hdl \
+	    -u call_user_start_cpu0 \
+	    -Wl,--gc-sections -Wl,-static -Wl,--undefined=uxTopUsedPriority \
+	    -u __cxa_guard_dummy 
+
+LD_STD_LIBS ?= -lgcc -lcxx -lstdc++ -lapp_trace -lapp_update -lbootloader_support \
+	       -lbt -lbtdm_app -lc -lc_nano -lcoap -lcoexist -lconsole -lcore -ldriver \
+	       -lesp32 -lesp_adc_cal -lespnow -lethernet -lexpat -lfatfs -lfreertos -lhal \
+	       -lheap -ljsmn -ljson -llog -llwip -lm -lmbedtls -lmdns -lmicro-ecc -lnet80211 \
+	       -lnewlib -lnghttp -lnvs_flash -lopenssl -lphy -lpp -lpthread -lrtc \
+	       -lsdmmc -lsmartconfig -lsoc -lspi_flash -lspiffs -ltcpip_adapter \
+	       -lulp -lvfs -lwear_levelling -lwpa -lwpa2 -lwpa_supplicant \
+	       -lwps -lxtensa-debug-module ${LIBCPP}
 
 # Core source files
 CORE_DIR = $(ESP_ROOT)/cores/$(CHIP)
@@ -172,7 +195,6 @@ $(CORE_LIB): $(CORE_OBJ)
 	echo  Creating core archive
 	rm -f $@
 	$(AR) cru $@  $^
-#	$(RANLIB) $^
 
 BUILD_DATE = $(call time_string,"%Y-%m-%d")
 BUILD_TIME = $(call time_string,"%H:%M:%S")
