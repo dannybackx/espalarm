@@ -39,13 +39,17 @@ Rfid::Rfid() {
   rst_pin = D3;
   ss_pin = D8;
 #elif defined(ESP32)
-  rst_pin = 3;
-  ss_pin = 8;
+  rst_pin = 22;
+  ss_pin = 21;
 #endif
 
+  // Serial.println("Before MFRC522 CTOR"); delay(200);
   mfrc522 = new MFRC522(ss_pin, rst_pin);
+  // Serial.println("After MFRC522 CTOR"); delay(200);
+
   if (mfrc522)
     mfrc522->PCD_Init();
+  // Serial.println("After PCD_Init"); delay(200);
 
   AddCard(RFID_1_ID, RFID_1_NAME);
   AddCard(RFID_2_ID, RFID_2_NAME);
@@ -53,6 +57,7 @@ Rfid::Rfid() {
   AddCard(RFID_4_ID, RFID_4_NAME);
   AddCard(RFID_5_ID, RFID_5_NAME);
   AddCard(RFID_6_ID, RFID_6_NAME);
+  // Serial.println("After 6x AddCard"); delay(200);
 
   int count = 0;
   list<rfidcard>::iterator card = cardlist.begin();
