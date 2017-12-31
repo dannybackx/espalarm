@@ -54,7 +54,6 @@ using namespace std;
 #include <RCSwitch.h>
 
 Peers::Peers() {
-  SetMyName();
   local = WiFi.localIP();
 
   RestSetup();
@@ -123,7 +122,7 @@ void Peers::AlarmSetArmed(AlarmStatus state) {
   DynamicJsonBuffer jb;
   JsonObject &jo = jb.createObject();
   jo["status"] = s;
-  jo["name"] = MyName;
+  jo["name"] = config->myName();
   jo.printTo(output, sizeof(output));
 
   CallPeers(output);
@@ -145,7 +144,7 @@ void Peers::AlarmSignal(const char *sensor, AlarmZone zone) {
   DynamicJsonBuffer jb;
   JsonObject &jo = jb.createObject();
   jo["status"] = "alarm";
-  jo["name"] = MyName;
+  jo["name"] = config->myName();
   jo["sensor"] = sensor;
   jo.printTo(output, sizeof(output));
 
@@ -279,7 +278,7 @@ char *Peers::HandleQuery(const char *str) {
     // Send : { "acknowledge" : "my name" }
     DynamicJsonBuffer jb2;
     JsonObject &j2 = jb2.createObject();
-    j2["acknowledge"] = MyName;
+    j2["acknowledge"] = config->myName();
     j2.printTo(output, sizeof(output));
     return output;
   }
@@ -296,7 +295,7 @@ char *Peers::HandleQuery(const char *str) {
 // Send out a multicast packet to search peers
 void Peers::QueryPeers() {
   char query[48];
-  sprintf(query, "{ \"announce\" : \"%s\" }", MyName);
+  sprintf(query, "{ \"announce\" : \"%s\" }", config->myName());
   int len = strlen(query);
 
 #if 0
@@ -393,58 +392,3 @@ void Peers::ClientSocketLoop()
     AddPeer(ack, sendudp.remoteIP());
   }
 }
-
-/*
- * For use in SetMyName().
- *
- * This is a cheap way to get modules to know their names.
- * Alternatives would be to implement UI code to allow you to configure a name from
- * the panel (for nodes that have that), or a secure (sigh) way to remotely configure
- * some stuff on the nodes.
- *
- * So instead of all that stuff, we're basically hardcoding node names, linked to MAC addresses.
- * Nodes not specifically named will identify as "Controller xyz" where xyz is the MAC address.
- * Macro definitions should go in secrets.h .
- */
-struct MAC2Name {
-  const char *id, *name;
-} MAC2Name [] = {
-#if defined(MODULE_1_ID) && defined(MODULE_1_NAME)
-  { MODULE_1_ID, MODULE_1_NAME },
-#endif
-#if defined(MODULE_2_ID) && defined(MODULE_2_NAME)
-  { MODULE_2_ID, MODULE_2_NAME },
-#endif
-#if defined(MODULE_3_ID) && defined(MODULE_3_NAME)
-  { MODULE_3_ID, MODULE_3_NAME },
-#endif
-#if defined(MODULE_4_ID) && defined(MODULE_4_NAME)
-  { MODULE_4_ID, MODULE_4_NAME },
-#endif
-#if defined(MODULE_5_ID) && defined(MODULE_5_NAME)
-  { MODULE_5_ID, MODULE_5_NAME },
-#endif
-#if defined(MODULE_6_ID) && defined(MODULE_6_NAME)
-  { MODULE_6_ID, MODULE_6_NAME },
-#endif
-  { 0, 0 }
-};
-
-/*
- * Determine our name based on MAC address and the secrets.h file
- */
-void Peers::SetMyName() {
-  String mac = WiFi.macAddress();
-
-  for (int i=0; MAC2Name[i].id; i++) {
-    if (strcasecmp(MAC2Name[i].id, mac.c_str()) == 0) {
-      MyName = (char *)MAC2Name[i].name;
-      Serial.printf("My name is \"%s\"\n", MyName);
-      return;
-    }
-  }
-
-  MyName = (char *)malloc(48);
-  sprintf(MyName, "Controller %s", mac.c_str());
-}
-

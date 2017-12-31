@@ -94,6 +94,8 @@ void Config::ReadConfig() {
 }
 
 void Config::ReadConfig(const char *js) {
+  Serial.printf("ReadConfig %s\n", js);
+
   DynamicJsonBuffer jb;
   JsonObject &json = jb.parseObject(js);
   if (json.success()) {
@@ -107,6 +109,15 @@ void Config::ParseConfig(JsonObject &jo) {
   siren_pin = jo["sirenPin"] | -1;
   radio_pin = jo["radioPin"] | A0;
   oled = jo["haveOled"] | false;
+
+  name = jo["name"];
+  if (name) {
+    name = strdup(name);	// Storage from JSON library doesn't last
+  } else {
+    name = (char *)malloc(40);
+    String mac = WiFi.macAddress();
+    sprintf((char *)name, "Controller %s", mac.c_str());
+  }
 }
 
 void Config::HardCodedConfig(const char *mac) {
@@ -162,3 +173,7 @@ struct config Config::configs[] = {
   MODULES_CONFIG_STRING
   { 0, 0 }
 };
+
+const char *Config::myName(void) {
+  return name;
+}

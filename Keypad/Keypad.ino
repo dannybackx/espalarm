@@ -107,6 +107,7 @@ void setup(void) {
   SetupOTA();
 				Serial.print(" done\nInitializing .. \n");
   config = new Config();
+  Serial.printf("My name is %s\n", config->myName());
 
   if (config->haveOled()) {
     oled = Oled();

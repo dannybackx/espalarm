@@ -45,12 +45,14 @@ public:
   void SetSirenPin(int);
 
   boolean haveOled();
+  const char *myName();
 
 private:
   int siren_pin;
   int radio_pin;
 
   boolean oled;
+  const char *name;
 
   int dirty;
   void ReadConfig();
