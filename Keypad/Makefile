@@ -32,7 +32,7 @@ EXTRA_SRC	= Alarm.cpp Config.cpp Peers.cpp ThingSpeakLogger.cpp \
 		  Oled.cpp Clock.cpp Siren.cpp \
 		  BackLight.cpp Sensors.cpp
 
-UPLOAD_AVAHI_NAME = OTA-Keypad.local
+UPLOAD_AVAHI_NAME = OTA-KeypadSecure.local
 
 ALARMLIBS = $(HOME)/src/sketchbook/esp8266/Alarm/libraries
 MYLIBS = $(HOME)/src/sketchbook/esp8266/libraries

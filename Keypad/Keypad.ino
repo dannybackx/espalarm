@@ -107,21 +107,23 @@ void setup(void) {
   SetupOTA();
 				Serial.print(" done\nInitializing .. \n");
   config = new Config();
-  oled = Oled();
 
-  oled.begin();
-  backlight = new BackLight(led_pin);
+  if (config->haveOled()) {
+    oled = Oled();
+    oled.begin();
+    backlight = new BackLight(led_pin);
 
-  screen1.buttonText = xxx;
-  screen1.buttonHandler = yyy;
-  s1 = oled.addScreen(screen1);
-  s2 = oled.addScreen(screen2);
-  oled.showScreen(s1);
+    screen1.buttonText = xxx;
+    screen1.buttonHandler = yyy;
+    s1 = oled.addScreen(screen1);
+    s2 = oled.addScreen(screen2);
+    oled.showScreen(s1);
 
-  backlight->SetStatus(BACKLIGHT_ON);	// Display on
-  backlight->SetTimeout(10);		// Hardcoded timeout in seconds
+    backlight->SetStatus(BACKLIGHT_ON);	// Display on
+    backlight->SetTimeout(10);		// Hardcoded timeout in seconds
 
-  clock = new Clock(&oled);
+    clock = new Clock(&oled);
+  }
 
   tsl = new ThingSpeakLogger(TS_CHANNEL_ID, TS_WRITE_KEY);
 
@@ -143,22 +145,27 @@ void loop()
 
   nowts = now();
 
-  oled.loop();
-  clock->loop();
+  if (config->haveOled()) {
+    oled.loop();
+    clock->loop();
+    backlight->loop(nowts);
+  }
+
   tsl->loop(0);
-  backlight->loop(nowts);
   sensors->loop(nowts);
   _alarm->loop(nowts);
   peers->loop(nowts);
 
-  pressed = oled.getTouchRaw(&t_x, &t_y);
-  t_z = oled.getTouchRawZ();
+  if (config->haveOled()) {
+    pressed = oled.getTouchRaw(&t_x, &t_y);
+    t_z = oled.getTouchRawZ();
 
-  if (pressed == 0 || t_z < 500) 
-    return;
+    if (pressed == 0 || t_z < 500) 
+      return;
 
 				  Serial.printf("X = %4d\tY = %4d\tZ = %4d\n", t_x, t_y, t_z);
-  oled.fillCircle(t_x, t_y, PENRADIUS, ILI9341_RED);
+    oled.fillCircle(t_x, t_y, PENRADIUS, ILI9341_RED);
+  }
 }
 
 /*

@@ -97,11 +97,12 @@ void loop()
  * Prepare OTA with minimal verbosity (messages on the console)
  */
 void SetupOTA() {
-  ArduinoOTA.setPort(8266);
   ArduinoOTA.setHostname(OTA_ID);
 #ifdef ESP32
+  ArduinoOTA.setPort(3232);
   WiFi.setHostname(OTA_ID);
 #else
+  ArduinoOTA.setPort(8266);
   WiFi.hostname(OTA_ID);
 #endif
   ArduinoOTA.begin();

@@ -299,7 +299,6 @@ void Peers::QueryPeers() {
   sprintf(query, "{ \"announce\" : \"%s\" }", MyName);
   int len = strlen(query);
 
-  sendudp.begin(client_port);
 #if 0
 		  Serial.printf("Sending %s from local port ", query);
 		  Serial.print(local);
@@ -307,8 +306,9 @@ void Peers::QueryPeers() {
 		  Serial.println(sendudp.localPort());
 #endif
 #if defined(ESP8266)
+  sendudp.begin(client_port);
   sendudp.beginPacketMulticast(ipMulti, portMulti, local);
-#else
+#elif defined(ESP32)
   sendudp.beginMulticast(ipMulti, portMulti);
   sendudp.beginMulticastPacket();
 #endif
@@ -319,7 +319,7 @@ void Peers::QueryPeers() {
 // twice
 #if defined(ESP8266)
   sendudp.beginPacketMulticast(ipMulti, portMulti, local);
-#else
+#elif defined(ESP32)
   sendudp.beginMulticast(ipMulti, portMulti);
   sendudp.beginMulticastPacket();
 #endif

@@ -26,6 +26,13 @@
 #ifndef	_CONFIG_H_
 #define	_CONFIG_H_
 
+#include <ArduinoJson.h>
+
+struct config {
+  const char *mac;
+  const char *config;
+};
+
 class Config {
 public:
   Config();
@@ -37,13 +44,22 @@ public:
   void SetRadioPin(int);
   void SetSirenPin(int);
 
+  boolean haveOled();
+
 private:
   int siren_pin;
   int radio_pin;
 
+  boolean oled;
+
   int dirty;
   void ReadConfig();
+  void ReadConfig(const char *);
   void WriteConfig();
+  void ParseConfig(JsonObject &jo);
+  void HardCodedConfig(const char *mac);
+
+  static struct config configs[];
 };
 
 extern Config *config;

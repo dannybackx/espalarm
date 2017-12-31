@@ -24,6 +24,11 @@
  */
 
 #include <Arduino.h>
+#ifdef ESP8266
+#include <ESP8266WiFi.h>
+#else
+#include <WiFi.h>
+#endif
 #include <Config.h>
 #include <secrets.h>
 #include <FS.h>
@@ -42,7 +47,10 @@ Config::Config() {
   radio_pin = D2;
 #endif
   siren_pin = -1;
+  oled = false;
 
+  String mac = WiFi.macAddress();
+  HardCodedConfig(mac.c_str());
   ReadConfig();
 }
 
@@ -70,30 +78,44 @@ void Config::SetSirenPin(int pin) {
 
 void Config::ReadConfig() {
   File f = SPIFFS.open(PREF_CONFIG_FN, "r");
-  if (!f) {
-    Serial.printf("Config: can not open %s\n", PREF_CONFIG_FN);
-#if 0
-    FSInfo fsi;
-    SPIFFS.info(fsi);
-    Serial.printf("SPIFFS total %d (%d M) used %d (%d M)\n",
-      fsi.totalBytes, fsi.totalBytes / 1024 / 1024,
-      fsi.usedBytes, fsi.usedBytes / 1024 / 1024);
-#endif
-    return;
-  }
+  if (!f)
+    return;	// Silently
 
   DynamicJsonBuffer jb;
   JsonObject &json = jb.parseObject(f);
-  if (! json.success()) {
-    Serial.println("Could not parse JSON");
-    f.close();
-    return;
+  if (json.success()) {
+    Serial.printf("Reading config from SPIFFS %s\n", PREF_CONFIG_FN);
+    ParseConfig(json);
+  } else {
+    Serial.printf("Could not parse JSON from %s\n", PREF_CONFIG_FN);
   }
 
-  siren_pin = json["sirenPin"] | -1;
-  radio_pin = json["radioPin"] | A0;
-
   f.close();
+}
+
+void Config::ReadConfig(const char *js) {
+  DynamicJsonBuffer jb;
+  JsonObject &json = jb.parseObject(js);
+  if (json.success()) {
+    ParseConfig(json);
+  } else {
+    Serial.println("Could not parse JSON");
+  }
+}
+
+void Config::ParseConfig(JsonObject &jo) {
+  siren_pin = jo["sirenPin"] | -1;
+  radio_pin = jo["radioPin"] | A0;
+  oled = jo["haveOled"] | false;
+}
+
+void Config::HardCodedConfig(const char *mac) {
+  for (int i=0; configs[i].mac != 0; i++)
+    if (strcasecmp(configs[i].mac, mac) == 0) {
+      Serial.printf("Hardcoded config %s\n", mac);
+      ReadConfig(configs[i].config);
+      return;
+    }
 }
 
 void Config::WriteConfig() {
@@ -119,3 +141,24 @@ void Config::WriteConfig() {
   }
   f.close();
 }
+
+boolean Config::haveOled() {
+  return oled;
+}
+
+/*
+ * Hardcoded configuration JSON per MAC address
+ * Store these in secrets.h in the MODULES_CONFIG_STRING macro definition.
+ */
+struct config Config::configs[] = {
+#if 0
+  { "12:34:56:78:90:ab",
+    "{ \"radioPin\" : 2, \"haveOled\" : true, \"name\" : \"Keypad gang\" }"
+  },
+  { "01:23:45:67:89:0a",
+    "{ \"name\" : \"ESP32 d1 mini\" }"
+  },
+#endif
+  MODULES_CONFIG_STRING
+  { 0, 0 }
+};
