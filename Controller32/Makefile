@@ -90,6 +90,7 @@ CPP = xtensa-esp32-elf-g++
 LD =  $(CC)
 AR = xtensa-esp32-elf-ar
 ESP_TOOL = /home/danny/src/arduino/arduino-1.8.5/hardware/espressif/esp32/tools/esptool.py
+GEN_PART = /home/danny/src/arduino/arduino-1.8.5/hardware/espressif/esp32/tools/gen_esp32part.py
 
 # DEBUG=-g
 # DEBUG=-Os -g
@@ -205,6 +206,7 @@ $(MAIN_EXE): $(CORE_LIB) $(USER_OBJ)
 	echo '_tBuildInfo _BuildInfo = {"$(BUILD_DATE)","$(BUILD_TIME)","$(SRC_GIT_VERSION)","$(ESP_GIT_VERSION)"};' >>$(BUILD_INFO_CPP)
 	$(CPP) $(C_DEFINES) $(C_INCLUDES) $(CPP_FLAGS) $(BUILD_INFO_CPP) -o $(BUILD_INFO_OBJ)
 	$(LD) $(LD_FLAGS) -Wl,--start-group $^ $(BUILD_INFO_OBJ) $(LD_STD_LIBS) -Wl,--end-group -L$(OBJ_DIR) -o $(MAIN_ELF)
+	python $(GEN_PART) -q $(TOOLS_ROOT)/partitions/default.csv $(SKETCH).partitions.bin
 	python $(ESP_TOOL) --chip esp32 elf2image --flash_mode $(FLASH_MODE) --flash_freq $(FLASH_FREQ) --flash_size $(FLASH_SIZE) -o $@ $(MAIN_ELF)
 	xtensa-esp32-elf-size -A $(MAIN_ELF) | perl -e $(MEM_USAGE)
 	perl -e 'print "Build complete. Elapsed time: ", time()-$(START_TIME),  " seconds\n\n"'
@@ -216,8 +218,8 @@ upload: all
 	--flash_freq 80m --flash_size detect \
 	0xe000 /home/danny/src/arduino/arduino-1.8.5/hardware/espressif/esp32/tools/partitions/boot_app0.bin \
 	0x1000 /home/danny/src/arduino/arduino-1.8.5/hardware/espressif/esp32/tools/sdk/bin/bootloader.bin \
-	0x10000 $(MAIN_EXE)
-#	0x8000 /tmp/arduino_build_73990/sketch_nov05a.ino.partitions.bin
+	0x10000 $(MAIN_EXE) \
+	0x8000 $(SKETCH).partitions.bin
 
 
 ota: all showotaip
