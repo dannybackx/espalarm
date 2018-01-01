@@ -50,6 +50,12 @@ using namespace std;
 
 #include <RCSwitch.h>
 
+#ifdef ESP8266
+extern "C" {
+  #include <sntp.h>
+}
+#endif
+
 Peers::Peers() {
   local = WiFi.localIP();
 
@@ -343,5 +349,26 @@ void Peers::ServerSocketLoop() {
       mcsrv.write((const uint8_t *)reply, strlen(reply)+1);
       mcsrv.endPacket();
     }
+    TrackPeerActivity(mcsrv.remoteIP());
   }
+}
+
+/*
+ * 
+ */
+void Peers::TrackPeerActivity(IPAddress remote) {
+  Peer *peer;
+
+  for (Peer p : peerlist)
+    if (p.ip == remote)
+      peer = &p;
+  if (peer == 0)
+    return;	// Unlikely : no peer found for this address
+
+#ifdef ESP32
+  struct tm timeinfo;
+  localtime_r(&peer->last_info, &timeinfo);
+#else
+  peer->last_info = sntp_get_current_timestamp();
+#endif
 }

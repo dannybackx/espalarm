@@ -36,7 +36,8 @@ using namespace std;
 
 struct Peer {
   char		*name;
-  // uint32_t	ip;
+  time_t	last_info,	// Time of last update received
+ 		poll_time;	// Time of our last poll to this peer
   IPAddress	ip;
   int		radio, siren, secure;
 };
@@ -66,6 +67,7 @@ private:
   char *HandleQuery(const char *str);
   void CallPeers(char *json);
   void CallPeer(Peer, char *json);
+  void TrackPeerActivity(IPAddress remote);
 
   void SetMyName();
   char *MyName;
