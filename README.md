@@ -1,6 +1,6 @@
 House alarm system based on ESP8266 or ESP32
 
-Copyright (c) 2017 by Danny Backx
+Copyright (c) 2017, 2018 by Danny Backx
 
 Hardware platform
  - ESP8266 and/or ESP32

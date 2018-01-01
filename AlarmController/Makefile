@@ -38,7 +38,6 @@ LIBS =	$(ESP_LIBS)/ESP8266WiFi \
 	$(ESP_LIBS)/ArduinoOTA \
 	$(ESP_LIBS)/ESP8266mDNS \
 	$(MYLIBS)/Timezone \
-	${ALARMLIBS}/TFT_eSPI \
 	${MYLIBS}/pubsubclient \
 	${MYLIBS}/Timezone \
 	${ALARMLIBS}/tzstuff \

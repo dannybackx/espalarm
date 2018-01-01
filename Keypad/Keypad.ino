@@ -1,32 +1,28 @@
 /*
  * Secure keypad : one that doesn't need unlock codes
  *
- * Copyright (c) 2017 Danny Backx
+ * Copyright (c) 2017, 2018 Danny Backx
  *
- * License (MIT license):
- *   Permission is hereby granted, free of charge, to any person obtaining a copy
- *   of this software and associated documentation files (the "Software"), to deal
- *   in the Software without restriction, including without limitation the rights
- *   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- *   copies of the Software, and to permit persons to whom the Software is
- *   furnished to do so, subject to the following conditions:
+ * License (GNU Lesser General Public License) :
  *
- *   The above copyright notice and this permission notice shall be included in
- *   all copies or substantial portions of the Software.
+ *   This program is free software; you can redistribute it and/or
+ *   modify it under the terms of the GNU Lesser General Public
+ *   License as published by the Free Software Foundation; either
+ *   version 3 of the License, or (at your option) any later version.
  *
- *   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- *   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- *   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- *   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- *   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- *   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- *   THE SOFTWARE.
+ *   This library is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *   Lesser General Public License for more details.
+ *
+ *   You should have received a copy of the GNU Lesser General Public
+ *   License along with this library; if not, write to the Free Software
+ *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-// Prepare for OTA software installation
+#include <Arduino.h>
 #include <ArduinoOTA.h>
 #include "secrets.h"
-#include <ThingSpeakLogger.h>
 #include <BackLight.h>
 #include <Sensors.h>
 #include <Oled.h>
@@ -34,6 +30,7 @@
 #include <Alarm.h>
 #include <Config.h>
 #include <Peers.h>
+#include <Rfid.h>
 
 void s1b1(struct OledScreen *scr, int button);
 void s1b2(struct OledScreen *scr, int button);
@@ -75,12 +72,12 @@ String		ips, gws;
 
 Config			*config;
 Oled			oled;
-Clock			*clock;
-ThingSpeakLogger	*tsl;
-BackLight		*backlight;
-Sensors			*sensors;
-Alarm			*_alarm;
-Peers			*peers;
+Clock			*clock = 0;
+BackLight		*backlight = 0;
+Sensors			*sensors = 0;
+Alarm			*_alarm = 0;
+Peers			*peers = 0;
+Rfid			*rfid = 0;
 
 time_t			nowts;
 
@@ -88,7 +85,7 @@ time_t			nowts;
 #define BOXSIZE		40
 #define PENRADIUS	2
 
-const int led_pin = D3;
+// const int led_pin = D3;
 int currentcolor;
 
 #define	NUMKEYS		3
@@ -101,6 +98,7 @@ OledButton key[NUMKEYS];
 
 void setup(void) {
 				Serial.begin(115200);
+				Serial.println("\nAlarm Controller (c) 2017, 2018 by Danny Backx");
 				Serial.print("Starting WiFi "); 
   SetupWifi();
 				Serial.printf("Set up OTA (id %s) ..", OTA_ID);
@@ -112,7 +110,7 @@ void setup(void) {
   if (config->haveOled()) {
     oled = Oled();
     oled.begin();
-    backlight = new BackLight(led_pin);
+    backlight = new BackLight(config->GetOledLedPin());	// led_pin, D3 is GPIO0 on D1 mini
 
     screen1.buttonText = xxx;
     screen1.buttonHandler = yyy;
@@ -126,9 +124,14 @@ void setup(void) {
     clock = new Clock(&oled);
   }
 
-  tsl = new ThingSpeakLogger(TS_CHANNEL_ID, TS_WRITE_KEY);
+  if (config->haveRadio())
+    sensors = new Sensors();
 
-  sensors = new Sensors();
+  if (config->haveRfid()) {
+    SPI.begin();
+    rfid = new Rfid();
+  }
+
   _alarm = new Alarm();
   peers = new Peers();
 
@@ -152,10 +155,10 @@ void loop()
     backlight->loop(nowts);
   }
 
-  tsl->loop(0);
-  sensors->loop(nowts);
+  if (sensors) sensors->loop(nowts);
   _alarm->loop(nowts);
   peers->loop(nowts);
+  if (rfid) rfid->loop(nowts);
 
   if (config->haveOled()) {
     pressed = oled.getTouchRaw(&t_x, &t_y);

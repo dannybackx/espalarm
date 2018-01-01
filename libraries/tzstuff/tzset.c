@@ -658,7 +658,7 @@ __tz_convert (const time_t *timer, int use_localtime, struct tm *tp)
 }
 
 
-libc_freeres_fn (free_mem)
+int libc_freeres_fn (int free_mem)
 {
   while (tzstring_list != NULL)
     {

@@ -29,7 +29,7 @@ HWTYPE=	nodemcu
 # SKETCH	= $(HOME)/src/sketchbook/esp8266/Alarm/Keypad/testtouch.ino
 SKETCH		= $(HOME)/src/sketchbook/esp8266/Alarm/Keypad/Keypad.ino
 EXTRA_SRC	= Alarm.cpp Config.cpp Peers.cpp ThingSpeakLogger.cpp \
-		  Oled.cpp Clock.cpp Siren.cpp \
+		  Oled.cpp Clock.cpp Siren.cpp Rfid.cpp \
 		  BackLight.cpp Sensors.cpp
 
 UPLOAD_AVAHI_NAME = OTA-KeypadSecure.local
@@ -48,6 +48,7 @@ LIBS =	$(ESP_LIBS)/ESP8266WiFi \
 	${ALARMLIBS}/tzstuff \
 	${ALARMLIBS}/rcswitch \
 	${ALARMLIBS}/arduinojson \
+	${ALARMLIBS}/rfid \
 	${ALARMLIBS}/thingspeak
 
 #=== Project specific definitions: sketch and list of needed libraries

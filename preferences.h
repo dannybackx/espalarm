@@ -1,7 +1,7 @@
 /*
  * Public preferences file for Alarm controller
  *
- * Copyright (c) 2017 Danny Backx
+ * Copyright (c) 2017, 2018 Danny Backx
  *
  * License (MIT license):
  *   Permission is hereby granted, free of charge, to any person obtaining a copy

@@ -32,7 +32,6 @@ LIBS =	$(ESP_LIBS)/WiFi \
 	$(ESP_LIBS)/Update \
 	$(ESP_LIBS)/ESPmDNS \
 	$(MYLIBS)/Timezone \
-	${ALARMLIBS}/TFT_eSPI \
 	${MYLIBS}/pubsubclient \
 	${MYLIBS}/Timezone \
 	${ALARMLIBS}/tzstuff \
