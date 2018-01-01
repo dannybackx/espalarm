@@ -308,8 +308,7 @@ void Peers::QueryPeers() {
   mcsrv.endPacket();
 }
 
-void Peers::MulticastSetup()
-{
+void Peers::MulticastSetup() {
   ipMulti = IPAddress(224,0,0,251);
 
   Serial.print("Udp Multicast listener starting at : ");
@@ -326,8 +325,7 @@ void Peers::MulticastSetup()
 /*
  * Receive unsollicited queries from peers, handle them and reply to them
  */
-void Peers::ServerSocketLoop()
-{
+void Peers::ServerSocketLoop() {
   int len = mcsrv.parsePacket();
   if (len) {
     mcsrv.read(packetBuffer, len);
@@ -335,13 +333,12 @@ void Peers::ServerSocketLoop()
 		    Serial.printf("Received : %s\n", packetBuffer);
 
     char *reply = HandleQuery((char *)packetBuffer);
-
+    if (reply) {
 		    Serial.printf("Replying %s to peer at ", reply ? reply : "(null)");
 		    Serial.print(mcsrv.remoteIP());
 		    Serial.print(":");
 		    Serial.println(mcsrv.remotePort());
 
-    if (reply) {
       mcsrv.beginPacket(mcsrv.remoteIP(), mcsrv.remotePort());
       mcsrv.write((const uint8_t *)reply, strlen(reply)+1);
       mcsrv.endPacket();
