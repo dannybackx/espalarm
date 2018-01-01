@@ -97,7 +97,6 @@ void Peers::AddPeer(const char *name, IPAddress ip) {
 void Peers::loop(time_t nowts) {
   RestLoop();
   ServerSocketLoop();
-  ClientSocketLoop();
 }
 
 /*********************************************************************************
@@ -157,16 +156,16 @@ void Peers::CallPeer(Peer peer, char *json) {
   Serial.printf("CallPeer(%s ", peer.name);
   Serial.print(peer.ip);
   Serial.printf(":%d, %s)\n", portMulti, json);
-#if 1
+
   WiFiClient client;
 
-  if (! client.connect(peer.ip, localPort)) {
+  if (! client.connect(peer.ip, portMulti)) {
     client.stop();
     Serial.printf("Connect to %s failed\n", peer.name);
     Serial.print("  ");
     Serial.print(peer.ip);
     Serial.print(" : ");
-    Serial.println(localPort);
+    Serial.println(portMulti);
     return;
   }
   client.print(json);
@@ -181,15 +180,6 @@ void Peers::CallPeer(Peer peer, char *json) {
   String line = client.readStringUntil('\r');
   client.stop();
   Serial.printf("Received from peer : %s\n", line.c_str());
-#else
-  sendudp.beginPacket(peer.ip, portMulti);
-  sendudp.write(json, strlen(json)+1);
-  sendudp.endPacket();
-  delay(200);
-  sendudp.beginPacket(peer.ip, portMulti);
-  sendudp.write(json, strlen(json)+1);
-  sendudp.endPacket();
-#endif
 }
 
 /*********************************************************************************
@@ -200,7 +190,7 @@ void Peers::CallPeer(Peer peer, char *json) {
  *********************************************************************************/
 
 void Peers::RestSetup() {
-  srv = new WiFiServer(localPort);
+  srv = new WiFiServer(portMulti);
   srv->begin();
 }
 
@@ -222,7 +212,8 @@ void Peers::RestLoop() {
   char *reply = HandleQuery((const char *)query);
 
   // Answer
-  client.println(reply);
+  if (reply)
+    client.println(reply);
   client.stop();
 }
 
@@ -236,7 +227,7 @@ char *Peers::HandleQuery(const char *str) {
   DynamicJsonBuffer jb;
   JsonObject &json = jb.parseObject(str);
   if (! json.success()) {
-    char *reply = (char *)"Could not parse JSON";
+    char *reply = (char *)"{ \"reply\" : \"error\", \"message\" : \"Could not parse JSON\" }";
     Serial.println(reply);
     return reply;
   }
@@ -264,7 +255,7 @@ char *Peers::HandleQuery(const char *str) {
       _alarm->SetArmed(ALARM_OFF, ZONE_FROMPEER);
       _alarm->Reset(device_name);
     } else {
-      return (char *)"400 Invalid query";
+      return (char *)"{ \"reply\" : \"error\", \"message\" : \"Invalid query\" }";
     }
   } else if (query = json["announce"]) {
     // {"announce" : "node-name"}
@@ -278,9 +269,12 @@ char *Peers::HandleQuery(const char *str) {
     j2["acknowledge"] = config->myName();
     j2.printTo(output, sizeof(output));
     return output;
+  } else if (query = json["acknowledge"]) {
+    AddPeer(query, mcsrv.remoteIP());
+    return 0;
   }
 
-  return (char *)"100 Ok";
+  return (char *)"{ \"reply\" : \"success\", \"message\" : \"Ok\" }";
 }
 
 /*********************************************************************************
@@ -295,32 +289,23 @@ void Peers::QueryPeers() {
   sprintf(query, "{ \"announce\" : \"%s\" }", config->myName());
   int len = strlen(query);
 
-#if 0
-		  Serial.printf("Sending %s from local port ", query);
-		  Serial.print(local);
-		  Serial.print(":");
-		  Serial.println(sendudp.localPort());
+#ifdef ESP8266
+  mcsrv.beginPacketMulticast(ipMulti, portMulti, local);
+#else
+  mcsrv.beginMulticastPacket();
 #endif
-#if defined(ESP8266)
-  sendudp.begin(client_port);
-  sendudp.beginPacketMulticast(ipMulti, portMulti, local);
-#elif defined(ESP32)
-  sendudp.beginMulticast(ipMulti, portMulti);
-  sendudp.beginMulticastPacket();
-#endif
-  sendudp.write((const uint8_t *)query, len+1);
-  sendudp.endPacket();
+  mcsrv.write((const uint8_t *)query, len+1);
+  mcsrv.endPacket();
+
   delay(200);
 
-// twice
-#if defined(ESP8266)
-  sendudp.beginPacketMulticast(ipMulti, portMulti, local);
-#elif defined(ESP32)
-  sendudp.beginMulticast(ipMulti, portMulti);
-  sendudp.beginMulticastPacket();
+#ifdef ESP8266
+  mcsrv.beginPacketMulticast(ipMulti, portMulti, local);
+#else
+  mcsrv.beginMulticastPacket();
 #endif
-  sendudp.write((const uint8_t *)query, len+1);
-  sendudp.endPacket();
+  mcsrv.write((const uint8_t *)query, len+1);
+  mcsrv.endPacket();
 }
 
 void Peers::MulticastSetup()
@@ -351,41 +336,15 @@ void Peers::ServerSocketLoop()
 
     char *reply = HandleQuery((char *)packetBuffer);
 
-		    Serial.printf("Replying %s to peer at ", reply);
+		    Serial.printf("Replying %s to peer at ", reply ? reply : "(null)");
 		    Serial.print(mcsrv.remoteIP());
 		    Serial.print(":");
 		    Serial.println(mcsrv.remotePort());
-    mcsrv.beginPacket(mcsrv.remoteIP(), mcsrv.remotePort());
-    mcsrv.write((const uint8_t *)reply, strlen(reply)+1);
-    mcsrv.endPacket();
-  }
-}
 
-/*
- * Receive replies to our query to search peer nodes
- * Only expect the format { "acknowledge" : "node" }
- */
-void Peers::ClientSocketLoop()
-{
-  int len = sendudp.parsePacket();
-  if (len) {
-    sendudp.read(packetBuffer, len);
-    packetBuffer[len] = 0;
-    Serial.printf("Received : %s\n", packetBuffer);
-
-    // Analyse incoming packet, expect JSON like { "announce" : "name" }
-    DynamicJsonBuffer jb;
-    JsonObject &json = jb.parseObject(packetBuffer);
-
-    if (! json.success())	// Could not parse JSON
-      return;
-
-    // See if it's { "acknowledge" : "node" }
-    const char *ack = json["acknowledge"];
-    if (! ack) {
-      Serial.printf("Unknown packet %s\n", packetBuffer);
-      return;
+    if (reply) {
+      mcsrv.beginPacket(mcsrv.remoteIP(), mcsrv.remotePort());
+      mcsrv.write((const uint8_t *)reply, strlen(reply)+1);
+      mcsrv.endPacket();
     }
-    AddPeer(ack, sendudp.remoteIP());
   }
 }

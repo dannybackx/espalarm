@@ -63,7 +63,6 @@ private:
   void MulticastSetup();
   void QueryPeers();
   void ServerSocketLoop();
-  void ClientSocketLoop();
   char *HandleQuery(const char *str);
   void CallPeers(char *json);
   void CallPeer(Peer, char *json);
@@ -73,16 +72,13 @@ private:
 
   WiFiServer	*srv;
 
-  const uint16_t localPort = 23456;		// local server port (both UDP and TCP)
-  const uint16_t portMulti = 23456;		// multicast port
+  const uint16_t portMulti = 23456;		// port number used for all our communication
   byte packetBuffer[512];			// buffer to hold incoming and outgoing packets
-  WiFiUDP mcsrv, sendudp;			// a server and a client port
+  WiFiUDP mcsrv;				// socket for both client and server multicast
   IPAddress ipMulti, local;
 
   char output[128];
 };
-
-const uint16_t client_port = 4567;
 
 extern Peers *peers;
 #endif	/* _PEER_H_ */
