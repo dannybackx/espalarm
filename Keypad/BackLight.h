@@ -40,12 +40,14 @@ public:
   void SetStatus(BackLightStatus);
   void Trigger(time_t);
   void SetTimeout(int);
+  void SetBrightness(int percentage);
 
 private:
   time_t trigger_ts;
   enum BackLightStatus	status;
 
   int led_pin;
+  int brightness;
   int timeout;		// number of seconds for backlight to stay lit
 };
 
