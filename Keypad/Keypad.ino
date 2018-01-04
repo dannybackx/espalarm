@@ -105,7 +105,11 @@ void setup(void) {
   SetupOTA();
 				Serial.print(" done\nInitializing .. \n");
   config = new Config();
-  Serial.printf("My name is %s\n", config->myName());
+  Serial.printf("My name is %s, have :", config->myName());
+  if (config->haveOled()) Serial.print(" oled");
+  if (config->haveRadio()) Serial.print(" radio");
+  if (config->haveRfid()) Serial.print(" rfid");
+  Serial.println();
 
   if (config->haveOled()) {
     oled = Oled();
@@ -167,7 +171,7 @@ void loop()
     if (pressed == 0 || t_z < 500) 
       return;
 
-				  Serial.printf("X = %4d\tY = %4d\tZ = %4d\n", t_x, t_y, t_z);
+//				  Serial.printf("X = %4d\tY = %4d\tZ = %4d\n", t_x, t_y, t_z);
     oled.fillCircle(t_x, t_y, PENRADIUS, ILI9341_RED);
   }
 }
