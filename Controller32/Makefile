@@ -222,6 +222,9 @@ upload: all
 	0x8000 $(SKETCH).partitions.bin
 
 
+run:	upload
+	miniterm.py ${UPLOAD_PORT} 115200
+
 ota: all showotaip
 	$(UPLOAD_OTA_TOOL) -i $(UPLOAD_AVAHI_IP) -p $(UPLOAD_AVAHI_PORT) -f $(MAIN_EXE)
 

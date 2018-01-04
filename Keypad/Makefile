@@ -189,6 +189,9 @@ $(MAIN_EXE): $(CORE_LIB) $(USER_OBJ)
 upload: all
 	$(ESP_TOOL) $(UPLOAD_VERB) -cd $(HWTYPE) -cb $(UPLOAD_SPEED) -cp $(UPLOAD_PORT) -ca 0x00000 -cf $(MAIN_EXE)
 
+run:	upload
+	miniterm.py ${UPLOAD_PORT} 115200
+
 ota: all showotaip
 	$(UPLOAD_OTA_TOOL) -i $(UPLOAD_AVAHI_IP) -p $(UPLOAD_AVAHI_PORT) -f $(MAIN_EXE)
 
