@@ -28,6 +28,7 @@
  */
 
 #include <Oled.h>
+#include <BackLight.h>
 
 const int ctrx = 1;	// Translate coordinates ?
 
@@ -189,20 +190,23 @@ boolean Oled::isScreenVisible(int ix) {
 /*
  * When called periodically, this triggers button callback functions
  */
-void Oled::loop(void) {
+void Oled::loop(time_t nowts) {
   if (getTouchRawZ() > 500) {
     uint16_t tx, ty;
+
+    backlight->touched(nowts);
+
     (void) getTouchRaw(&tx, &ty);
 
     for (int btn=0; btn<current->nbuttons; btn++)
       if (ctrx) {
-      if (current->key[btn]->contains(tx, 320 - ty)) {
-        current->buttonHandler[btn](current, btn);
-      }
+        if (current->key[btn]->contains(tx, 320 - ty)) {
+          current->buttonHandler[btn](current, btn);
+        }
       } else {
-      if (current->key[btn]->contains(tx, ty)) {
-        current->buttonHandler[btn](current, btn);
-      }
+        if (current->key[btn]->contains(tx, ty)) {
+          current->buttonHandler[btn](current, btn);
+        }
       }
   }
 }

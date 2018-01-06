@@ -115,15 +115,14 @@ void setup(void) {
     oled = Oled();
     oled.begin();
     backlight = new BackLight(config->GetOledLedPin());	// led_pin, D3 is GPIO0 on D1 mini
+    backlight->SetStatus(BACKLIGHT_TEMP_ON);	// Display on
+    backlight->SetTimeout(10);			// Hardcoded timeout in seconds
 
     screen1.buttonText = xxx;
     screen1.buttonHandler = yyy;
     s1 = oled.addScreen(screen1);
     s2 = oled.addScreen(screen2);
     oled.showScreen(s1);
-
-    backlight->SetStatus(BACKLIGHT_ON);	// Display on
-    backlight->SetTimeout(10);		// Hardcoded timeout in seconds
 
     clock = new Clock(&oled);
   }
@@ -154,7 +153,7 @@ void loop()
   nowts = now();
 
   if (config->haveOled()) {
-    oled.loop();
+    oled.loop(nowts);
     clock->loop();
     backlight->loop(nowts);
   }

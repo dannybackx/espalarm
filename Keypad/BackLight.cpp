@@ -25,15 +25,16 @@
 
 BackLight::BackLight(int pin) {
   led_pin = pin;
-  SetBrightness(10);
+
+  SetBrightness(70);
+  bright_low = 10;
+  bright_high = 70;
+  timeout = 10;
 				// Initialize LED control pin
   pinMode(led_pin, OUTPUT);
   analogWrite(led_pin, 0);	// Display off
 
   status = BACKLIGHT_NONE;
-}
-
-BackLight::~BackLight() {
 }
 
 void BackLight::SetStatus(BackLightStatus ns) {
@@ -48,7 +49,8 @@ void BackLight::SetStatus(BackLightStatus ns) {
     trigger_ts = now();
 }
 
-void BackLight::SetBrightness(int percentage) {
+void BackLight::SetBrightness(int pctage) {
+  percentage = pctage;
   brightness = percentage * PWMRANGE / 100;
 }
 
@@ -74,10 +76,29 @@ void BackLight::SetTimeout(int s) {
  */
 void BackLight::loop(time_t nowts) {
   if (status == BACKLIGHT_TEMP_ON) {
-    if (trigger_ts + timeout * 1000 < nowts) {		// Milliseconds vs seconds
+    if (trigger_ts + timeout < nowts) {
       analogWrite(led_pin, 0);
-      status = BACKLIGHT_TEMP_OFF;
+      status = BACKLIGHT_TEMP_CHANGING;
       trigger_ts = 0;
     }
+  }
+  if (status == BACKLIGHT_TEMP_CHANGING) {		// Slowly go to bright_low
+    if (percentage <= bright_low)
+      status = BACKLIGHT_TEMP_OFF;			// We've reached it
+    else {
+      percentage--;					// Slow this down ?
+      SetBrightness(percentage);
+      analogWrite(led_pin, brightness);
+    }
+  }
+}
+
+void BackLight::touched(time_t nowts) {
+  trigger_ts = nowts;
+  if (status == BACKLIGHT_TEMP_OFF || status == BACKLIGHT_TEMP_CHANGING)
+    status = BACKLIGHT_TEMP_ON;
+  if (status == BACKLIGHT_TEMP_ON) {
+    SetBrightness(bright_high);
+    analogWrite(led_pin, brightness);
   }
 }

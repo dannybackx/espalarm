@@ -30,25 +30,28 @@ enum BackLightStatus {
   BACKLIGHT_ON,		// Permanently on
   BACKLIGHT_TEMP_OFF,
   BACKLIGHT_TEMP_ON,
+  BACKLIGHT_TEMP_CHANGING,	// Slowly dim backlight
 };
 
 class BackLight {
 public:
   BackLight(int pin);
-  ~BackLight();
   void loop(time_t);
   void SetStatus(BackLightStatus);
   void Trigger(time_t);
   void SetTimeout(int);
   void SetBrightness(int percentage);
+  void touched(time_t);
 
 private:
   time_t trigger_ts;
   enum BackLightStatus	status;
 
   int led_pin;
-  int brightness;
-  int timeout;		// number of seconds for backlight to stay lit
+  int brightness, percentage;	// Current brightness
+  int bright_low, bright_high;	// brightness for passive and active states
+  int timeout;			// number of seconds for backlight to stay lit
 };
 
+extern BackLight *backlight;
 #endif	/* _BACKLIGHT_H_ */

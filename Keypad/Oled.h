@@ -54,7 +54,7 @@ class Oled : public TFT_eSPI {
     Oled(int16_t _W = TFT_WIDTH, int16_t _H = TFT_HEIGHT);
     void init(void);
     void begin(void);
-    void loop(void);
+    void loop(time_t);
 
     // Draw stuff
     void drawRect(int32_t x, int32_t y, int32_t w, int32_t h, uint32_t color);
