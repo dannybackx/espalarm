@@ -31,6 +31,11 @@
 #include <Config.h>
 #include <Peers.h>
 #include <Rfid.h>
+#include <Weather.h>
+
+extern "C" {
+#include <sntp.h>
+}
 
 void s1b1(struct OledScreen *scr, int button);
 void s1b2(struct OledScreen *scr, int button);
@@ -78,15 +83,13 @@ Sensors			*sensors = 0;
 Alarm			*_alarm = 0;
 Peers			*peers = 0;
 Rfid			*rfid = 0;
+Weather			*weather = 0;
 
 time_t			nowts;
 
 // Size of the color selection boxes and the paintbrush size
 #define BOXSIZE		40
 #define PENRADIUS	2
-
-// const int led_pin = D3;
-int currentcolor;
 
 #define	NUMKEYS		3
 
@@ -109,6 +112,7 @@ void setup(void) {
   if (config->haveOled()) Serial.print(" oled");
   if (config->haveRadio()) Serial.print(" radio");
   if (config->haveRfid()) Serial.print(" rfid");
+  if (config->haveWeather()) Serial.print(" weather");
   Serial.println();
 
   if (config->haveOled()) {
@@ -125,6 +129,10 @@ void setup(void) {
     oled.showScreen(s1);
 
     clock = new Clock(&oled);
+
+    // We always have a local weather module if we have an OLED
+    // Only one of us actually does wunderground queries
+    weather = new Weather(config->haveWeather());
   }
 
   if (config->haveRadio())
@@ -150,11 +158,13 @@ void loop()
 
   ArduinoOTA.handle();
 
-  nowts = now();
+  // nowts = now();
+  nowts = sntp_get_current_timestamp();
 
   if (config->haveOled()) {
     oled.loop(nowts);
     clock->loop();
+    if (weather) weather->loop(nowts);
     backlight->loop(nowts);
   }
 
@@ -172,6 +182,7 @@ void loop()
 
 //				  Serial.printf("X = %4d\tY = %4d\tZ = %4d\n", t_x, t_y, t_z);
     oled.fillCircle(t_x, t_y, PENRADIUS, ILI9341_RED);
+
   }
 }
 
@@ -270,19 +281,6 @@ void s1draw(OledScreen *pscr) {
 
   oled.fillScreen(ILI9341_BLACK);
 
-#if 0
-  // make the color selection boxes
-  oled.fillRect(0, 0, BOXSIZE, BOXSIZE, ILI9341_RED);
-  oled.fillRect(BOXSIZE, 0, BOXSIZE, BOXSIZE, ILI9341_YELLOW);
-  oled.fillRect(BOXSIZE*2, 0, BOXSIZE, BOXSIZE, ILI9341_GREEN);
-  oled.fillRect(BOXSIZE*3, 0, BOXSIZE, BOXSIZE, ILI9341_CYAN);
-  oled.fillRect(BOXSIZE*4, 0, BOXSIZE, BOXSIZE, ILI9341_BLUE);
-  oled.fillRect(BOXSIZE*5, 0, BOXSIZE, BOXSIZE, ILI9341_MAGENTA);
-
-  // select the current color 'red'
-  oled.drawRect(0, 0, BOXSIZE, BOXSIZE, ILI9341_WHITE);
-  currentcolor = ILI9341_RED;
-#endif
 				Serial.println("OLED ready.");
 }
 

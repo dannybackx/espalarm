@@ -50,7 +50,8 @@ private:
   int led_pin;
   int brightness, percentage;	// Current brightness
   int bright_low, bright_high;	// brightness for passive and active states
-  int timeout;			// number of seconds for backlight to stay lit
+  int timeout,			// number of seconds for backlight to stay lit
+      slow;			// Counter to slow down dimming
 };
 
 extern BackLight *backlight;

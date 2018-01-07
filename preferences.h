@@ -26,3 +26,6 @@
 // 
 #define	PREF_CONFIG_FN	"config.json"
 
+/* Wunderground */
+#define	WUNDERGROUND_API_SRV	"api.wunderground.com"
+

@@ -72,7 +72,7 @@ void BackLight::SetTimeout(int s) {
 }
 
 /*
- * Report environmental information periodically
+ * Loop function : deal with timeout, and slowly dimming the backlight.
  */
 void BackLight::loop(time_t nowts) {
   if (status == BACKLIGHT_TEMP_ON) {
@@ -80,13 +80,16 @@ void BackLight::loop(time_t nowts) {
       analogWrite(led_pin, 0);
       status = BACKLIGHT_TEMP_CHANGING;
       trigger_ts = 0;
+      slow = 0;
     }
   }
   if (status == BACKLIGHT_TEMP_CHANGING) {		// Slowly go to bright_low
     if (percentage <= bright_low)
       status = BACKLIGHT_TEMP_OFF;			// We've reached it
     else {
-      percentage--;					// Slow this down ?
+      slow = (slow + 1) % 10;				// FIXME hardcoded factor
+      if (slow == 0)
+        percentage--;					// Slow this down ?
       SetBrightness(percentage);
       analogWrite(led_pin, brightness);
     }
