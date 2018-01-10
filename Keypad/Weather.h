@@ -48,5 +48,18 @@ private:
   static const int	normal_delay = 75 * 60;		// A bit more than an hour between queries
   static const int	error_delay = 20 * 60;		// Time to wait after error
   int			the_delay;
+
+  // Fields from the JSON query
+  char		*icon_url,
+  		*weather,
+  		*pressure_trend,
+		*wind_dir,
+		*relative_humidity;
+  float		feelslike_c,
+  		temp_c;
+  int		wind_kph,
+		pressure_mb,
+		observation_epoch,
+		precip_today_metric;
 };
 #endif	/* _WEATHER_H_ */

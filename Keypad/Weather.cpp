@@ -31,7 +31,7 @@
 #include <ArduinoJson.h>
 
 const char *Weather::pattern = "GET /api/%s/conditions/q/%s/%s.json HTTP/1.1\r\n"
-	"User-Agent: ESP8266/1.0 Alarm Console\r\n"
+	"User-Agent: ESP8266-ESP32 Alarm Console/1.0\r\n"
 	"Accept: */*\r\n"
 	"Host: %s \r\n"
 	"Connection: close\r\n"
@@ -99,8 +99,7 @@ void Weather::PerformQuery() {
   }
   buf[rl++] = 0;
   Serial.printf("Response received, length %d\n", rl);
-  Serial.printf("\n\n%s\n\n", buf);
-  // return;
+  // Serial.printf("\n\n%s\n\n", buf);
 
   DynamicJsonBuffer jb;
   JsonObject &root = jb.parseObject(buf);
@@ -114,14 +113,29 @@ void Weather::PerformQuery() {
     Serial.println("Failed to parse current in JSON");
     return;
   }
-  const float temp_c = current["temp_c"];
-  const char *temp_cs = current["temp_c"];
-  const char *hum = current["relative_humidity"];
-  const char *wth = current["weather"];
-  const char *pressure = current["pressure_mb"];
-  const char *ob_time = current["observation_time_rfc822"];
 
-  // Serial.printf("Current observation : %f °C hum %s, pressure %s\n", temp_c, hum, pressure);
+  temp_c = (const float)current["temp_c"];
+  feelslike_c = (const float)current["feelslike_c"];
+
+  relative_humidity = (char *)(const char *)current["relative_humidity"];
+  precip_today_metric = (const int)current["precip_today_metric"];
+
+  weather = (char *)(const char *)current["weather"];
+  icon_url = (char *)(const char *)current["icon_url"];
+
+  pressure_mb = (const int)current["pressure_mb"];
+  pressure_trend = (char *)(const char *)current["pressure_trend"];
+
+  observation_epoch = (const int)current["observation_epoch"];
+
+  wind_dir = (char *)(const char *)current["wind_dir"];
+  wind_kph = (const int)current["wind_kph"];
+
+  int	temp_c_a = (int)temp_c,
+  	temp_c_b = (temp_c - temp_c_a) * 10;
+  Serial.printf("Current observation : %d.%d °C, pressure %d, wind %d km/h\n",
+  	temp_c_a, temp_c_b, pressure_mb, wind_kph);
+
   // Serial.printf("Weather %s\n", wth);
   // Serial.printf("Time %s\n", ob_time);
 
