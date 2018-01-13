@@ -30,6 +30,8 @@
 #include <preferences.h>
 #include <ArduinoJson.h>
 
+#include <LoadGif.h>
+
 const char *Weather::pattern = "GET /api/%s/conditions/q/%s/%s.json HTTP/1.1\r\n"
 	"User-Agent: ESP8266-ESP32 Alarm Console/1.0\r\n"
 	"Accept: */*\r\n"
@@ -58,15 +60,17 @@ void Weather::PerformQuery() {
   if (http == 0)
     http = new WiFiClient();
 
-  Serial.printf("Querying %s ..\n", WUNDERGROUND_API_SRV);
+  Serial.printf("Querying %s .. ", WUNDERGROUND_API_SRV);
 
   if (! http->connect(WUNDERGROUND_API_SRV, 80)) {	// Not connected
-    Serial.println("Could not connect to wunderground");;
+    Serial.println("Could not connect");
     the_delay = error_delay;
     return;
   }
   http->print(query);
   http->flush();
+
+  free(query); query = 0;
 
   buf = (char *)malloc(buflen);
   boolean skip = true;
@@ -98,8 +102,12 @@ void Weather::PerformQuery() {
     return;
   }
   buf[rl++] = 0;
-  Serial.printf("Response received, length %d\n", rl);
+
+  // Serial.printf("Response received, length %d\n", rl);
   // Serial.printf("\n\n%s\n\n", buf);
+  Serial.println("ok");
+
+  Serial.printf("Heap (before JSON) %d\n", ESP.getFreeHeap());
 
   DynamicJsonBuffer jb;
   JsonObject &root = jb.parseObject(buf);
@@ -135,11 +143,18 @@ void Weather::PerformQuery() {
   	temp_c_b = (temp_c - temp_c_a) * 10;
   Serial.printf("Current observation : %d.%d °C, pressure %d, wind %d km/h\n",
   	temp_c_a, temp_c_b, pressure_mb, wind_kph);
+  Serial.printf("Weather %s, pic %s\n", weather, icon_url);
 
   // Serial.printf("Weather %s\n", wth);
   // Serial.printf("Time %s\n", ob_time);
 
   the_delay = normal_delay;
+
+  free(buf);
+  buf = 0;
+
+  Serial.printf("Heap (after JSON) %d\n", ESP.getFreeHeap());
+  if (gif) gif->loadGif(icon_url);
 }
 
 Weather::~Weather() {

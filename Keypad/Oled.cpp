@@ -126,9 +126,8 @@ int Oled::addScreen(OledScreen screen) {
 
 // FIX ME needs cleanup
 
-#define	LABEL_FONT		&FreeSans12pt7b
-// #define	LABEL_FONT		&FreeSansBold12pt7b
-#define	LABEL_FONT_OBLIQUE	&FreeSansOblique12pt7b
+// #define	LABEL_FONT		&FreeSans12pt7b
+#define	LABEL_FONT		&FreeSans9pt7b
 
 // Keypad start position, key sizes and spacing
 #define KEY_X		40	// Centre of key

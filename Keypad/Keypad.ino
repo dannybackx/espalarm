@@ -32,6 +32,7 @@
 #include <Peers.h>
 #include <Rfid.h>
 #include <Weather.h>
+#include <LoadGif.h>
 
 extern "C" {
 #include <sntp.h>
@@ -84,6 +85,7 @@ Alarm			*_alarm = 0;
 Peers			*peers = 0;
 Rfid			*rfid = 0;
 Weather			*weather = 0;
+LoadGif			*gif = 0;
 
 time_t			nowts;
 
@@ -102,6 +104,7 @@ OledButton key[NUMKEYS];
 void setup(void) {
 				Serial.begin(115200);
 				Serial.println("\nAlarm Controller (c) 2017, 2018 by Danny Backx");
+				Serial.printf("Free heap : %d\n", ESP.getFreeHeap());
 				Serial.print("Starting WiFi "); 
   SetupWifi();
 				Serial.printf("Set up OTA (id %s) ..", OTA_ID);
@@ -129,6 +132,7 @@ void setup(void) {
     oled.showScreen(s1);
 
     clock = new Clock(&oled);
+    gif = new LoadGif();
 
     // We always have a local weather module if we have an OLED
     // Only one of us actually does wunderground queries
@@ -166,6 +170,7 @@ void loop()
     clock->loop();
     if (weather) weather->loop(nowts);
     backlight->loop(nowts);
+    gif->loop(nowts);
   }
 
   if (sensors) sensors->loop(nowts);
