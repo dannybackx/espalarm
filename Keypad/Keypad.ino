@@ -292,3 +292,9 @@ void s1draw(OledScreen *pscr) {
 void s2draw(OledScreen *pscr) {
   Serial.printf("s2draw: drawing screen %s\n", pscr->name.c_str());
 }
+
+extern "C" {
+  int heap() {
+    return ESP.getFreeHeap();
+  }
+}

@@ -296,7 +296,7 @@ static gif_result gif_initialise_frame(gif_animation *gif)
         if ((int)gif->frame_holders <= frame) {
                 /* Allocate more memory */
                 temp_buf = (gif_frame *)realloc(gif->frames, (frame + 1) * sizeof(gif_frame));
-		printf("GIF realloc %p sz %d -> %p\n", gif->frames, (frame + 1) * sizeof(gif_frame), temp_buf);
+		// printf("GIF realloc %p sz %d -> %p, heap %d\n", gif->frames, (frame + 1) * sizeof(gif_frame), temp_buf, heap());
                 if (temp_buf == NULL) {
                         return GIF_INSUFFICIENT_MEMORY;
                 }
@@ -1034,10 +1034,11 @@ gif_result gif_initialise(gif_animation *gif, size_t size, unsigned char *data)
                  * is lying to us. It's far better to give the wrong colours
                  * than to trample over some memory somewhere.
                 */
+		// printf("Before GIF calloc heap %d\n", heap());
                 gif->global_colour_table = calloc(GIF_MAX_COLOURS, sizeof(unsigned int));
-		printf("GIF calloc sz %d -> %p\n", GIF_MAX_COLOURS * sizeof(unsigned int), gif->global_colour_table);
+		// printf("GIF calloc sz %d -> %p, heap %d\n", GIF_MAX_COLOURS * sizeof(unsigned int), gif->global_colour_table, heap());
                 gif->local_colour_table = calloc(GIF_MAX_COLOURS, sizeof(unsigned int));
-		printf("GIF calloc sz %d -> %p\n", GIF_MAX_COLOURS * sizeof(unsigned int), gif->local_colour_table);
+		// printf("GIF calloc sz %d -> %p, heap %d\n", GIF_MAX_COLOURS * sizeof(unsigned int), gif->local_colour_table, heap());
                 if ((gif->global_colour_table == NULL) ||
                     (gif->local_colour_table == NULL)) {
                         gif_finalise(gif);
@@ -1066,7 +1067,7 @@ gif_result gif_initialise(gif_animation *gif, size_t size, unsigned char *data)
                         gif_finalise(gif);
                         return GIF_INSUFFICIENT_MEMORY;
                 }
-		printf("GIF malloc %d -> %p\n", sizeof(gif_frame), gif->frames);
+		// printf("GIF malloc %d -> %p, heap %d\n", sizeof(gif_frame), gif->frames, heap());
                 gif->frame_holders = 1;
 
                 /* Initialise the bitmap header */

@@ -38,8 +38,11 @@ private:
   static const char	*pattern;
   WiFiClient		*http;
 
-  const int buflen = 4096;
-  char *buf;
+  int			buflen;
+  const int		std_buflen = 2000;
+  char			*buf;
+
+  uint16_t		*pixels;
 
   char *loadGif(const char *url, size_t *data_size);
   gif_bitmap_callback_vt bitmap_callbacks;
