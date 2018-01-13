@@ -20,23 +20,29 @@
  *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#undef	USE_SPIFFS
+
 #include <Arduino.h>
 #ifdef ESP8266
-#include <ESP8266WiFi.h>
+# include <ESP8266WiFi.h>
 #else
-#include <WiFi.h>
+# include <WiFi.h>
 #endif
 #include <Config.h>
 #include <secrets.h>
-#include <FS.h>
-#if defined(ESP32)
-#include <SPIFFS.h>
+#ifdef	USE_SPIFFS
+# include <FS.h>
+# if defined(ESP32)
+#  include <SPIFFS.h>
+# endif
 #endif
 #include <ArduinoJson.h>
 #include <preferences.h>
 
 Config::Config() {
+#ifdef	USE_SPIFFS
   SPIFFS.begin();
+#endif
 
 #if defined(ESP32)
   radio_pin = 2;
@@ -52,7 +58,9 @@ Config::Config() {
 }
 
 Config::~Config() {
+#ifdef	USE_SPIFFS
   SPIFFS.end();
+#endif
 }
 
 int Config::GetRadioPin() {
@@ -74,6 +82,7 @@ void Config::SetSirenPin(int pin) {
 }
 
 void Config::ReadConfig() {
+#ifdef	USE_SPIFFS
   File f = SPIFFS.open(PREF_CONFIG_FN, "r");
   if (!f)
     return;	// Silently
@@ -88,6 +97,7 @@ void Config::ReadConfig() {
   }
 
   f.close();
+#endif
 }
 
 void Config::ReadConfig(const char *js) {
@@ -137,6 +147,7 @@ void Config::HardCodedConfig(const char *mac) {
 }
 
 void Config::WriteConfig() {
+#ifdef	USE_SPIFFS
   SPIFFS.remove(PREF_CONFIG_FN);
 
   File f = SPIFFS.open(PREF_CONFIG_FN, "w");
@@ -168,6 +179,7 @@ void Config::WriteConfig() {
     return;
   }
   f.close();
+#endif
 }
 
 boolean Config::haveOled() {
