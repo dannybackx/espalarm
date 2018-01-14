@@ -128,15 +128,15 @@ void Weather::PerformQuery() {
   relative_humidity = (char *)(const char *)current["relative_humidity"];
   precip_today_metric = (const int)current["precip_today_metric"];
 
-  weather = (char *)(const char *)current["weather"];
-  icon_url = (char *)(const char *)current["icon_url"];
+  weather = strdup((const char *)current["weather"]);
+  icon_url = strdup((const char *)current["icon_url"]);
 
   pressure_mb = (const int)current["pressure_mb"];
-  pressure_trend = (char *)(const char *)current["pressure_trend"];
+  pressure_trend = strdup((const char *)current["pressure_trend"]);
 
   observation_epoch = (const int)current["observation_epoch"];
 
-  wind_dir = (char *)(const char *)current["wind_dir"];
+  wind_dir = strdup((const char *)current["wind_dir"]);
   wind_kph = (const int)current["wind_kph"];
 
   int	temp_c_a = (int)temp_c,
