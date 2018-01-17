@@ -15,12 +15,12 @@
 #ifndef _LIBNSGIF_H_
 #define _LIBNSGIF_H_
 
-#if defined(__cplusplus)
-extern "C" {
-#endif
-
 #include <stdbool.h>
 #include <inttypes.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* Error return values */
 typedef enum {
@@ -184,7 +184,7 @@ gif_result gif_decode_frame(gif_animation *gif, unsigned int frame);
  */
 void gif_finalise(gif_animation *gif);
 
-#if defined(__cplusplus)
+#ifdef __cplusplus
 }
 #endif
 #endif
