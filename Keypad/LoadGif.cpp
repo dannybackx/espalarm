@@ -121,44 +121,44 @@ void LoadGif::loadGif(const char *url) {
 
 static void *bitmap_create(int width, int height) {
   // Serial.printf("ESP.getFreeHeap() -> %d\n", ESP.getFreeHeap());
-  Serial.printf("bitmap_create(%d,%d) .. ", width, height);
+  // Serial.printf("bitmap_create(%d,%d) .. ", width, height);
   if (width > 75 || height > 75) {
-    Serial.print(" -> NULL\n");
+    // Serial.print(" -> NULL\n");
     return NULL;
   }
   // void *r = malloc(width * height * BYTES_PER_PIXEL);
   void *r = calloc(width * height, BYTES_PER_PIXEL);
-  Serial.printf(" -> %08X\n", r); delay(250);
+  // Serial.printf(" -> %08X\n", r); delay(250);
   return r;
 }
 
 static void bitmap_set_opaque(void *bitmap, bool opaque) {
-  Serial.printf("bitmap_set_opaque()\n");
+  // Serial.printf("bitmap_set_opaque()\n");
 }
 
 static bool bitmap_test_opaque(void *bitmap)
 {
-  Serial.printf("bitmap_test_opaque()\n");
+  // Serial.printf("bitmap_test_opaque()\n");
   return false;
 }
 
 
 static unsigned char *bitmap_get_buffer(void *bitmap)
 {
-  Serial.printf("bitmap_get_buffer()\n");
+  // Serial.printf("bitmap_get_buffer()\n");
   return (unsigned char *)bitmap;
 }
 
 
 static void bitmap_destroy(void *bitmap)
 {
-  Serial.printf("bitmap_destroy()\n");
+  // Serial.printf("bitmap_destroy()\n");
   free(bitmap);
 }
 
 static void bitmap_modified(void *bitmap)
 {
-  Serial.printf("bitmap_modified()\n");
+  // Serial.printf("bitmap_modified()\n");
   return;
 }
 
@@ -267,82 +267,11 @@ void LoadGif::loop(time_t) {
   mostlycloudy_len = 0;
 }
 
-#if 0
-void LoadGif::TestIt(unsigned char data[], int len) {
-  Serial.printf("TestIt(_, %d)\n", len);
-
-  size_t giflen;
-  gif_result code;
-  char *gifdata;
-
-				// Serial.printf("Before GIF : heap %d\n", ESP.getFreeHeap());
-  gif_create(&gif, &bitmap_callbacks);
-				// Serial.printf("Before download : heap %d\n", ESP.getFreeHeap());
-
-  // Download it
-  // gifdata = loadGif(url, &giflen);
-  gifdata = (char *)data;
-  giflen = len;
-				// Print first bytes, should read "GIF89a"
-				for (int i=0; i<8; i++)
-				  Serial.printf("%02x %c ", gifdata[i], gifdata[i] ? gifdata[i] : '.');
-				Serial.println();
-				// Serial.printf("After download : heap %d\n", ESP.getFreeHeap());
-  if (gifdata == 0)
-    return;
-
-  Serial.print("Begin decoding .. "); delay(250);
-  do {
-    code = gif_initialise(&gif, giflen, (unsigned char *)gifdata);
-    if (code != GIF_OK && code != GIF_WORKING) {
-      Serial.printf("LoadGif(%s) failed : %d\n", "URL", code);
-      return;
-    }
-    Serial.printf("LoadGif(%s) gif_initialise -> %d\n", "URL", code);
-  } while (code != GIF_OK);
-
-  Serial.printf(" --> phase 2 .. (has %d frames) ", gif.frame_count);
-
-  // Handle only one frame
-  unsigned char *image;
-
-  code = gif_decode_frame(&gif, 0);	// Only first frame
-  Serial.printf("After gif_decode_frame()\n");
-  if (code != GIF_OK) {
-    Serial.printf("gif error, code %d\n", code);
-    // FIX ME
-  } else {
-    image = (unsigned char *)gif.frame_image;
-    pixels = (uint16_t *)malloc(gif.height * gif.width * 2);
-
-    for (int row=0; row != gif.height; row++)
-      for (int col=0; col != gif.width; col++) {
-        Serial.printf(".. %d %d\n", row, col);
-	size_t z = (row * gif.width + col) * 4;
-	uint16_t x = image[z] << 11 + image[z+1] << 5 + image[z+2];
-	pixels[row * gif.width + col] = x;
-      }
-  }
-
-  Serial.println("done");
-  // Serial.printf("After GIF decode : heap %d\n", ESP.getFreeHeap());
-
-  gif_finalise(&gif);
-  free(gifdata);		// Frees the buffer allocated in loadGif()
-}
-#else
-static void write_ppm(FILE* fh, const char *name, gif_animation *gif, bool no_write) {
+uint16_t *LoadGif::Decode2(const char *name, gif_animation *gif) {
         unsigned int i;
         gif_result code;
 
-        Serial.printf("P3\n");
-        Serial.printf("# %s\n", name);
-        Serial.printf("# width                %u \n", gif->width);
-        Serial.printf("# height               %u \n", gif->height);
-        Serial.printf("# frame_count          %u \n", gif->frame_count);
-        Serial.printf("# frame_count_partial  %u \n", gif->frame_count_partial);
-        Serial.printf("# loop_count           %u \n", gif->loop_count);
-        Serial.printf("%u %u 256\n", gif->width, gif->height * gif->frame_count);
+	uint16_t *outbuf = (uint16_t *)malloc(gif->width * gif->height * 2);
 
         /* decode the frames */
         for (i = 0; i != gif->frame_count; i++) {
@@ -353,22 +282,16 @@ static void write_ppm(FILE* fh, const char *name, gif_animation *gif, bool no_wr
                 if (code != GIF_OK)
                         ; // warning("gif_decode_frame", code);
 
-                if (!no_write) {
-                        Serial.printf("# frame %u:\n", i);
-
-                        image = (unsigned char *) gif->frame_image;
-                        for (row = 0; row != gif->height; row++) {
-                                for (col = 0; col != gif->width; col++) {
-                                        size_t z = (row * gif->width + col) * 4;
-
-                                        Serial.printf("%u %u %u ",
-                                          (unsigned char) image[z],
-                                          (unsigned char) image[z + 1],
-                                          (unsigned char) image[z + 2]);
-                                }
-                                Serial.printf("\n");
-                        }
-                }
+		image = (unsigned char *) gif->frame_image;
+		for (row = 0; row != gif->height; row++) {
+			for (col = 0; col != gif->width; col++) {
+				size_t z = (row * gif->width + col) * 4;
+				// 5 + 6 + 5 bits coded
+				// Serial.printf("%04x ", (uint16_t)(image[z] << 11 | image[z+1] << 6 | image[z+2]));
+				outbuf[row * gif->width + col] = image[z] << 11
+				  | image[z+1] << 6 | image[z+2];
+			}
+		}
         }
 }
 
@@ -406,12 +329,17 @@ Serial.printf("TestIt(_, %d) .. ", len);
                 }
         } while (code != GIF_OK);
 
-        write_ppm(outf, "mostlycloudy.gif", &gif, no_write);
+	// Converted picture
+        pic = Decode2("mostlycloudy.gif", &gif);
+	picw = gif.width;
+	pich = gif.height;
+
         /* clean up */
         gif_finalise(&gif);
-Serial.print("done\n");
+
+	Serial.printf("done (%d x %d)\n", picw, pich);
+
         return;
 
 
 }
-#endif

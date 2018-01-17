@@ -45,8 +45,11 @@ private:
 
   char *loadGif(const char *url, size_t *data_size);
   gif_bitmap_callback_vt bitmap_callbacks;
+  uint16_t *Decode2(const char *name, gif_animation *gif);
 
   void TestIt(unsigned char [], int);
+
+  uint16_t *pic, picw, pich;
 };
 
 extern LoadGif *gif;
