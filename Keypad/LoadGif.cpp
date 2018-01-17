@@ -30,6 +30,8 @@
 #endif
 #include <WiFiClient.h>
 
+#include <Oled.h>
+
 static void *bitmap_create(int width, int height);
 static void bitmap_destroy(void *bitmap);
 static void bitmap_set_opaque(void *bitmap, bool opaque);
@@ -338,8 +340,19 @@ Serial.printf("TestIt(_, %d) .. ", len);
         gif_finalise(&gif);
 
 	Serial.printf("done (%d x %d)\n", picw, pich);
+#if 0
+#define BS 64
+  uint16_t tx[BS];
 
-        return;
-
-
+  oled.setWindow(100, 100, 100 + picw - 1, 100 + pich - 1);
+  uint16_t nb = picw * pich / BS;
+  int i, j;
+  for (i=0; i<nb; i++) {
+    for (j=0; i<BS; j++)
+      tx[j] = pic[i * BS + j];
+    oled.pushColors(tx, BS);
+  }
+  uint16_t np = (picw * pich) % BS;
+  oled.pushColors(&pic[i], np);
+#endif
 }
