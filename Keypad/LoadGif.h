@@ -23,7 +23,6 @@
 #ifndef	_LOADGIF_H_
 #define	_LOADGIF_H_
 
-#include <WiFiClient.h>
 #include "libnsgif.h"
 
 class LoadGif {
@@ -36,16 +35,18 @@ public:
 
 private:
   static const char	*pattern;
-  WiFiClient		*http;
 
   int			buflen;
   const int		std_buflen = 2000;
   char			*buf;
 
   uint16_t		*pixels;
+  gif_animation		gif;
 
   char *loadGif(const char *url, size_t *data_size);
   gif_bitmap_callback_vt bitmap_callbacks;
+
+  void TestIt(unsigned char [], int);
 };
 
 extern LoadGif *gif;
