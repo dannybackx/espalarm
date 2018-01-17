@@ -89,7 +89,6 @@ struct lzw_ctx {
 lzw_result lzw_context_create(struct lzw_ctx **ctx)
 {
 	struct lzw_ctx *c = malloc(sizeof(*c));
-	// printf("LZW alloc %d, heap %d -> %p\n", sizeof(*c), heap(), c);
 	if (c == NULL) {
 		return LZW_NO_MEM;
 	}
@@ -103,7 +102,6 @@ lzw_result lzw_context_create(struct lzw_ctx **ctx)
 void lzw_context_destroy(struct lzw_ctx *ctx)
 {
 	free(ctx);
-	// printf("LZW free %p, heap %d\n", ctx, heap());
 }
 
 

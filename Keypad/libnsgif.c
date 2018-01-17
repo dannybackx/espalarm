@@ -16,8 +16,6 @@
 #include "libnsgif.h"
 // #include "utils/log.h"
 
-#include <Arduino.h>
-
 #include "lzw.h"
 
 /**
@@ -296,7 +294,6 @@ static gif_result gif_initialise_frame(gif_animation *gif)
         if ((int)gif->frame_holders <= frame) {
                 /* Allocate more memory */
                 temp_buf = (gif_frame *)realloc(gif->frames, (frame + 1) * sizeof(gif_frame));
-		// printf("GIF realloc %p sz %d -> %p, heap %d\n", gif->frames, (frame + 1) * sizeof(gif_frame), temp_buf, heap());
                 if (temp_buf == NULL) {
                         return GIF_INSUFFICIENT_MEMORY;
                 }
@@ -987,7 +984,7 @@ gif_result gif_initialise(gif_animation *gif, size_t size, unsigned char *data)
                 /*
                 if ((strncmp(gif_data, "87a", 3) != 0) &&
                     (strncmp(gif_data, "89a", 3) != 0))
-                               println("Unknown GIF format - proceeding anyway");
+                               LOG(("Unknown GIF format - proceeding anyway"));
                 */
                 gif_data += 3;
 
@@ -1034,11 +1031,8 @@ gif_result gif_initialise(gif_animation *gif, size_t size, unsigned char *data)
                  * is lying to us. It's far better to give the wrong colours
                  * than to trample over some memory somewhere.
                 */
-		// printf("Before GIF calloc heap %d\n", heap());
                 gif->global_colour_table = calloc(GIF_MAX_COLOURS, sizeof(unsigned int));
-		// printf("GIF calloc sz %d -> %p, heap %d\n", GIF_MAX_COLOURS * sizeof(unsigned int), gif->global_colour_table, heap());
                 gif->local_colour_table = calloc(GIF_MAX_COLOURS, sizeof(unsigned int));
-		// printf("GIF calloc sz %d -> %p, heap %d\n", GIF_MAX_COLOURS * sizeof(unsigned int), gif->local_colour_table, heap());
                 if ((gif->global_colour_table == NULL) ||
                     (gif->local_colour_table == NULL)) {
                         gif_finalise(gif);
@@ -1067,7 +1061,6 @@ gif_result gif_initialise(gif_animation *gif, size_t size, unsigned char *data)
                         gif_finalise(gif);
                         return GIF_INSUFFICIENT_MEMORY;
                 }
-		// printf("GIF malloc %d -> %p, heap %d\n", sizeof(gif_frame), gif->frames, heap());
                 gif->frame_holders = 1;
 
                 /* Initialise the bitmap header */
@@ -1165,13 +1158,10 @@ void gif_finalise(gif_animation *gif)
 
         gif->frame_image = NULL;
         free(gif->frames);
-	printf("GIF free %p\n", gif->frames);
         gif->frames = NULL;
         free(gif->local_colour_table);
-	printf("GIF free %p\n", gif->local_colour_table);
         gif->local_colour_table = NULL;
         free(gif->global_colour_table);
-	printf("GIF free %p\n", gif->global_colour_table);
         gif->global_colour_table = NULL;
 
         lzw_context_destroy(gif->lzw_ctx);
