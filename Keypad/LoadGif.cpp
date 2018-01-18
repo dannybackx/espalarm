@@ -273,8 +273,15 @@ uint16_t *LoadGif::Decode2(const char *name, gif_animation *gif) {
         unsigned int i;
         gif_result code;
 
-	uint16_t *outbuf = (uint16_t *)malloc(gif->width * gif->height * 2);
-
+	uint16_t *outbuf = (uint16_t *)malloc(gif->width * gif->height * 2 + 8);
+#if 0
+	int OB = (int) outbuf;
+	Serial.printf("Alignment %d ...\n", OB % 4);
+	if ((OB % 4) != 0)
+	  outbuf = (uint16_t *)(OB + 1);
+	OB = (int) outbuf;
+	Serial.printf("Alignment %d ...\n", OB % 4);
+#endif
         /* decode the frames */
         for (i = 0; i != gif->frame_count; i++) {
                 unsigned int row, col;
@@ -340,6 +347,8 @@ Serial.printf("TestIt(_, %d) .. ", len);
         gif_finalise(&gif);
 
 	Serial.printf("done (%d x %d)\n", picw, pich);
+
+	oled.drawIcon(pic, 100, 100, picw, pich);
 #if 0
 #define BS 64
   uint16_t tx[BS];

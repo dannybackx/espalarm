@@ -250,3 +250,37 @@ boolean OledButton::contains(int16_t x, int16_t y) {
   return TFT_eSPI_Button::contains(x, y);
 #endif
 }
+
+/*
+ * Note the Bodmer version of drawIcon is for FLASH memory. No such thing here.
+ * See TFT_eSPI/examples/320 x 240/TFT_Flash_Bitmap , moved from example to class method here.
+ */
+void Oled::drawIcon(const uint16_t *icon, int16_t x, int16_t y, uint16_t width, uint16_t height) {
+  uint16_t pixbuf[OLED_BS];
+
+  setWindow(x, y, x + width - 1, y + height - 1);
+
+  // How many whole buffers to send ?
+  uint16_t nb = ((uint16_t)height * width) / OLED_BS;
+
+  // Fill and send that many buffers to TFT
+  for (int i = 0; i < nb; i++) {
+    for (int j = 0; j < OLED_BS; j++) {
+      pixbuf[j] = icon[i * OLED_BS + j];
+    }
+
+    pushColors(pixbuf, OLED_BS);
+  }
+
+  // How many pixels not yet sent ?
+  uint16_t np = ((uint16_t)height * width) % OLED_BS;
+
+  // Send any partial buffer left over
+  if (np) {
+    for (int i = 0; i < np; i++)
+      pixbuf[i] = icon[nb * OLED_BS + i];
+
+      pushColors(pixbuf, np);
+    }
+
+}

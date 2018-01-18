@@ -79,6 +79,9 @@ class Oled : public TFT_eSPI {
     void showScreen(int);
     boolean isScreenVisible(int);
 
+    // Draw images
+    void drawIcon(const uint16_t *icon, int16_t x, int16_t y, uint16_t width, uint16_t height);
+
   private:
     int verbose;
     int	led_state;
@@ -90,6 +93,8 @@ class Oled : public TFT_eSPI {
 
     void showScreenButtons(int);
     OledScreen *current;
+
+    static const unsigned int OLED_BS = 64;
 };
 
 /*
@@ -104,4 +109,6 @@ class OledButton : public TFT_eSPI_Button {
 		uint16_t textcolor, char *label, uint8_t textsize);
   boolean contains(int16_t x, int16_t y);
 };
+
+extern Oled	oled;
 #endif
