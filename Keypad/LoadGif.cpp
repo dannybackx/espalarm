@@ -270,98 +270,77 @@ void LoadGif::loop(time_t) {
 }
 
 uint16_t *LoadGif::Decode2(const char *name, gif_animation *gif) {
-        unsigned int i;
-        gif_result code;
+  unsigned int i;
+  gif_result code;
 
-	uint16_t *outbuf = (uint16_t *)malloc(gif->width * gif->height * 2 + 8);
-#if 0
-	int OB = (int) outbuf;
-	Serial.printf("Alignment %d ...\n", OB % 4);
-	if ((OB % 4) != 0)
-	  outbuf = (uint16_t *)(OB + 1);
-	OB = (int) outbuf;
-	Serial.printf("Alignment %d ...\n", OB % 4);
-#endif
-        /* decode the frames */
-        for (i = 0; i != gif->frame_count; i++) {
-                unsigned int row, col;
-                unsigned char *image;
+  uint16_t *outbuf = (uint16_t *)malloc(gif->width * gif->height * 2 + 8);
+  // Serial.printf("Decode2 : sz %d (%d x %d)\n", gif->width * gif->height * 2 + 8, gif->width, gif->height);
 
-                code = gif_decode_frame(gif, i);
-                if (code != GIF_OK)
-                        ; // warning("gif_decode_frame", code);
+  /* decode the frames */
+  for (i = 0; i != gif->frame_count; i++) {
+    unsigned int row, col;
+    unsigned char *image;
 
-		image = (unsigned char *) gif->frame_image;
-		for (row = 0; row != gif->height; row++) {
-			for (col = 0; col != gif->width; col++) {
-				size_t z = (row * gif->width + col) * 4;
-				// 5 + 6 + 5 bits coded
-				// Serial.printf("%04x ", (uint16_t)(image[z] << 11 | image[z+1] << 6 | image[z+2]));
-				outbuf[row * gif->width + col] = image[z] << 11
-				  | image[z+1] << 6 | image[z+2];
-			}
-		}
-        }
+    code = gif_decode_frame(gif, i);
+    if (code != GIF_OK)
+      ; // warning("gif_decode_frame", code);
+
+    image = (unsigned char *) gif->frame_image;
+    for (row = 0; row != gif->height; row++) {
+      for (col = 0; col != gif->width; col++) {
+	size_t z = (row * gif->width + col) * 4;
+	// 5 + 6 + 5 bits coded
+	// Serial.printf("%04x ", (uint16_t)(image[z] << 11 | image[z+1] << 6 | image[z+2]));
+	outbuf[row * gif->width + col] = image[z] << 11 | image[z+1] << 6 | image[z+2];
+      }
+    }
+  }
+  return outbuf;
 }
 
 void LoadGif::TestIt(unsigned char data[], int len) {
-Serial.printf("TestIt(_, %d) .. ", len);
+  Serial.printf("TestIt(_, %d) .. ", len);
 
-        gif_bitmap_callback_vt bitmap_callbacks = {
-                bitmap_create,
-                bitmap_destroy,
-                bitmap_get_buffer,
-                bitmap_set_opaque,
-                bitmap_test_opaque,
-                bitmap_modified
-        };
-        gif_animation gif;
-        size_t size;
-        gif_result code;
-        unsigned char *gifdata;
-        FILE *outf = stdout;
-        bool no_write = false;
+  gif_bitmap_callback_vt bitmap_callbacks = {
+    bitmap_create,
+    bitmap_destroy,
+    bitmap_get_buffer,
+    bitmap_set_opaque,
+    bitmap_test_opaque,
+    bitmap_modified
+  };
+  gif_animation gif;
+  size_t size;
+  gif_result code;
+  unsigned char *gifdata;
+  FILE *outf = stdout;
+  bool no_write = false;
 
-        /* create our gif animation */
-        gif_create(&gif, &bitmap_callbacks);
+  /* create our gif animation */
+  gif_create(&gif, &bitmap_callbacks);
 
-        /* load file into memory */
-        gifdata = data;
-        size = len;
+  /* load file into memory */
+  gifdata = data;
+  size = len;
 
-        /* begin decoding */
-        do {
-                code = gif_initialise(&gif, size, gifdata);
-                if (code != GIF_OK && code != GIF_WORKING) {
-                        // warning("gif_initialise", code);
-                        return;
-                }
-        } while (code != GIF_OK);
+  /* begin decoding */
+  do {
+    code = gif_initialise(&gif, size, gifdata);
+    if (code != GIF_OK && code != GIF_WORKING) {
+      // warning("gif_initialise", code);
+      return;
+    }
+  } while (code != GIF_OK);
 
-	// Converted picture
-        pic = Decode2("mostlycloudy.gif", &gif);
-	picw = gif.width;
-	pich = gif.height;
+  // Converted picture
+  pic = Decode2("mostlycloudy.gif", &gif);
+  picw = gif.width;
+  pich = gif.height;
 
-        /* clean up */
-        gif_finalise(&gif);
+  /* clean up */
+  gif_finalise(&gif);
 
-	Serial.printf("done (%d x %d)\n", picw, pich);
+  Serial.printf("done (%d x %d)\n", picw, pich);
 
-	oled.drawIcon(pic, 100, 100, picw, pich);
-#if 0
-#define BS 64
-  uint16_t tx[BS];
-
-  oled.setWindow(100, 100, 100 + picw - 1, 100 + pich - 1);
-  uint16_t nb = picw * pich / BS;
-  int i, j;
-  for (i=0; i<nb; i++) {
-    for (j=0; i<BS; j++)
-      tx[j] = pic[i * BS + j];
-    oled.pushColors(tx, BS);
-  }
-  uint16_t np = (picw * pich) % BS;
-  oled.pushColors(&pic[i], np);
-#endif
+  oled.drawIcon(pic, 100, 100, picw, pich);
 }
