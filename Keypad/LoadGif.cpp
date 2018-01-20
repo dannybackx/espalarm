@@ -54,7 +54,7 @@ LoadGif::~LoadGif() {
 }
 
 void LoadGif::loadGif(const char *url) {
-  Serial.printf("LoadGif(%s)\n", url);
+				Serial.printf("LoadGif(%s)\n", url);
 
   size_t giflen;
   gif_result code;
@@ -67,14 +67,14 @@ void LoadGif::loadGif(const char *url) {
   // Download it
   gifdata = loadGif(url, &giflen);
 				// Print first bytes, should read "GIF89a"
-				for (int i=0; i<8; i++)
-				  Serial.printf("%02x %c ", gifdata[i], gifdata[i] ? gifdata[i] : '.');
-				Serial.println();
+				// for (int i=0; i<8; i++)
+				//   Serial.printf("%02x %c ", gifdata[i], gifdata[i] ? gifdata[i] : '.');
+				// Serial.println();
 				// Serial.printf("After download : heap %d\n", ESP.getFreeHeap());
   if (gifdata == 0)
     return;
 
-  Serial.print("Begin decoding .. ");
+				// Serial.print("Begin decoding .. ");
   /* begin decoding */
   do {
     code = gif_initialise(&gif, giflen, gifdata);
@@ -92,12 +92,12 @@ void LoadGif::loadGif(const char *url) {
   /* clean up */
   gif_finalise(&gif);
 
-  Serial.printf("LoadGif conversion done (%d x %d)\n", picw, pich);
+				// Serial.printf("LoadGif conversion done (%d x %d)\n", picw, pich);
 
   oled.drawIcon(pic, 100, 100, picw, pich);
 
-  Serial.println("done");
-  // Serial.printf("After GIF decode : heap %d\n", ESP.getFreeHeap());
+				// Serial.println("done");
+				// Serial.printf("After GIF decode : heap %d\n", ESP.getFreeHeap());
 
   free(gifdata);		// Frees the buffer allocated in loadGif()
 }
@@ -106,15 +106,15 @@ void LoadGif::loadGif(const char *url) {
 #define MAX_IMAGE_BYTES (48 * 1024 * 1024)
 
 static void *bitmap_create(int width, int height) {
-  // Serial.printf("ESP.getFreeHeap() -> %d\n", ESP.getFreeHeap());
-  // Serial.printf("bitmap_create(%d,%d) .. ", width, height);
+				// Serial.printf("ESP.getFreeHeap() -> %d\n", ESP.getFreeHeap());
+				// Serial.printf("bitmap_create(%d,%d) .. ", width, height);
   if (width > 75 || height > 75) {
-    // Serial.print(" -> NULL\n");
+				// Serial.print(" -> NULL\n");
     return NULL;
   }
-  // void *r = malloc(width * height * BYTES_PER_PIXEL);
+
   void *r = calloc(width * height, BYTES_PER_PIXEL);
-  // Serial.printf(" -> %08X\n", r); delay(250);
+				// Serial.printf(" -> %08X\n", r); delay(250);
   return r;
 }
 
@@ -183,7 +183,7 @@ unsigned char *LoadGif::loadGif(const char *url, size_t *data_size) {
 
   query = (char *)malloc(strlen(url) + strlen(host) + strlen(pattern) + 8);
   sprintf(query, pattern, url, host);
-  Serial.printf("Query gif from %s .. ", host);
+				// Serial.printf("Query gif from %s .. ", host);
 
   if (! http.connect(host, 80)) {	// Not connected
     Serial.printf("Could not connect to %s\n", host);
@@ -231,7 +231,7 @@ unsigned char *LoadGif::loadGif(const char *url, size_t *data_size) {
     }
     delay(100);
   }
-  Serial.printf("reply ok, downloaded %d bytes\n", rl);
+				// Serial.printf("reply ok, downloaded %d bytes\n", rl);
 
   http.stop();
 
@@ -257,7 +257,7 @@ uint16_t *LoadGif::Decode2(gif_animation *gif) {
   gif_result code;
 
   uint16_t *outbuf = (uint16_t *)malloc(gif->width * gif->height * 2 + 8);
-  // Serial.printf("Decode2 : sz %d (%d x %d)\n", gif->width * gif->height * 2 + 8, gif->width, gif->height);
+				// Serial.printf("Decode2 : sz %d (%d x %d)\n", gif->width * gif->height * 2 + 8, gif->width, gif->height);
 
   /* decode the frames */
   for (int i = 0; i != gif->frame_count; i++) {
@@ -273,7 +273,7 @@ uint16_t *LoadGif::Decode2(gif_animation *gif) {
       for (col = 0; col != gif->width; col++) {
 	size_t z = (row * gif->width + col) * 4;
 	// 5 + 6 + 5 bits coded
-	// Serial.printf("%04x ", (uint16_t)(image[z] << 11 | image[z+1] << 6 | image[z+2]));
+				// Serial.printf("%04x ", (uint16_t)(image[z] << 11 | image[z+1] << 6 | image[z+2]));
 	// k++ is equivalent to (row * gif->width + col)
 	outbuf[k++] = image[z] << 11 | image[z+1] << 6 | image[z+2];
       }
@@ -325,4 +325,14 @@ void LoadGif::TestIt(unsigned char data[], int len) {
   Serial.printf("TestIt done (%d x %d)\n", picw, pich);
 
   oled.drawIcon(pic, 100, 200, picw, pich);
+}
+
+/*
+ * FIX ME
+ * This is meant to be a way to read a rectangle from the screen, but incomplete
+ * implementation, and untested.
+ * See examples/320 x 240/TFT_Screen_Capture/screenServer.ino
+ */
+void LoadGif::ReadScreen(uint16_t *data, int x, int y, int width, int height) {
+  oled.readRect(x, y, width * height, 1, data);
 }

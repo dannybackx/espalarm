@@ -23,9 +23,12 @@
  *   THE SOFTWARE.
  */
 
-// 
+// Configuration file name to read from SPIFFS
 #define	PREF_CONFIG_FN	"config.json"
 
-/* Wunderground */
-#define	WUNDERGROUND_API_SRV	"api.wunderground.com"
+// Wunderground
+#define	PREF_WUNDERGROUND_API_SRV	"api.wunderground.com"
+
+// Default timezone (relative to GMT)
+#define	PREF_TIMEZONE	+1
 

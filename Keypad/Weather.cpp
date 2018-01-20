@@ -51,18 +51,18 @@ Weather::Weather(boolean doit) {
 void Weather::PerformQuery() {
   if (query == 0) {
     query = (char *)malloc(strlen(WUNDERGROUND_API_KEY) + strlen(WUNDERGROUND_COUNTRY)
-      + strlen(WUNDERGROUND_CITY) + strlen(pattern) + strlen(WUNDERGROUND_API_SRV));
+      + strlen(WUNDERGROUND_CITY) + strlen(pattern) + strlen(PREF_WUNDERGROUND_API_SRV));
     sprintf(query, pattern, WUNDERGROUND_API_KEY, WUNDERGROUND_COUNTRY,
-      WUNDERGROUND_CITY, WUNDERGROUND_API_SRV);
+      WUNDERGROUND_CITY, PREF_WUNDERGROUND_API_SRV);
     // Serial.println(query);
   }
 
   if (http == 0)
     http = new WiFiClient();
 
-  Serial.printf("Querying %s .. ", WUNDERGROUND_API_SRV);
+  Serial.printf("Querying %s .. ", PREF_WUNDERGROUND_API_SRV);
 
-  if (! http->connect(WUNDERGROUND_API_SRV, 80)) {	// Not connected
+  if (! http->connect(PREF_WUNDERGROUND_API_SRV, 80)) {	// Not connected
     Serial.println("Could not connect");
     the_delay = error_delay;
     return;

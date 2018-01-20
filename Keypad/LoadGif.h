@@ -32,6 +32,7 @@ public:
   void loop(time_t);
 
   void loadGif(const char *);
+  void ReadScreen(uint16_t *data, int x, int y, int width, int height);
 
 private:
   static const char	*pattern;
