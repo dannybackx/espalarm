@@ -92,7 +92,7 @@ void LoadGif::loadGif(const char *url) {
   /* clean up */
   gif_finalise(&gif);
 
-  Serial.printf("TestIt done (%d x %d)\n", picw, pich);
+  Serial.printf("LoadGif conversion done (%d x %d)\n", picw, pich);
 
   oled.drawIcon(pic, 100, 100, picw, pich);
 
@@ -254,15 +254,14 @@ void LoadGif::loop(time_t) {
 }
 
 uint16_t *LoadGif::Decode2(gif_animation *gif) {
-  unsigned int i;
   gif_result code;
 
   uint16_t *outbuf = (uint16_t *)malloc(gif->width * gif->height * 2 + 8);
   // Serial.printf("Decode2 : sz %d (%d x %d)\n", gif->width * gif->height * 2 + 8, gif->width, gif->height);
 
   /* decode the frames */
-  for (i = 0; i != gif->frame_count; i++) {
-    unsigned int row, col;
+  for (int i = 0; i != gif->frame_count; i++) {
+    int row, col, k;
     unsigned char *image;
 
     code = gif_decode_frame(gif, i);
@@ -270,12 +269,13 @@ uint16_t *LoadGif::Decode2(gif_animation *gif) {
       ; // warning("gif_decode_frame", code);
 
     image = (unsigned char *) gif->frame_image;
-    for (row = 0; row != gif->height; row++) {
+    for (row = 0, k = 0; row != gif->height; row++) {
       for (col = 0; col != gif->width; col++) {
 	size_t z = (row * gif->width + col) * 4;
 	// 5 + 6 + 5 bits coded
 	// Serial.printf("%04x ", (uint16_t)(image[z] << 11 | image[z+1] << 6 | image[z+2]));
-	outbuf[row * gif->width + col] = image[z] << 11 | image[z+1] << 6 | image[z+2];
+	// k++ is equivalent to (row * gif->width + col)
+	outbuf[k++] = image[z] << 11 | image[z+1] << 6 | image[z+2];
       }
     }
   }
@@ -324,5 +324,5 @@ void LoadGif::TestIt(unsigned char data[], int len) {
 
   Serial.printf("TestIt done (%d x %d)\n", picw, pich);
 
-  oled.drawIcon(pic, 100, 100, picw, pich);
+  oled.drawIcon(pic, 100, 200, picw, pich);
 }

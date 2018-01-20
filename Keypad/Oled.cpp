@@ -256,6 +256,10 @@ boolean OledButton::contains(int16_t x, int16_t y) {
  * See TFT_eSPI/examples/320 x 240/TFT_Flash_Bitmap , moved from example to class method here.
  */
 void Oled::drawIcon(const uint16_t *icon, int16_t x, int16_t y, uint16_t width, uint16_t height) {
+#if 1
+  // Use buffering to increase transfer speed.
+  // We don't need this speed, but the examples are coded this way so what the hell.
+
   uint16_t pixbuf[OLED_BS];
 
   setWindow(x, y, x + width - 1, y + height - 1);
@@ -281,4 +285,9 @@ void Oled::drawIcon(const uint16_t *icon, int16_t x, int16_t y, uint16_t width, 
 
       pushColors(pixbuf, np);
     }
+#else
+  // Slow version, no buffering
+  for (int i=0; i<width*height; i++)
+    pushColor(icon[i]);
+#endif
 }
