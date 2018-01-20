@@ -268,7 +268,6 @@ void Oled::drawIcon(const uint16_t *icon, int16_t x, int16_t y, uint16_t width, 
     for (int j = 0; j < OLED_BS; j++) {
       pixbuf[j] = icon[i * OLED_BS + j];
     }
-
     pushColors(pixbuf, OLED_BS);
   }
 
@@ -282,5 +281,4 @@ void Oled::drawIcon(const uint16_t *icon, int16_t x, int16_t y, uint16_t width, 
 
       pushColors(pixbuf, np);
     }
-
 }

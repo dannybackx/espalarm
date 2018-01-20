@@ -58,7 +58,7 @@ void LoadGif::loadGif(const char *url) {
 
   size_t giflen;
   gif_result code;
-  char *gifdata;
+  unsigned char *gifdata;
 
 				// Serial.printf("Before GIF : heap %d\n", ESP.getFreeHeap());
   gif_create(&gif, &bitmap_callbacks);
@@ -74,47 +74,31 @@ void LoadGif::loadGif(const char *url) {
   if (gifdata == 0)
     return;
 
-  Serial.print("Begin decoding .. "); delay(250);
+  Serial.print("Begin decoding .. ");
+  /* begin decoding */
   do {
-    code = gif_initialise(&gif, giflen, (unsigned char *)gifdata);
+    code = gif_initialise(&gif, giflen, gifdata);
     if (code != GIF_OK && code != GIF_WORKING) {
-      Serial.printf("LoadGif(%s) failed : %d\n", url, code);
+      // warning("gif_initialise", code);
       return;
     }
-    Serial.printf("LoadGif(%s) gif_initialise -> %d\n", url, code);
   } while (code != GIF_OK);
 
-#if 0
-  Serial.print(" (phase 2 disabled)");
-#else
-  Serial.printf(" --> phase 2 .. (has %d frames) ", gif.frame_count);
+  // Converted picture
+  pic = Decode2(&gif);
+  picw = gif.width;
+  pich = gif.height;
 
-  // Handle only one frame
-  unsigned char *image;
+  /* clean up */
+  gif_finalise(&gif);
 
-  code = gif_decode_frame(&gif, 0);	// Only first frame
-  Serial.printf("After gif_decode_frame()\n");
-  if (code != GIF_OK) {
-    Serial.printf("gif error, code %d\n", code);
-    // FIX ME
-  } else {
-    image = (unsigned char *)gif.frame_image;
-    pixels = (uint16_t *)malloc(gif.height * gif.width * 2);
+  Serial.printf("TestIt done (%d x %d)\n", picw, pich);
 
-    for (int row=0; row != gif.height; row++)
-      for (int col=0; col != gif.width; col++) {
-        Serial.printf(".. %d %d\n", row, col);
-	size_t z = (row * gif.width + col) * 4;
-	uint16_t x = image[z] << 11 + image[z+1] << 5 + image[z+2];
-	pixels[row * gif.width + col] = x;
-      }
-  }
+  oled.drawIcon(pic, 100, 100, picw, pich);
 
-#endif
   Serial.println("done");
   // Serial.printf("After GIF decode : heap %d\n", ESP.getFreeHeap());
 
-  gif_finalise(&gif);
   free(gifdata);		// Frees the buffer allocated in loadGif()
 }
 
@@ -175,7 +159,7 @@ const char *LoadGif::pattern = "GET %s HTTP/1.1\r\n"
 // FIX ME this needs to handle timeouts
 // FIX ME this needs to handle slow connections better
 // Return points to a buffer which the caller needs to free.
-char *LoadGif::loadGif(const char *url, size_t *data_size) {
+unsigned char *LoadGif::loadGif(const char *url, size_t *data_size) {
   char		*query, *host;
   WiFiClient	http;
 
@@ -222,7 +206,7 @@ char *LoadGif::loadGif(const char *url, size_t *data_size) {
         skip = false;
     } else {
       // Allocate here, based on the header info
-      buf = (char *)malloc(buflen);
+      buf = (unsigned char *)malloc(buflen);
 
       int nb = http.read((uint8_t *)&buf[rl], buflen - rl);
       if (nb > 0) {
@@ -264,12 +248,12 @@ extern unsigned char mostlycloudy_gif[];
 extern int mostlycloudy_len;
 
 void LoadGif::loop(time_t) {
-  if (mostlycloudy_len)
-    TestIt(mostlycloudy_gif, mostlycloudy_len);
-  mostlycloudy_len = 0;
+  // if (mostlycloudy_len)
+  //   TestIt(mostlycloudy_gif, mostlycloudy_len);
+  // mostlycloudy_len = 0;
 }
 
-uint16_t *LoadGif::Decode2(const char *name, gif_animation *gif) {
+uint16_t *LoadGif::Decode2(gif_animation *gif) {
   unsigned int i;
   gif_result code;
 
@@ -313,8 +297,6 @@ void LoadGif::TestIt(unsigned char data[], int len) {
   size_t size;
   gif_result code;
   unsigned char *gifdata;
-  FILE *outf = stdout;
-  bool no_write = false;
 
   /* create our gif animation */
   gif_create(&gif, &bitmap_callbacks);
@@ -333,14 +315,14 @@ void LoadGif::TestIt(unsigned char data[], int len) {
   } while (code != GIF_OK);
 
   // Converted picture
-  pic = Decode2("mostlycloudy.gif", &gif);
+  pic = Decode2(&gif);
   picw = gif.width;
   pich = gif.height;
 
   /* clean up */
   gif_finalise(&gif);
 
-  Serial.printf("done (%d x %d)\n", picw, pich);
+  Serial.printf("TestIt done (%d x %d)\n", picw, pich);
 
   oled.drawIcon(pic, 100, 100, picw, pich);
 }

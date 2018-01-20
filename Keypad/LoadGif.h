@@ -38,14 +38,14 @@ private:
 
   int			buflen;
   const int		std_buflen = 2000;
-  char			*buf;
+  unsigned char		*buf;
 
   uint16_t		*pixels;
   gif_animation		gif;
 
-  char *loadGif(const char *url, size_t *data_size);
+  unsigned char *loadGif(const char *url, size_t *data_size);
   gif_bitmap_callback_vt bitmap_callbacks;
-  uint16_t *Decode2(const char *name, gif_animation *gif);
+  uint16_t *Decode2(gif_animation *gif);
 
   void TestIt(unsigned char [], int);
 

@@ -90,7 +90,7 @@ void Weather::PerformQuery() {
         Serial.println("Read error");
       }
     }
-    delay(100);
+    delay(300);
   }
 
   http->stop();
@@ -103,16 +103,16 @@ void Weather::PerformQuery() {
   }
   buf[rl++] = 0;
 
-  // Serial.printf("Response received, length %d\n", rl);
-  // Serial.printf("\n\n%s\n\n", buf);
   Serial.println("ok");
 
-  Serial.printf("Heap (before JSON) %d\n", ESP.getFreeHeap());
+  // Serial.printf("Heap (before JSON) %d\n", ESP.getFreeHeap());
 
   DynamicJsonBuffer jb;
   JsonObject &root = jb.parseObject(buf);
   if (! root.success()) {
     Serial.println("Failed to parse JSON");
+    Serial.printf("Response received, length %d\n", rl);
+    Serial.printf("\n\n%s\n\n", buf);
     return;
   }
 
@@ -153,7 +153,7 @@ void Weather::PerformQuery() {
   free(buf);
   buf = 0;
 
-  Serial.printf("Heap (after JSON) %d\n", ESP.getFreeHeap());
+  // Serial.printf("Heap (after JSON) %d\n", ESP.getFreeHeap());
   if (gif) gif->loadGif(icon_url);
 }
 
