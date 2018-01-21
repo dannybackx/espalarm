@@ -1,5 +1,6 @@
 /*
  * Class to display a clock on a specified place on the screen
+ * Three pieces of text can be drawn in configurable places and fonts.
  *
  * Copyright (c) 2017, 2018 Danny Backx
  *
@@ -34,7 +35,6 @@ extern "C" {
 Clock::Clock(Oled *oled) {
   this->oled = oled;
   hr = min = sec = 0;
-  first = 1;
   counter = 0;
 
   // Set up real time clock
@@ -45,6 +45,38 @@ Clock::Clock(Oled *oled) {
   sntp_setservername(1, (char *)"ntp.belnet.be");
 
   dstHandled = DST_NONE;
+
+  // Specify default clock
+  for (int i=0; i<PREF_CLOCK_NB; i++) {
+    first[i] = 1;
+    format[i] = 0;
+    tposx[i] = 0;
+    tposy[i] = 0;
+    buffer[i][0] = 0;
+  }
+
+  // Default setting : three fields
+
+  // Time, displayed in large font
+  tposx[0] = 3;
+  tposy[0] = 50;
+  format[0] = (char *)"%H:%M";
+  font[0] = 4;
+  buffer[0][0] = 0;
+
+  // Smaller day-of-week, date
+  tposx[1] = 140;
+  tposy[1] = 50;
+  format[1] = (char *)"%a %d/%m";
+  font[1] = 1;
+  buffer[1][0] = 0;
+
+  // Smaller month-year
+  tposx[2] = 140;
+  tposy[2] = 75;
+  format[2] = (char *)"%Y";
+  font[2] = 1;
+  buffer[2][0] = 0;
 }
 
 void Clock::loop() {
@@ -82,19 +114,28 @@ void Clock::loop() {
 }
 
 void Clock::draw() {
-  if (first == 0) {
-    oled->setTextColor(ILI9341_BLACK);
-    oled->drawString(buffer, 3, 50);
-    oled->setTextColor(ILI9341_WHITE);
-  }
-  first = 0;
+				// Serial.printf("Clock draw(");
+  for (int i=0; i<PREF_CLOCK_NB; i++)
+    if (format[i] != 0 && format[i][0] != 0) { 
+      oled->fontSize(font[i]);
 
-  // sprintf(buffer, "%02d:%02d", newhour, newminute);
-  struct tm *ptm = localtime(&the_time);
-  strftime(buffer, sizeof(buffer), "%a %d.%m.%Y %H:%M", ptm);
+      if (first[i] == 0) {
+        oled->setTextColor(ILI9341_BLACK);
+        oled->drawString(buffer[i], tposx[i], tposy[i]);
+        oled->setTextColor(ILI9341_WHITE);
+      }
+      first[i] = 0;
 
-  oled->setTextSize(1);
-  oled->drawString(buffer, 3, 50);
+      struct tm *ptm = localtime(&the_time);
+      strftime(buffer[i], sizeof(buffer[i]), format[i], ptm);
+
+				// Serial.printf("%d %s,", i, buffer[i]);
+
+      oled->setTextSize(1);
+      oled->drawString(buffer[i], tposx[i], tposy[i]);
+    }
+  				// Serial.printf(")\n");
+    oled->fontSize(1);
 }
 
 bool Clock::IsDST(int day, int month, int dow)

@@ -41,6 +41,7 @@ static void bitmap_modified(void *bitmap);
 
 LoadGif::LoadGif() {
   pixels = 0;
+  buf = 0;
 
   bitmap_callbacks.bitmap_create = bitmap_create;
   bitmap_callbacks.bitmap_destroy = bitmap_destroy;
@@ -51,6 +52,9 @@ LoadGif::LoadGif() {
 }
 
 LoadGif::~LoadGif() {
+  if (buf)
+    free(buf);
+  buf = 0;
 }
 
 void LoadGif::loadGif(const char *url) {
@@ -80,6 +84,11 @@ void LoadGif::loadGif(const char *url) {
     code = gif_initialise(&gif, giflen, gifdata);
     if (code != GIF_OK && code != GIF_WORKING) {
       // warning("gif_initialise", code);
+
+      // FIXME
+      free(buf);
+      buf = 0;
+
       return;
     }
   } while (code != GIF_OK);
@@ -99,7 +108,8 @@ void LoadGif::loadGif(const char *url) {
 				// Serial.println("done");
 				// Serial.printf("After GIF decode : heap %d\n", ESP.getFreeHeap());
 
-  free(gifdata);		// Frees the buffer allocated in loadGif()
+  free(buf);		// Frees the buffer allocated in loadGif()
+  buf = 0;
 }
 
 #define BYTES_PER_PIXEL 2
@@ -206,6 +216,8 @@ unsigned char *LoadGif::loadGif(const char *url, size_t *data_size) {
         skip = false;
     } else {
       // Allocate here, based on the header info
+      if (buf)		// Prevent leak
+        free(buf);
       buf = (unsigned char *)malloc(buflen);
 
       int nb = http.read((uint8_t *)&buf[rl], buflen - rl);

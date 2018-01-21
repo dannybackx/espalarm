@@ -82,6 +82,9 @@ class Oled : public TFT_eSPI {
     // Draw images
     void drawIcon(const uint16_t *icon, int16_t x, int16_t y, uint16_t width, uint16_t height);
 
+    // My font size selector
+    void fontSize(int i);
+
   private:
     int verbose;
     int	led_state;

@@ -291,3 +291,12 @@ void Oled::drawIcon(const uint16_t *icon, int16_t x, int16_t y, uint16_t width, 
     pushColor(icon[i]);
 #endif
 }
+
+void Oled::fontSize(int i) {
+  switch (i) {
+  default:	setFreeFont(&FreeSans9pt7b); break;
+  case 2:	setFreeFont(&FreeSans12pt7b); break;
+  case 3:	setFreeFont(&FreeSans18pt7b); break;
+  case 4:	setFreeFont(&FreeSans24pt7b); break;
+  }
+}

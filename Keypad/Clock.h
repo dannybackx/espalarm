@@ -21,6 +21,7 @@
  */
 
 #include <Oled.h>
+#include <preferences.h>
 
 #ifndef _CLOCK_H_
 #define _CLOCK_H_
@@ -41,9 +42,16 @@ protected:
 private:
   Oled		*oled;
   void		draw(void);
-  char		buffer[32];
   char		hr, min, sec;
-  int		first;
+
+  // Stuff that is duplicated, one per displayed zone
+  int		first[PREF_CLOCK_NB];
+  char		buffer[PREF_CLOCK_NB][32];
+  char		*format[PREF_CLOCK_NB];		// Description of the content
+  int		font[PREF_CLOCK_NB];		// Font
+  uint16_t	tposx[PREF_CLOCK_NB],		// Position
+		tposy[PREF_CLOCK_NB];
+
   DstHandled	dstHandled;
   void HandleDST1();
   void HandleDST2();

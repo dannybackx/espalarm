@@ -132,7 +132,7 @@ void setup(void) {
     oled.showScreen(s1);
 
     clock = new Clock(&oled);
-    gif = new LoadGif();
+    // gif = new LoadGif();
 
     // We always have a local weather module if we have an OLED
     // Only one of us actually does wunderground queries
