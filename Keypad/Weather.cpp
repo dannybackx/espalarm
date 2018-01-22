@@ -29,6 +29,7 @@
 #include <secrets.h>
 #include <preferences.h>
 #include <ArduinoJson.h>
+#include <Oled.h>
 
 #include <LoadGif.h>
 
@@ -39,13 +40,52 @@ const char *Weather::pattern = "GET /api/%s/conditions/q/%s/%s.json HTTP/1.1\r\n
 	"Connection: close\r\n"
 	"\r\n";
 
-Weather::Weather(boolean doit) {
+/*
+ * Constructor
+ * The parameter says whether this module is the one doing internet queries.
+ * (Only one of the modules queries wunderground.com, the others share the info.)
+ */
+Weather::Weather(boolean doit, Oled *oled) {
   Serial.printf("Weather ctor(%s)\n", doit ? "true" : "false");
   centralNode = doit;
+  this->oled = oled;
+
   the_delay = normal_delay;
   last_query = 0;
   http = 0;
   query = 0;
+  changed = false;
+
+  // Specify default clock
+  for (int i=0; i<PREF_WEATHER_NB; i++) {
+    first[i] = 1;
+    format[i] = 0;
+    wposx[i] = wposy[i] = 0;
+    buffer[i][0] = 0;
+  }
+
+  // Default setting : three fields
+
+  // Temperature, displayed in large font
+  wposx[0] = 120;
+  wposy[0] = 100;
+  format[0] = (char *)"%c °C";
+  font[0] = 4;
+  buffer[0][0] = 0;
+
+  // Smaller : pressure, wind speed, humidity
+  wposx[1] = 5;
+  wposy[1] = 140;
+  format[1] = (char *)"%w km/u %p mb %h";
+  font[1] = 1;
+  buffer[1][0] = 0;
+
+  // Smaller : wind speed
+  wposx[2] = 55;
+  wposy[2] = 120;
+  // format[2] = (char *)"%w km/u";
+  font[2] = 1;
+  buffer[2][0] = 0;
 }
 
 void Weather::PerformQuery() {
@@ -124,20 +164,25 @@ void Weather::PerformQuery() {
 
   temp_c = (const float)current["temp_c"];
   feelslike_c = (const float)current["feelslike_c"];
+  temp_f = (const float)current["temp_f"];
+  feelslike_f = (const float)current["feelslike_f"];
 
   relative_humidity = (char *)(const char *)current["relative_humidity"];
   precip_today_metric = (const int)current["precip_today_metric"];
+  precip_today_in = (const int)current["precip_today_in"];
 
   weather = strdup((const char *)current["weather"]);
   icon_url = strdup((const char *)current["icon_url"]);
 
   pressure_mb = (const int)current["pressure_mb"];
+  pressure_in = (const int)current["pressure_in"];
   pressure_trend = strdup((const char *)current["pressure_trend"]);
 
   observation_epoch = (const int)current["observation_epoch"];
 
   wind_dir = strdup((const char *)current["wind_dir"]);
   wind_kph = (const int)current["wind_kph"];
+  wind_mph = (const int)current["wind_mph"];
 
   int	temp_c_a = (int)temp_c,
   	temp_c_b = (temp_c - temp_c_a) * 10;
@@ -152,6 +197,8 @@ void Weather::PerformQuery() {
 
   free(buf);
   buf = 0;
+
+  changed = true;
 
   // Serial.printf("Heap (after JSON) %d\n", ESP.getFreeHeap());
   if (gif) gif->loadGif(icon_url);
@@ -185,6 +232,117 @@ void Weather::loop(time_t nowts) {
     if (last_query == 0 || (n - last_query > the_delay)) {
       PerformQuery();
       last_query = nowts;
+    }
+  }
+
+  draw();
+}
+
+void Weather::draw() {
+  if (! changed)
+    return;
+  changed = false;
+				// Serial.printf("Weather draw(");
+  for (int i=0; i<PREF_WEATHER_NB; i++)
+    if (format[i] != 0 && format[i][0] != 0) { 
+      oled->fontSize(font[i]);
+
+      if (first[i] == 0) {
+        oled->setTextColor(ILI9341_BLACK);
+        oled->drawString(buffer[i], wposx[i], wposy[i]);
+        oled->setTextColor(ILI9341_WHITE);
+      }
+      first[i] = 0;
+
+      // Print the weather info format-based : we don't have a function for that
+      strwtime(buffer[i], sizeof(buffer[i]), format[i]);
+
+				// Serial.printf("%d %s,", i, buffer[i]);
+
+      oled->setTextSize(1);
+      oled->drawString(buffer[i], wposx[i], wposy[i]);
+    }
+  				// Serial.printf(")\n");
+    oled->fontSize(1);
+}
+
+/*
+ * Perform a strftime-like translation
+ *
+  char		*icon_url,
+  		*weather,
+  		*pressure_trend,
+		*wind_dir,
+		*relative_humidity;
+  float		feelslike_c,
+  		temp_c;
+  int		wind_kph,
+		pressure_mb,
+		observation_epoch,
+		precip_today_metric;
+ */
+void Weather::strwtime(char *buffer, int buflen, const char *format) {
+  char	*endp = buffer + buflen;
+  char	tbuf[16];
+  int	tc_1, tc_2;
+
+  for (; *format && buffer < endp - 1; format++) {
+    tbuf[0] = 0;
+    if (*format != '%') {
+      *buffer++ = *format;
+      continue;
+    }
+    switch (*++format) {
+    // Temperature
+    case 'c':				// Celcius
+      tc_1 = temp_c;
+      tc_2 = (temp_c - tc_1) * 10;
+      sprintf(tbuf, "%d.%d", tc_1, tc_2);
+      break;
+    case 'C':				// Fahrenheit
+      tc_1 = temp_f;
+      tc_2 = (temp_f - tc_1) * 10;
+      sprintf(tbuf, "%d.%d", tc_1, tc_2);
+      break;
+    // Humidity
+    case 'h':
+      sprintf(tbuf, "%s", relative_humidity);
+      break;
+    // Wind
+    case 'w':				// kilometers per hour
+      sprintf(tbuf, "%d", wind_kph);
+      break;
+    case 'W':				// miles per hour
+      sprintf(tbuf, "%d", wind_mph);
+      break;
+    // Rain (precipitation)
+    case 'r':				// millimeters
+      sprintf(tbuf, "%d", precip_today_metric);
+      break;
+    case 'R':				// inches
+      sprintf(tbuf, "%d", precip_today_in);
+      break;
+    // Pressure
+    case 'p':				// millibar
+      sprintf(tbuf, "%d", pressure_mb);
+      break;
+    case 'P':				// inch
+      sprintf(tbuf, "%d", pressure_in);
+      break;
+    default:
+      tbuf[0] = '%';
+      tbuf[1] = *format;
+      tbuf[1] = 0;
+      break;
+    }
+
+    int	i = strlen(tbuf);
+    if (i) {
+      if (buffer + i < endp - 1) {
+        strcpy(buffer, tbuf);
+	buffer += i;
+      } else
+        return;
     }
   }
 }

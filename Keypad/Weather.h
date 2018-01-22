@@ -24,23 +24,29 @@
 #define	_WEATHER_H_
 
 #include <WiFiClient.h>
+#include <preferences.h>
+#include <Oled.h>
 
 class Weather {
 public:
-  Weather(boolean);
+  Weather(boolean, Oled *);
   ~Weather();
   void loop(time_t);
 
 private:
   void PerformQuery();
+  void draw();
+  void strwtime(char *buffer, int buflen, const char *format);
 
   char		*query;
   WiFiClient	*http;
+  Oled		*oled;
 
   const int buflen = 4096;
   char *buf;
 
   boolean	centralNode;	// This one does web queries
+  boolean	changed;
 
   time_t	last_query;
   static const char *pattern;
@@ -55,11 +61,19 @@ private:
   		*pressure_trend,
 		*wind_dir,
 		*relative_humidity;
-  float		feelslike_c,
-  		temp_c;
-  int		wind_kph,
-		pressure_mb,
+  float		feelslike_c, feelslike_f,
+  		temp_c, temp_f;
+  int		wind_kph, wind_mph,
+		pressure_mb, pressure_in,
 		observation_epoch,
-		precip_today_metric;
+		precip_today_metric, precip_today_in;
+
+  // Stuff that is duplicated, one per displayed zone
+  int		first[PREF_WEATHER_NB];
+  char		buffer[PREF_WEATHER_NB][32];
+  char		*format[PREF_WEATHER_NB];	// Description of the content
+  int		font[PREF_WEATHER_NB];		// Font
+  uint16_t	wposx[PREF_WEATHER_NB],		// Position
+		wposy[PREF_WEATHER_NB];
 };
 #endif	/* _WEATHER_H_ */
