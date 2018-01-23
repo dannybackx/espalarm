@@ -77,7 +77,7 @@ void SetupOTA();
 String		ips, gws;
 
 Config			*config;
-Oled			oled;
+Oled			*oled;
 Clock			*clock = 0;
 BackLight		*backlight = 0;
 Sensors			*sensors = 0;
@@ -119,24 +119,24 @@ void setup(void) {
   Serial.println();
 
   if (config->haveOled()) {
-    oled = Oled();
-    oled.begin();
+    oled = new Oled();
+    oled->begin();
     backlight = new BackLight(config->GetOledLedPin());	// led_pin, D3 is GPIO0 on D1 mini
     backlight->SetStatus(BACKLIGHT_TEMP_ON);	// Display on
     backlight->SetTimeout(10);			// Hardcoded timeout in seconds
 
     screen1.buttonText = xxx;
     screen1.buttonHandler = yyy;
-    s1 = oled.addScreen(screen1);
-    s2 = oled.addScreen(screen2);
-    oled.showScreen(s1);
+    s1 = oled->addScreen(screen1);
+    s2 = oled->addScreen(screen2);
+    oled->showScreen(s1);
 
-    clock = new Clock(&oled);
-    // gif = new LoadGif();
+    clock = new Clock(oled);
+    gif = new LoadGif(oled);
 
     // We always have a local weather module if we have an OLED
     // Only one of us actually does wunderground queries
-    weather = new Weather(config->haveWeather());
+    weather = new Weather(config->haveWeather(), oled);
   }
 
   if (config->haveRadio())
@@ -166,7 +166,7 @@ void loop()
   nowts = sntp_get_current_timestamp();
 
   if (config->haveOled()) {
-    oled.loop(nowts);
+    oled->loop(nowts);
     clock->loop();
     if (weather) weather->loop(nowts);
     backlight->loop(nowts);
@@ -179,14 +179,14 @@ void loop()
   if (rfid) rfid->loop(nowts);
 
   if (config->haveOled()) {
-    pressed = oled.getTouchRaw(&t_x, &t_y);
-    t_z = oled.getTouchRawZ();
+    pressed = oled->getTouchRaw(&t_x, &t_y);
+    t_z = oled->getTouchRawZ();
 
     if (pressed == 0 || t_z < 500) 
       return;
 
 //				  Serial.printf("X = %4d\tY = %4d\tZ = %4d\n", t_x, t_y, t_z);
-    oled.fillCircle(t_x, t_y, PENRADIUS, ILI9341_RED);
+    oled->fillCircle(t_x, t_y, PENRADIUS, ILI9341_RED);
 
   }
 }
@@ -284,7 +284,7 @@ void s2b3(struct OledScreen *scr, int button) {
 void s1draw(OledScreen *pscr) {
   Serial.printf("s1draw: drawing screen %s\n", pscr->name.c_str());
 
-  oled.fillScreen(ILI9341_BLACK);
+  oled->fillScreen(ILI9341_BLACK);
 
 				Serial.println("OLED ready.");
 }
