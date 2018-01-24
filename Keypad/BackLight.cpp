@@ -23,6 +23,19 @@
 #include <Arduino.h>
 #include <BackLight.h>
 
+#ifdef ESP32
+extern "C" {
+  void analogWrite(int pin, int value) {
+    ledcWrite(pin, value);
+  }
+
+  const int ledChannel = 0;
+  const int resolution = 8;
+  const int freq = 5000;
+  const int PWMRANGE = 2 ^ resolution;
+}
+#endif
+
 BackLight::BackLight(int pin) {
   led_pin = pin;
 
@@ -35,6 +48,11 @@ BackLight::BackLight(int pin) {
   analogWrite(led_pin, 0);	// Display off
 
   status = BACKLIGHT_NONE;
+
+#ifdef ESP32
+  ledcSetup(ledChannel, freq, resolution);
+  ledcAttachPin(led_pin, ledChannel);
+#endif
 }
 
 void BackLight::SetStatus(BackLightStatus ns) {
