@@ -32,3 +32,6 @@
 // Default timezone (relative to GMT)
 #define	PREF_TIMEZONE	+1
 
+// Number of buffers for the Clock module
+#define	PREF_CLOCK_NB	3
+#define	PREF_WEATHER_NB	3
