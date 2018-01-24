@@ -24,10 +24,11 @@
 #define	_LOADGIF_H_
 
 #include "libnsgif.h"
+#include <Oled.h>
 
 class LoadGif {
 public:
-  LoadGif();
+  LoadGif(Oled *);
   ~LoadGif();
   void loop(time_t);
 
@@ -36,6 +37,7 @@ public:
 
 private:
   static const char	*pattern;
+  Oled			*oled;
 
   int			buflen;
   const int		std_buflen = 2000;

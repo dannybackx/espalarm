@@ -112,6 +112,4 @@ class OledButton : public TFT_eSPI_Button {
 		uint16_t textcolor, char *label, uint8_t textsize);
   boolean contains(int16_t x, int16_t y);
 };
-
-extern Oled	oled;
 #endif

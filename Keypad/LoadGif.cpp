@@ -26,7 +26,7 @@
 #if defined(ESP8266)
 #include <ESP8266WiFi.h>
 #else
-#include <ESPWiFi.h>
+#include <WiFi.h>
 #endif
 #include <WiFiClient.h>
 
@@ -39,7 +39,9 @@ static bool bitmap_test_opaque(void *bitmap);
 static unsigned char *bitmap_get_buffer(void *bitmap);
 static void bitmap_modified(void *bitmap);
 
-LoadGif::LoadGif() {
+LoadGif::LoadGif(Oled *oled) {
+  this->oled = oled;
+
   pixels = 0;
   buf = 0;
 
@@ -92,7 +94,7 @@ void LoadGif::loadGif(const char *url) {
       return;
     }
   } while (code != GIF_OK);
-
+#if 0
   // Converted picture
   pic = Decode2(&gif);
   picw = gif.width;
@@ -103,7 +105,8 @@ void LoadGif::loadGif(const char *url) {
 
 				// Serial.printf("LoadGif conversion done (%d x %d)\n", picw, pich);
 
-  oled.drawIcon(pic, 100, 100, picw, pich);
+  oled->drawIcon(pic, 100, 100, picw, pich);
+#endif
 
 				// Serial.println("done");
 				// Serial.printf("After GIF decode : heap %d\n", ESP.getFreeHeap());
@@ -205,7 +208,7 @@ unsigned char *LoadGif::loadGif(const char *url, size_t *data_size) {
   buflen = std_buflen;		// Postpone allocating buffer, base buffer length on header info
   boolean skip = true;
   int rl = 0;
-  while (http.connected() || http.available()) {
+  while (http && (http.connected() || http.available())) {
     if (skip) {			// Skip headers, but read Content-Length
       String line = http.readStringUntil('\n');
       const char *l = line.c_str();
@@ -269,7 +272,7 @@ uint16_t *LoadGif::Decode2(gif_animation *gif) {
   gif_result code;
 
   uint16_t *outbuf = (uint16_t *)malloc(gif->width * gif->height * 2 + 8);
-				// Serial.printf("Decode2 : sz %d (%d x %d)\n", gif->width * gif->height * 2 + 8, gif->width, gif->height);
+				Serial.printf("Decode2 : sz %d (%d x %d)\n", gif->width * gif->height * 2 + 8, gif->width, gif->height);
 
   /* decode the frames */
   for (int i = 0; i != gif->frame_count; i++) {
@@ -285,12 +288,13 @@ uint16_t *LoadGif::Decode2(gif_animation *gif) {
       for (col = 0; col != gif->width; col++) {
 	size_t z = (row * gif->width + col) * 4;
 	// 5 + 6 + 5 bits coded
-				// Serial.printf("%04x ", (uint16_t)(image[z] << 11 | image[z+1] << 6 | image[z+2]));
+				Serial.printf("%04x ", (uint16_t)(image[z] << 11 | image[z+1] << 6 | image[z+2]));
 	// k++ is equivalent to (row * gif->width + col)
 	outbuf[k++] = image[z] << 11 | image[z+1] << 6 | image[z+2];
       }
     }
   }
+  				Serial.printf("Decode2 : done\n");
   return outbuf;
 }
 
@@ -336,7 +340,7 @@ void LoadGif::TestIt(unsigned char data[], int len) {
 
   Serial.printf("TestIt done (%d x %d)\n", picw, pich);
 
-  oled.drawIcon(pic, 100, 200, picw, pich);
+  oled->drawIcon(pic, 100, 200, picw, pich);
 }
 
 /*
@@ -346,5 +350,5 @@ void LoadGif::TestIt(unsigned char data[], int len) {
  * See examples/320 x 240/TFT_Screen_Capture/screenServer.ino
  */
 void LoadGif::ReadScreen(uint16_t *data, int x, int y, int width, int height) {
-  oled.readRect(x, y, width * height, 1, data);
+  oled->readRect(x, y, width * height, 1, data);
 }
