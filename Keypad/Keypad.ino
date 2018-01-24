@@ -78,7 +78,7 @@ String		ips, gws;
 
 Config			*config;
 Oled			*oled;
-Clock			*clock = 0;
+Clock			*_clock = 0;
 BackLight		*backlight = 0;
 Sensors			*sensors = 0;
 Alarm			*_alarm = 0;
@@ -131,13 +131,14 @@ void setup(void) {
     s2 = oled->addScreen(screen2);
     oled->showScreen(s1);
 
-    clock = new Clock(oled);
     gif = new LoadGif(oled);
-
-    // We always have a local weather module if we have an OLED
-    // Only one of us actually does wunderground queries
-    weather = new Weather(config->haveWeather(), oled);
   }
+
+  _clock = new Clock(oled);
+
+  // We always have a local weather module if we have an OLED
+  // Only one of us actually does wunderground queries
+  weather = new Weather(config->haveWeather(), oled);
 
   if (config->haveRadio())
     sensors = new Sensors();
@@ -162,13 +163,16 @@ void loop()
 
   ArduinoOTA.handle();
 
-  // nowts = now();
+#ifdef ESP32
+  nowts = time(0);
+#else
   nowts = sntp_get_current_timestamp();
+#endif
 
+  if (weather) weather->loop(nowts);
   if (config->haveOled()) {
     oled->loop(nowts);
-    clock->loop();
-    if (weather) weather->loop(nowts);
+    _clock->loop(nowts);
     backlight->loop(nowts);
     gif->loop(nowts);
   }
@@ -195,9 +199,14 @@ void loop()
  * Prepare OTA with minimal verbosity (messages on the console)
  */
 void SetupOTA() {
-  ArduinoOTA.setPort(8266);
   ArduinoOTA.setHostname(OTA_ID);
+#ifdef ESP32
+  ArduinoOTA.setPort(3232);
+  WiFi.setHostname(OTA_ID);
+#else
+  ArduinoOTA.setPort(8266);
   WiFi.hostname(OTA_ID);
+#endif
   ArduinoOTA.begin();
 }
 

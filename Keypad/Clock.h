@@ -35,7 +35,7 @@ enum DstHandled {
 class Clock {
 public:
   Clock(Oled *);
-  void loop(void);
+  void loop(time_t);
 
 protected:
 

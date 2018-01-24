@@ -39,7 +39,11 @@ Clock::Clock(Oled *oled) {
 
   // Set up real time clock
   // Note : DST processing comes later
+#ifdef ESP8266
   (void)sntp_set_timezone(PREF_TIMEZONE);
+#else
+  sntp_setoperatingmode(SNTP_OPMODE_POLL);
+#endif
   sntp_init();
   sntp_setservername(0, (char *)"ntp.scarlet.be");
   sntp_setservername(1, (char *)"ntp.belnet.be");
@@ -73,13 +77,16 @@ Clock::Clock(Oled *oled) {
 
   // Smaller month-year
   tposx[2] = 140;
-  tposy[2] = 75;
+  tposy[2] = 70;
   format[2] = (char *)"%Y";
   font[2] = 1;
   buffer[2][0] = 0;
 }
 
-void Clock::loop() {
+void Clock::loop(time_t nowts) {
+  the_time = nowts;
+
+#ifdef ESP8266
   // Basically try to get the time, do nothing until you have that.
   if (dstHandled != DST_OK) {
     // Try to kick us a step further
@@ -92,6 +99,7 @@ void Clock::loop() {
     if (dstHandled != DST_OK)
       return;
   }
+#endif
 
   // Only do this once per second or so (given the delay 100)
   if (counter++ % 10 == 0) {
@@ -99,8 +107,6 @@ void Clock::loop() {
 
     oldminute = newminute;
     oldhour = newhour;
-
-    the_time = sntp_get_current_timestamp();
 
     newhour = hour(the_time);
     newminute = minute(the_time);
@@ -114,6 +120,8 @@ void Clock::loop() {
 }
 
 void Clock::draw() {
+  if (oled == 0)
+    return;
 				// Serial.printf("Clock draw(");
   for (int i=0; i<PREF_CLOCK_NB; i++)
     if (format[i] != 0 && format[i][0] != 0) { 
@@ -161,12 +169,17 @@ bool Clock::IsDST(int day, int month, int dow)
   return previousSunday <= 0;
 }
 
+#ifdef ESP8266
 void Clock::HandleDST1() {
   time_t t;
 
   // Wait for a correct time, and report it
 
+#ifdef ESP8266
   t = sntp_get_current_timestamp();
+#else
+  t = now();
+#endif
   if (t < 0x1000)
     return;
 
@@ -176,19 +189,31 @@ void Clock::HandleDST1() {
 
     // Set TZ again
     sntp_stop();
+#ifdef ES8266
     (void)sntp_set_timezone(PREF_TIMEZONE + 1);
+#endif
 
     // Re-initialize/fetch
     sntp_init();
     dstHandled = DST_BUSY;
   } else {
+#ifdef ESP8266
     t = sntp_get_current_timestamp();
+#else
+    t = now();
+#endif
     dstHandled = DST_OK;
   }
 }
 
 void Clock::HandleDST2() {
-  time_t t = sntp_get_current_timestamp();
+  time_t t;
+#ifdef ESP8266
+  t = sntp_get_current_timestamp();
+#else
+  t = now();
+#endif
   if (t > 0x1000)
       dstHandled = DST_OK;
 }
+#endif
