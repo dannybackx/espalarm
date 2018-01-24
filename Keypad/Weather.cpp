@@ -73,10 +73,10 @@ Weather::Weather(boolean doit, Oled *oled) {
   font[0] = 4;
   buffer[0][0] = 0;
 
-  // Smaller : pressure, wind speed, humidity
+  // Smaller : pressure, wind speed, rain
   wposx[1] = 5;
   wposy[1] = 140;
-  format[1] = (char *)"%w km/u %p mb %h";
+  format[1] = (char *)"%w km/u %p mb %r mm";
   font[1] = 1;
   buffer[1][0] = 0;
 
@@ -115,7 +115,7 @@ void Weather::PerformQuery() {
   buf = (char *)malloc(buflen);
   boolean skip = true;
   int rl = 0;
-  while (http->connected() || http->available()) {
+  while (http && (http->connected() || http->available())) {
     if (skip) {
       String line = http->readStringUntil('\n');
       if (line.length() <= 1)
@@ -132,11 +132,11 @@ void Weather::PerformQuery() {
     }
     delay(300);
   }
-
+#if 0
   http->stop();
   delete http;
   http = 0;
-
+#endif
   if (rl >= buflen) {
     Serial.println("buffer overflow");
     return;
@@ -222,12 +222,11 @@ Weather::~Weather() {
 /*
  * Loop function : deal with timeout, and slowly dimming the backlight.
  */
-int cnt = 5;
 void Weather::loop(time_t nowts) {
   uint32_t n = (uint32_t)nowts;
 
   if (centralNode) {
-    if (n >= 0 && n < 1000)
+    if (n >= 0 && n < 1000)			// Wait until we know the time
       return;
     if (last_query == 0 || (n - last_query > the_delay)) {
       PerformQuery();
@@ -241,6 +240,9 @@ void Weather::loop(time_t nowts) {
 void Weather::draw() {
   if (! changed)
     return;
+  if (oled == 0)
+    return;
+
   changed = false;
 				// Serial.printf("Weather draw(");
   for (int i=0; i<PREF_WEATHER_NB; i++)
