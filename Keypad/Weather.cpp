@@ -113,6 +113,10 @@ void Weather::PerformQuery() {
   free(query); query = 0;
 
   buf = (char *)malloc(buflen);
+  if (buf == 0) {
+    Serial.printf("Weather::PerformQuery() malloc failed\n");
+    return;
+  }
   boolean skip = true;
   int rl = 0;
   while (http && (http->connected() || http->available())) {
