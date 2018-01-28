@@ -157,12 +157,16 @@ void Weather::PerformQuery() {
     Serial.println("Failed to parse JSON");
     Serial.printf("Response received, length %d\n", rl);
     Serial.printf("\n\n%s\n\n", buf);
+
+    the_delay = error_delay;				// Shorter retry
     return;
   }
 
   JsonObject &current = root["current_observation"];
   if (! current.success()) {
     Serial.println("Failed to parse current in JSON");
+
+    the_delay = error_delay;				// Shorter retry
     return;
   }
 

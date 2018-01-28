@@ -94,7 +94,11 @@ void LoadGif::loadGif(const char *url) {
       return;
     }
   } while (code != GIF_OK);
-#if 0
+
+  free(buf);		// Frees the buffer allocated in loadGif()
+  buf = 0;
+
+#if 1
   // Converted picture
   pic = Decode2(&gif);
   picw = gif.width;
@@ -105,14 +109,14 @@ void LoadGif::loadGif(const char *url) {
 
 				// Serial.printf("LoadGif conversion done (%d x %d)\n", picw, pich);
 
-  oled->drawIcon(pic, 100, 100, picw, pich);
+  if (pic)
+    oled->drawIcon(pic, 100, 100, picw, pich);
+#else
+  gif_finalise(&gif);
 #endif
 
 				// Serial.println("done");
 				// Serial.printf("After GIF decode : heap %d\n", ESP.getFreeHeap());
-
-  free(buf);		// Frees the buffer allocated in loadGif()
-  buf = 0;
 }
 
 #define BYTES_PER_PIXEL 2
@@ -271,8 +275,14 @@ void LoadGif::loop(time_t) {
 uint16_t *LoadGif::Decode2(gif_animation *gif) {
   gif_result code;
 
-  uint16_t *outbuf = (uint16_t *)malloc(gif->width * gif->height * 2 + 8);
-				Serial.printf("Decode2 : sz %d (%d x %d)\n", gif->width * gif->height * 2 + 8, gif->width, gif->height);
+				Serial.printf("Decode2 : sz %d (%d x %d)\n", gif->width * gif->height * 2, gif->width, gif->height);
+
+  uint16_t *outbuf = (uint16_t *)malloc(gif->width * gif->height * 2);
+
+  if (outbuf == 0) {
+    Serial.printf("LoadGif::Decode2 malloc failed (free heap %d)\n", ESP.getFreeHeap());
+    return 0;
+  }
 
   /* decode the frames */
   for (int i = 0; i != gif->frame_count; i++) {
