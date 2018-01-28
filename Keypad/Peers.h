@@ -56,6 +56,8 @@ public:
 
   void AlarmReset(const char *user);		// Pass the user name
 
+  void SendWeather(const char *json);
+
 private:
   list<Peer>		peerlist;
 

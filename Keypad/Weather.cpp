@@ -3,7 +3,13 @@
  *
  * Only one controller should perform the web queries (the one with CTOR parameter true).
  * The others can get the info from that node.
- * The code won't query more than once per 90 minutes.
+ * The code won't query more than once per 90 minutes. (See preferences.h)
+ *
+ * As the ESP8266 will run out of memory (RAM) converting GIF images, polling those and
+ * converting them into raw format is also done on only one node. So all this imagery
+ * doesn't necessarily happen on a node with an OLED.
+ *
+ * Other nodes get the info pushed by the "central" one via JSON.
  *
  * Copyright (c) 2018 Danny Backx
  *
@@ -30,8 +36,9 @@
 #include <preferences.h>
 #include <ArduinoJson.h>
 #include <Oled.h>
-
 #include <LoadGif.h>
+#include <Peers.h>
+#include <Config.h>
 
 const char *Weather::pattern = "GET /api/%s/conditions/q/%s/%s.json HTTP/1.1\r\n"
 	"User-Agent: ESP8266-ESP32 Alarm Console/1.0\r\n"
@@ -56,38 +63,45 @@ Weather::Weather(boolean doit, Oled *oled) {
   query = 0;
   changed = false;
 
-  // Specify default clock
-  for (int i=0; i<PREF_WEATHER_NB; i++) {
-    first[i] = 1;
-    format[i] = 0;
-    wposx[i] = wposy[i] = 0;
-    buffer[i][0] = 0;
+  icon_url = weather = pressure_trend = wind_dir = relative_humidity = 0;
+
+  if (oled) {
+    // Specify default clock
+    for (int i=0; i<PREF_WEATHER_NB; i++) {
+      first[i] = 1;
+      format[i] = 0;
+      wposx[i] = wposy[i] = 0;
+      buffer[i][0] = 0;
+    }
+  
+    // Default setting : three fields
+  
+    // Temperature, displayed in large font
+    wposx[0] = 120;
+    wposy[0] = 100;
+    format[0] = (char *)"%c °C";
+    font[0] = 4;
+    buffer[0][0] = 0;
+  
+    // Smaller : pressure, wind speed, rain
+    wposx[1] = 5;
+    wposy[1] = 140;
+    format[1] = (char *)"%w km/u %p mb %r mm";
+    font[1] = 1;
+    buffer[1][0] = 0;
+  
+    // Smaller : wind speed
+    wposx[2] = 55;
+    wposy[2] = 120;
+    // format[2] = (char *)"%w km/u";
+    font[2] = 1;
+    buffer[2][0] = 0;
   }
-
-  // Default setting : three fields
-
-  // Temperature, displayed in large font
-  wposx[0] = 120;
-  wposy[0] = 100;
-  format[0] = (char *)"%c °C";
-  font[0] = 4;
-  buffer[0][0] = 0;
-
-  // Smaller : pressure, wind speed, rain
-  wposx[1] = 5;
-  wposy[1] = 140;
-  format[1] = (char *)"%w km/u %p mb %r mm";
-  font[1] = 1;
-  buffer[1][0] = 0;
-
-  // Smaller : wind speed
-  wposx[2] = 55;
-  wposy[2] = 120;
-  // format[2] = (char *)"%w km/u";
-  font[2] = 1;
-  buffer[2][0] = 0;
 }
 
+/*
+ * Internet query, only on the CentralNode
+ */
 void Weather::PerformQuery() {
   if (query == 0) {
     query = (char *)malloc(strlen(WUNDERGROUND_API_KEY) + strlen(WUNDERGROUND_COUNTRY)
@@ -141,6 +155,7 @@ void Weather::PerformQuery() {
   delete http;
   http = 0;
 #endif
+
   if (rl >= buflen) {
     Serial.println("buffer overflow");
     return;
@@ -170,46 +185,34 @@ void Weather::PerformQuery() {
     return;
   }
 
-  temp_c = (const float)current["temp_c"];
-  feelslike_c = (const float)current["feelslike_c"];
-  temp_f = (const float)current["temp_f"];
-  feelslike_f = (const float)current["feelslike_f"];
-
-  relative_humidity = (char *)(const char *)current["relative_humidity"];
-  precip_today_metric = (const int)current["precip_today_metric"];
-  precip_today_in = (const int)current["precip_today_in"];
-
-  weather = strdup((const char *)current["weather"]);
-  icon_url = strdup((const char *)current["icon_url"]);
-
-  pressure_mb = (const int)current["pressure_mb"];
-  pressure_in = (const int)current["pressure_in"];
-  pressure_trend = strdup((const char *)current["pressure_trend"]);
-
-  observation_epoch = (const int)current["observation_epoch"];
-
-  wind_dir = strdup((const char *)current["wind_dir"]);
-  wind_kph = (const int)current["wind_kph"];
-  wind_mph = (const int)current["wind_mph"];
-
-  int	temp_c_a = (int)temp_c,
-  	temp_c_b = (temp_c - temp_c_a) * 10;
-  Serial.printf("Current observation : %d.%d °C, pressure %d, wind %d km/h\n",
-  	temp_c_a, temp_c_b, pressure_mb, wind_kph);
-  Serial.printf("Weather %s, pic %s\n", weather, icon_url);
-
-  // Serial.printf("Weather %s\n", wth);
-  // Serial.printf("Time %s\n", ob_time);
-
-  the_delay = normal_delay;
-
+  /*
+   * Grab the info we want from the lengthy Wunderground message
+   */
+  FromPeer(current);
+#if 0
+				  int	temp_c_a = (int)temp_c,
+					temp_c_b = (temp_c - temp_c_a) * 10;
+				  Serial.printf("Current observation : %d.%d °C, pressure %d, wind %d km/h\n",
+					temp_c_a, temp_c_b, pressure_mb, wind_kph);
+				  Serial.printf("Weather %s, pic %s\n", weather, icon_url);
+#endif
   free(buf);
   buf = 0;
 
+  the_delay = normal_delay;
   changed = true;
 
-  // Serial.printf("Heap (after JSON) %d\n", ESP.getFreeHeap());
+  /*
+   * Obtain and convert the corresponding image
+   */
   if (gif) gif->loadGif(icon_url);
+
+  /*
+   * Put this all in a shorter JSON and send to our peers.
+   */
+  const char *wjson = CreatePeerMessage();
+  if (peers) peers->SendWeather(wjson);
+  free((void *)wjson);
 }
 
 Weather::~Weather() {
@@ -242,7 +245,8 @@ void Weather::loop(time_t nowts) {
     }
   }
 
-  draw();
+  if (oled)
+    draw();
 }
 
 void Weather::draw() {
@@ -355,4 +359,91 @@ void Weather::strwtime(char *buffer, int buflen, const char *format) {
         return;
     }
   }
+}
+
+/*
+ * Create JSON format string
+ * Caller must free memory
+ */
+char *Weather::CreatePeerMessage() {
+  char *r = (char *)malloc(500);
+
+  DynamicJsonBuffer jb;
+  JsonObject &jo = jb.createObject();
+  // Generic part of the message
+  jo["weather"] = weather;				// Doubles as identifier and info
+  jo["name"] = config->myName();			// identify ourselves
+  jo["icon_url"] = icon_url;
+
+  // Real content
+  jo["temp_c"] = temp_c;
+  jo["temp_f"] = temp_f;
+  jo["relative_humidity"] = relative_humidity;
+  jo["wind_kph"] = wind_kph;
+  jo["wind_mph"] = wind_mph;
+  jo["precip_today_metric"] = precip_today_metric;
+  jo["precip_today_in"] = precip_today_in;
+  jo["pressure_mb"] = pressure_mb;
+  jo["pressure_in"] = pressure_in;
+  jo.printTo(r, 300);
+
+  return r;
+}
+
+void Weather::FromPeer(JsonObject &json) {
+  temp_c = (const float)json["temp_c"];
+  feelslike_c = (const float)json["feelslike_c"];
+  temp_f = (const float)json["temp_f"];
+  feelslike_f = (const float)json["feelslike_f"];
+
+			int	temp_c_a = (int)temp_c,
+			temp_c_b = (temp_c - temp_c_a) * 10;
+			Serial.printf("Current observation : %d.%d °C\n", temp_c_a, temp_c_b);
+			delay(500);
+
+  relative_humidity = (char *)(const char *)json["relative_humidity"];
+  precip_today_metric = (const int)json["precip_today_metric"];
+  precip_today_in = (const int)json["precip_today_in"];
+
+			Serial.printf("Humidity %s, rain %d mm %d inch\n",
+			  relative_humidity, precip_today_metric, precip_today_in);
+			delay(500);
+
+  const char *w = json["weather"];
+  if (w) {
+    if (weather) free(weather);
+    weather = strdup(w);
+  }
+
+  const char *i = json["icon_url"];
+  if (i) {
+    if (icon_url) free(icon_url);
+    icon_url = strdup(i);
+  }
+
+			Serial.printf("Weather %s, url %s\n", weather, icon_url);
+			delay(500);
+
+  pressure_mb = (const int)json["pressure_mb"];
+  pressure_in = (const int)json["pressure_in"];
+  const char *p = json["pressure_trend"];
+  if (p) {
+    if (pressure_trend) free(pressure_trend);
+    pressure_trend = strdup(p);
+  }
+
+  			Serial.printf("Pressure %d mb %d inch, trend %s\n",
+			  pressure_mb, pressure_in, pressure_trend);
+			delay(500);
+
+  observation_epoch = (const int)json["observation_epoch"];
+
+  const char *wd = json["wind_dir"];
+  if (wd) {
+    if (wind_dir) free(wind_dir);
+    wind_dir = strdup(wd);
+  }
+
+  wind_kph = (const int)json["wind_kph"];
+  wind_mph = (const int)json["wind_mph"];
 }

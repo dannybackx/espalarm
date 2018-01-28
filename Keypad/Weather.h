@@ -26,17 +26,20 @@
 #include <WiFiClient.h>
 #include <preferences.h>
 #include <Oled.h>
+#include <ArduinoJson.h>
 
 class Weather {
 public:
   Weather(boolean, Oled *);
   ~Weather();
   void loop(time_t);
+  void FromPeer(JsonObject &json);
 
 private:
   void PerformQuery();
   void draw();
   void strwtime(char *buffer, int buflen, const char *format);
+  char *CreatePeerMessage();
 
   char		*query;
   WiFiClient	*http;
@@ -51,8 +54,8 @@ private:
   time_t	last_query;
   static const char *pattern;
 
-  static const int	normal_delay = 75 * 60;		// A bit more than an hour between queries
-  static const int	error_delay = 20 * 60;		// Time to wait after error
+  static const int	normal_delay = WU_TIME_OK * 60;	// Wait time between successful queries
+  static const int	error_delay = WU_TIME_FAIL * 60;// Time to wait after error
   int			the_delay;
 
   // Fields from the JSON query
@@ -76,4 +79,6 @@ private:
   uint16_t	wposx[PREF_WEATHER_NB],		// Position
 		wposy[PREF_WEATHER_NB];
 };
+
+extern Weather *weather;
 #endif	/* _WEATHER_H_ */

@@ -47,6 +47,7 @@ using namespace std;
 #include <Config.h>
 #include <ArduinoJson.h>
 #include <Alarm.h>
+#include <Weather.h>
 
 #include <RCSwitch.h>
 
@@ -200,7 +201,7 @@ void Peers::RestSetup() {
   srv->begin();
 }
 
-const int sz = 256;
+const int sz = 512;
 
 void Peers::RestLoop() {
   WiFiClient client = srv->available();
@@ -275,6 +276,9 @@ char *Peers::HandleQuery(const char *str) {
     j2["acknowledge"] = config->myName();
     j2.printTo(output, sizeof(output));
     return output;
+  } else if (query = json["weather"]) {
+    // TO DO, currently no action -> just ACK
+    weather->FromPeer(json);
   } else if (query = json["acknowledge"]) {
     AddPeer(query, mcsrv.remoteIP());
     return 0;
@@ -371,4 +375,9 @@ void Peers::TrackPeerActivity(IPAddress remote) {
 #else
   peer->last_info = sntp_get_current_timestamp();
 #endif
+}
+
+void Peers::SendWeather(const char *json) {
+  Serial.printf("Peers::SendWeather, length %d\n", strlen(json));
+  CallPeers((char *)json);
 }
