@@ -366,14 +366,14 @@ void Weather::strwtime(char *buffer, int buflen, const char *format) {
  * Caller must free memory
  */
 char *Weather::CreatePeerMessage() {
-  char *r = (char *)malloc(500);
+  char *r = (char *)malloc(300);
 
   DynamicJsonBuffer jb;
   JsonObject &jo = jb.createObject();
+
   // Generic part of the message
   jo["weather"] = weather;				// Doubles as identifier and info
   jo["name"] = config->myName();			// identify ourselves
-  jo["icon_url"] = icon_url;
 
   // Real content
   jo["temp_c"] = temp_c;
@@ -385,6 +385,7 @@ char *Weather::CreatePeerMessage() {
   jo["precip_today_in"] = precip_today_in;
   jo["pressure_mb"] = pressure_mb;
   jo["pressure_in"] = pressure_in;
+  jo["pressure_trend"] = pressure_trend;
   jo.printTo(r, 300);
 
   return r;
@@ -396,33 +397,24 @@ void Weather::FromPeer(JsonObject &json) {
   temp_f = (const float)json["temp_f"];
   feelslike_f = (const float)json["feelslike_f"];
 
-			int	temp_c_a = (int)temp_c,
-			temp_c_b = (temp_c - temp_c_a) * 10;
-			Serial.printf("Current observation : %d.%d °C\n", temp_c_a, temp_c_b);
-			delay(500);
+			// int	temp_c_a = (int)temp_c,
+			// temp_c_b = (temp_c - temp_c_a) * 10;
+			// Serial.printf("Current observation : %d.%d °C\n", temp_c_a, temp_c_b);
+			// delay(500);
 
   relative_humidity = (char *)(const char *)json["relative_humidity"];
   precip_today_metric = (const int)json["precip_today_metric"];
   precip_today_in = (const int)json["precip_today_in"];
 
-			Serial.printf("Humidity %s, rain %d mm %d inch\n",
-			  relative_humidity, precip_today_metric, precip_today_in);
-			delay(500);
+			// Serial.printf("Humidity %s, rain %d mm %d inch\n",
+			//   relative_humidity, precip_today_metric, precip_today_in);
+			// delay(500);
 
   const char *w = json["weather"];
   if (w) {
     if (weather) free(weather);
     weather = strdup(w);
   }
-
-  const char *i = json["icon_url"];
-  if (i) {
-    if (icon_url) free(icon_url);
-    icon_url = strdup(i);
-  }
-
-			Serial.printf("Weather %s, url %s\n", weather, icon_url);
-			delay(500);
 
   pressure_mb = (const int)json["pressure_mb"];
   pressure_in = (const int)json["pressure_in"];
@@ -432,9 +424,9 @@ void Weather::FromPeer(JsonObject &json) {
     pressure_trend = strdup(p);
   }
 
-  			Serial.printf("Pressure %d mb %d inch, trend %s\n",
-			  pressure_mb, pressure_in, pressure_trend);
-			delay(500);
+  			// Serial.printf("Pressure %d mb %d inch, trend %s\n",
+			//   pressure_mb, pressure_in, pressure_trend);
+			// delay(500);
 
   observation_epoch = (const int)json["observation_epoch"];
 
@@ -446,4 +438,6 @@ void Weather::FromPeer(JsonObject &json) {
 
   wind_kph = (const int)json["wind_kph"];
   wind_mph = (const int)json["wind_mph"];
+
+  changed = true;
 }

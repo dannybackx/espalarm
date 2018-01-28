@@ -160,9 +160,9 @@ void Peers::CallPeers(char *json) {
 }
 
 void Peers::CallPeer(Peer peer, char *json) {
-  Serial.printf("CallPeer(%s ", peer.name);
-  Serial.print(peer.ip);
-  Serial.printf(":%d, %s)\n", portMulti, json);
+  // Serial.printf("CallPeer(%s ", peer.name);
+  // Serial.print(peer.ip);
+  // Serial.printf(":%d, %s)\n", portMulti, json);
 
   WiFiClient client;
 
@@ -186,7 +186,7 @@ void Peers::CallPeer(Peer peer, char *json) {
   }
   String line = client.readStringUntil('\r');
   client.stop();
-  Serial.printf("Received from peer : %s\n", line.c_str());
+  // Serial.printf("Received from peer : %s\n", line.c_str());
 }
 
 /*********************************************************************************
@@ -378,6 +378,6 @@ void Peers::TrackPeerActivity(IPAddress remote) {
 }
 
 void Peers::SendWeather(const char *json) {
-  Serial.printf("Peers::SendWeather, length %d\n", strlen(json));
+  // Serial.printf("Peers::SendWeather, length %d\n", strlen(json));
   CallPeers((char *)json);
 }
