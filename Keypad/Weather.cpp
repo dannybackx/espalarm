@@ -63,6 +63,9 @@ Weather::Weather(boolean doit, Oled *oled) {
   query = 0;
   changed = false;
 
+  pic = 0;
+  picw = pich = 0;
+
   icon_url = weather = pressure_trend = wind_dir = relative_humidity = 0;
 
   if (oled) {
@@ -165,25 +168,35 @@ void Weather::PerformQuery() {
   Serial.println("ok");
 
   // Serial.printf("Heap (before JSON) %d\n", ESP.getFreeHeap());
+  Serial.printf("Weather.cpp %d\n", __LINE__); delay(500);
 
   DynamicJsonBuffer jb;
+  Serial.printf("Weather.cpp %d\n", __LINE__); delay(500);
   JsonObject &root = jb.parseObject(buf);
+  Serial.printf("Weather.cpp %d\n", __LINE__); delay(500);
   if (! root.success()) {
+  Serial.printf("Weather.cpp %d\n", __LINE__); delay(500);
     Serial.println("Failed to parse JSON");
     Serial.printf("Response received, length %d\n", rl);
     Serial.printf("\n\n%s\n\n", buf);
 
+  Serial.printf("Weather.cpp %d\n", __LINE__); delay(500);
     the_delay = error_delay;				// Shorter retry
+  Serial.printf("Weather.cpp %d\n", __LINE__); delay(500);
     return;
   }
+  Serial.printf("Weather.cpp %d\n", __LINE__); delay(500);
 
   JsonObject &current = root["current_observation"];
+  Serial.printf("Weather.cpp %d\n", __LINE__); delay(500);
   if (! current.success()) {
+  Serial.printf("Weather.cpp %d\n", __LINE__); delay(500);
     Serial.println("Failed to parse current in JSON");
 
     the_delay = error_delay;				// Shorter retry
     return;
   }
+  Serial.printf("Weather.cpp %d\n", __LINE__); delay(500);
 
   /*
    * Grab the info we want from the lengthy Wunderground message
@@ -196,23 +209,39 @@ void Weather::PerformQuery() {
 					temp_c_a, temp_c_b, pressure_mb, wind_kph);
 				  Serial.printf("Weather %s, pic %s\n", weather, icon_url);
 #endif
+  Serial.printf("Weather.cpp %d\n", __LINE__); delay(500);
   free(buf);
   buf = 0;
 
+  Serial.printf("Weather.cpp %d\n", __LINE__); delay(500);
   the_delay = normal_delay;
   changed = true;
 
+  Serial.printf("Weather.cpp %d\n", __LINE__); delay(500);
   /*
    * Obtain and convert the corresponding image
    */
-  if (gif) gif->loadGif(icon_url);
+  Serial.printf("Weather.cpp %d\n", __LINE__); delay(500);
+  if (icon_url)
+    Serial.printf("About to load %s\n", icon_url);
+  else
+    Serial.printf("No icon_url yet, not loading anything\n");
+  delay(1000);
+  Serial.printf("Weather.cpp %d\n", __LINE__); delay(500);
+  if (gif && icon_url)
+    gif->loadGif(icon_url);
+  Serial.printf("Weather.cpp %d\n", __LINE__); delay(500);
 
   /*
    * Put this all in a shorter JSON and send to our peers.
    */
+  Serial.printf("Weather.cpp %d\n", __LINE__); delay(500);
   const char *wjson = CreatePeerMessage();
+  Serial.printf("Weather.cpp %d\n", __LINE__); delay(500);
   if (peers) peers->SendWeather(wjson);
+  Serial.printf("Weather.cpp %d\n", __LINE__); delay(500);
   free((void *)wjson);
+  Serial.printf("Weather.cpp %d\n", __LINE__); delay(500);
 }
 
 Weather::~Weather() {
@@ -227,6 +256,10 @@ Weather::~Weather() {
   if (http) {
     delete http;
     http = 0;
+  }
+  if (pic) {
+    free(pic);
+    pic = 0;
   }
 }
 
@@ -392,6 +425,7 @@ char *Weather::CreatePeerMessage() {
 }
 
 void Weather::FromPeer(JsonObject &json) {
+  Serial.printf("Weather::FromPeer %d\n", __LINE__); delay(500);
   temp_c = (const float)json["temp_c"];
   feelslike_c = (const float)json["feelslike_c"];
   temp_f = (const float)json["temp_f"];
@@ -439,5 +473,33 @@ void Weather::FromPeer(JsonObject &json) {
   wind_kph = (const int)json["wind_kph"];
   wind_mph = (const int)json["wind_mph"];
 
+  Serial.printf("Weather::FromPeer %d\n", __LINE__); delay(500);
   changed = true;
+}
+
+/*
+ * Receive a chunk of data - to preserve memory and avoid writing yet another transfer protocol,
+ * we're reusing the JSON based stuff already in place, and sticking to the buffer size
+ * already allocated there.
+ *
+ * Do (re)allocation at the 0 offset
+ * The image will be offline while being built up.
+ */
+void Weather::ReceiveImageFromPeer(uint16_t wid, uint16_t ht, uint16_t offset, uint16_t *data, uint16_t len) {
+    if (offset == 0 && (picw != wid || pich != ht)) {
+      if (pic)
+        free(pic);
+      picw = wid;
+      pich = ht;
+      pic = (uint16_t *)malloc(2 * picw * pich);
+      if (pic == 0) {
+        Serial.printf("Weather::ReceiveImageFromPeer: malloc failed %dx%d\n", wid, ht);
+	return;
+      }
+    }
+    memcpy(pic + offset, data, len);
+
+    if (offset + len == wid * ht)
+      if (oled)
+        oled->drawIcon(pic, 100, 100, picw, pich);
 }

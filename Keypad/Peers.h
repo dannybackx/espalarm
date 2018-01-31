@@ -30,6 +30,7 @@
 #endif
 #include <WiFiUdp.h>
 #include <Alarm.h>
+#include <ArduinoJson.h>
 
 #include <list>
 using namespace std;
@@ -57,6 +58,7 @@ public:
   void AlarmReset(const char *user);		// Pass the user name
 
   void SendWeather(const char *json);
+  void SendImage(uint16_t *pic, uint16_t wid, uint16_t ht);
 
 private:
   list<Peer>		peerlist;
@@ -70,6 +72,7 @@ private:
   void CallPeers(char *json);
   void CallPeer(Peer, char *json);
   void TrackPeerActivity(IPAddress remote);
+  void ImageFromPeer(const char *query, JsonObject &json);
 
   void SetMyName();
   char *MyName;
@@ -80,6 +83,8 @@ private:
   byte packetBuffer[512];			// buffer to hold incoming and outgoing packets
   WiFiUDP mcsrv;				// socket for both client and server multicast
   IPAddress ipMulti, local;
+
+  const int recBufLen = 512;
 
   char output[128];
 };

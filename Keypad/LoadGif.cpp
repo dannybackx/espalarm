@@ -31,6 +31,7 @@
 #include <WiFiClient.h>
 
 #include <Oled.h>
+#include <Peers.h>
 
 static void *bitmap_create(int width, int height);
 static void bitmap_destroy(void *bitmap);
@@ -109,8 +110,14 @@ void LoadGif::loadGif(const char *url) {
 
 				// Serial.printf("LoadGif conversion done (%d x %d)\n", picw, pich);
 
-  if (pic)
-    oled->drawIcon(pic, 100, 100, picw, pich);
+  if (pic) {
+    if (oled) 
+      oled->drawIcon(pic, 100, 100, picw, pich);
+
+    // Pass on to other nodes
+    if (peers)
+      peers->SendImage(pic, picw, pich);
+  }
 #else
   gif_finalise(&gif);
 #endif
@@ -200,7 +207,7 @@ unsigned char *LoadGif::loadGif(const char *url, size_t *data_size) {
 
   query = (char *)malloc(strlen(url) + strlen(host) + strlen(pattern) + 8);
   sprintf(query, pattern, url, host);
-				// Serial.printf("Query gif from %s .. ", host);
+				Serial.printf("Query gif from %s .. ", host);
 
   if (! http.connect(host, 80)) {	// Not connected
     Serial.printf("Could not connect to %s\n", host);
@@ -250,7 +257,7 @@ unsigned char *LoadGif::loadGif(const char *url, size_t *data_size) {
     }
     delay(100);
   }
-				// Serial.printf("reply ok, downloaded %d bytes\n", rl);
+				Serial.printf("reply ok, downloaded %d bytes\n", rl);
 
   http.stop();
 

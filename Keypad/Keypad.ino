@@ -131,9 +131,9 @@ void setup(void) {
     s2 = oled->addScreen(screen2);
     oled->showScreen(s1);
 
-    gif = new LoadGif(oled);
   }
 
+  gif = new LoadGif(oled);		// THIS DANNY
   _clock = new Clock(oled);
 
   // We always have a local weather module if we have an OLED
@@ -174,9 +174,9 @@ void loop()
     oled->loop(nowts);
     _clock->loop(nowts);
     backlight->loop(nowts);
-    gif->loop(nowts);
   }
 
+  gif->loop(nowts);			// THIS DANNY
   if (sensors) sensors->loop(nowts);
   _alarm->loop(nowts);
   peers->loop(nowts);

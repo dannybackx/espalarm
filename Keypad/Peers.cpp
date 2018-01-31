@@ -201,16 +201,14 @@ void Peers::RestSetup() {
   srv->begin();
 }
 
-const int sz = 512;
-
 void Peers::RestLoop() {
   WiFiClient client = srv->available();
   if (! client) return;
   while (! client.available())
     delay(1);
 
-  uint8_t query[sz];
-  int len = client.read(query, sz);
+  uint8_t query[recBufLen];
+  int len = client.read(query, recBufLen);
   if (len > 0) {
     query[len] = 0;
     Serial.printf("JSON query %s\n", query);
@@ -277,8 +275,9 @@ char *Peers::HandleQuery(const char *str) {
     j2.printTo(output, sizeof(output));
     return output;
   } else if (query = json["weather"]) {
-    // TO DO, currently no action -> just ACK
     weather->FromPeer(json);
+  } else if (query = json["image"]) {
+    ImageFromPeer(query, json);
   } else if (query = json["acknowledge"]) {
     AddPeer(query, mcsrv.remoteIP());
     return 0;
@@ -380,4 +379,26 @@ void Peers::TrackPeerActivity(IPAddress remote) {
 void Peers::SendWeather(const char *json) {
   // Serial.printf("Peers::SendWeather, length %d\n", strlen(json));
   CallPeers((char *)json);
+}
+
+/*
+ * Send a raw image (converted GIF) to our peers, in a format immediately suitable for display.
+ * Do this in chunks so buffers don't swallow all available memory, and we can use JSON.
+ */
+void Peers::SendImage(uint16_t *pic, uint16_t wid, uint16_t ht) {
+  // Any pixel is 16 bits. Transmission as hex string means 4 characters for this, e.g. 0xABCD .
+  // To keep below the limit, we'll send JSON max buffer length divided by 4, minus 80.
+
+  // packet format : { "image" : offset, "w" : width, "h" : height, "d" : "xxx" }
+  int maxlen = recBufLen / 4 - 60;
+
+  sprintf((char *)packetBuffer, "{\"image\": %d, \"w\": %d, \"h\": %d, \"d\": \"", 0, wid, ht);
+  strcat((char *)packetBuffer, "ABCD");
+  strcat((char *)packetBuffer, "\" }");
+
+  CallPeers((char *)packetBuffer);
+}
+
+void Peers::ImageFromPeer(const char *query, JsonObject &json) {
+  Serial.printf("ImageFromPeer\n");
 }

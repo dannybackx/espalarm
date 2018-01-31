@@ -34,6 +34,7 @@ public:
   ~Weather();
   void loop(time_t);
   void FromPeer(JsonObject &json);
+  void ReceiveImageFromPeer(uint16_t wid, uint16_t ht, uint16_t offset, uint16_t *data, uint16_t len);
 
 private:
   void PerformQuery();
@@ -78,6 +79,9 @@ private:
   int		font[PREF_WEATHER_NB];		// Font
   uint16_t	wposx[PREF_WEATHER_NB],		// Position
 		wposy[PREF_WEATHER_NB];
+
+  //
+  uint16_t	*pic, picw, pich;
 };
 
 extern Weather *weather;
