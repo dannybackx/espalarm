@@ -389,6 +389,7 @@ char *Weather::CreatePeerMessage() {
   jo["name"] = config->myName();			// identify ourselves
 
   // Real content
+  jo["icon_url"] = icon_url;
   jo["temp_c"] = temp_c;
   jo["temp_f"] = temp_f;
   jo["relative_humidity"] = relative_humidity;
@@ -452,6 +453,12 @@ void Weather::FromPeer(JsonObject &json) {
   wind_kph = (const int)json["wind_kph"];
   wind_mph = (const int)json["wind_mph"];
 
+  const char *iurl = json["icon_url"];
+  if (iurl) {
+    if (icon_url) free(icon_url);
+    icon_url = strdup(iurl);
+  }
+
   changed = true;
 }
 
@@ -464,20 +471,38 @@ void Weather::FromPeer(JsonObject &json) {
  * The image will be offline while being built up.
  */
 void Weather::ReceiveImageFromPeer(uint16_t wid, uint16_t ht, uint16_t offset, uint16_t *data, uint16_t len) {
-    if (offset == 0 && (picw != wid || pich != ht)) {
-      if (pic)
-        free(pic);
-      picw = wid;
-      pich = ht;
-      pic = (uint16_t *)malloc(2 * picw * pich);
-      if (pic == 0) {
-        Serial.printf("Weather::ReceiveImageFromPeer: malloc failed %dx%d\n", wid, ht);
-	return;
-      }
+#if 1
+  Serial.printf("ReceiveImageFromPeer %dx%d, off %d, len %d: need to alloc\n", wid, ht, offset, len);
+#else
+  if ((pic == 0) || (offset == 0 && (picw != wid || pich != ht))) {
+    Serial.printf("ReceiveImageFromPeer %dx%d, off %d, len %d: need to alloc\n", wid, ht, offset, len);
+    if (pic)
+      free(pic);
+    picw = wid;
+    pich = ht;
+    pic = (uint16_t *)malloc(4 * picw * pich);
+    if (pic == 0) {
+      Serial.printf("Weather::ReceiveImageFromPeer: malloc failed %dx%d\n", wid, ht);
+      return;
     }
-    memcpy(pic + offset, data, len);
+    for (int i=0; i<wid*ht; i++)
+      pic[i] = 0;
+    Serial.printf("ReceiveImageFromPeer: alloc-and-inited %d\n", wid * ht);
+  } else {
+    Serial.printf("Weather::ReceiveImageFromPeer %dx%d off %d len %d\n", wid, ht, offset, len);
+  }
 
-    if (offset + len == wid * ht)
-      if (oled)
-        oled->drawIcon(pic, 100, 100, picw, pich);
+  // memcpy(pic + offset, data, len);
+  for (int i=0; i<len; i++) {
+    Serial.printf("st %d ", i); Serial.flush();
+    pic[offset + i] = data[i];
+  }
+
+  if (offset + len == wid * ht)
+    if (oled) {
+      Serial.printf("Pass picture to OLED\n");
+      oled->drawIcon(pic, 100, 100, picw, pich);
+    }
+  Serial.printf("Weather::ReceiveImageFromPeer return\n");
+#endif
 }

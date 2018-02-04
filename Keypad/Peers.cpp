@@ -377,7 +377,7 @@ void Peers::TrackPeerActivity(IPAddress remote) {
 }
 
 void Peers::SendWeather(const char *json) {
-  // Serial.printf("Peers::SendWeather, length %d\n", strlen(json));
+  Serial.printf("Peers::SendWeather, length %d\n", strlen(json));
   CallPeers((char *)json);
 }
 
@@ -392,13 +392,90 @@ void Peers::SendImage(uint16_t *pic, uint16_t wid, uint16_t ht) {
   // packet format : { "image" : offset, "w" : width, "h" : height, "d" : "xxx" }
   int maxlen = recBufLen / 4 - 60;
 
-  sprintf((char *)packetBuffer, "{\"image\": %d, \"w\": %d, \"h\": %d, \"d\": \"", 0, wid, ht);
-  strcat((char *)packetBuffer, "ABCD");
-  strcat((char *)packetBuffer, "\" }");
+  Serial.printf("SendImage: len %d maxlen %d\n", wid * ht, maxlen);
+  int i=0;
+  for (int ix = 0; ix < wid * ht; ix += maxlen) {
 
-  CallPeers((char *)packetBuffer);
+    int len = wid * ht - ix;
+    if (len > maxlen)
+      len = maxlen;
+
+    sprintf((char *)packetBuffer, "{\"image\": %d, \"w\": %d, \"h\": %d, \"d\": \"", ix, wid, ht);
+    char chunk[5];
+    for (int j=0; j<len; j++) {
+      sprintf(chunk, "%04X", pic[i++]);
+      strcat((char *)packetBuffer, chunk);
+    }
+    strcat((char *)packetBuffer, "\" }");
+    CallPeers((char *)packetBuffer);
+
+    // sprintf((char *)packetBuffer, "{\"image\": %d, \"w\": %d, \"h\": %d, \"d\": \"", 0, wid, ht);
+    // strcat((char *)packetBuffer, "ABCD");
+    // strcat((char *)packetBuffer, "\" }");
+  }
 }
 
+uint16_t x1toi(char x) {
+  if (x >= '0' && x <= '9')
+    return x - '0';
+  if (x >= 'A' && x <= 'F')
+    return x - 'A';
+  if (x >= 'a' && x <= 'f')
+    return x - 'a';
+  return 0;
+}
+
+uint16_t x4toi(const char *s) {
+  uint16_t r;
+  r = x1toi(s[3]);
+  r += x1toi(s[2]) << 4;
+  r += x1toi(s[1]) << 8;
+  r += x1toi(s[0]) << 12;
+  return r;
+}
+
+/*
+ * Just convert from JSON (and hex data) into normal data.
+ * The Weather module will handle special cases (first and last block), store into the
+ * bitmap, and flag to the UI when the image was completely transmitted.
+ */
 void Peers::ImageFromPeer(const char *query, JsonObject &json) {
-  Serial.printf("ImageFromPeer\n");
+  // Serial.printf("Peers::ImageFromPeer\n");
+  uint16_t	offset = atoi(query);
+  uint16_t	wid = json["w"],
+  		ht = json["h"];
+  const char	*d = json["d"];
+
+  Serial.printf("ImageFromPeer %d (%d x %d)\n", offset, wid, ht);
+  Serial.printf("ImageFromPeer data {%s}\n", d);
+
+  uint16_t	num = wid * ht,
+  		len = strlen(d) / 4;
+
+  uint16_t	*data = (uint16_t *)malloc(len);
+  // Serial.printf("ImageFromPeer len %d malloc -> %p\n", len, data);
+  if (data == 0) {
+    Serial.println("Peers::ImageFromPeer: malloc failed");
+    return;
+  }
+
+  for (int i=0; i<len; i++) {
+    uint16_t x;
+
+    x = x4toi(&d[i*4]);
+    // Serial.printf("Pixel %d ", i);
+    // Serial.printf("is %04x ... ", x);
+
+    data[i] = x;
+    // Serial.printf("stored\n");
+  }
+
+#if 0
+  Serial.println("About to call Weather()");
+  if (weather)
+    weather->ReceiveImageFromPeer(wid, ht, offset, data, len);
+  Serial.printf("Peers::ImageFromPeer back\n"); Serial.flush();
+  free(data);
+  Serial.printf("Peers::ImageFromPeer after free\n"); Serial.flush();
+#endif
 }

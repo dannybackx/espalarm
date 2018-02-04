@@ -38,6 +38,7 @@ public:
 private:
   static const char	*pattern;
   Oled			*oled;
+  char			*url;
 
   int			buflen;
   const int		std_buflen = 2000;
