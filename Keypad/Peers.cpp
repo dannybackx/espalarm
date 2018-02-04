@@ -211,7 +211,7 @@ void Peers::RestLoop() {
   int len = client.read(query, recBufLen);
   if (len > 0) {
     query[len] = 0;
-    Serial.printf("JSON query %s\n", query);
+    // Serial.printf("JSON query %s\n", query);
   }
 
   char *reply = HandleQuery((const char *)query);
@@ -233,7 +233,7 @@ char *Peers::HandleQuery(const char *str) {
   JsonObject &json = jb.parseObject(str);
   if (! json.success()) {
     char *reply = (char *)"{ \"reply\" : \"error\", \"message\" : \"Could not parse JSON\" }";
-    Serial.println(reply);
+    // Serial.println(reply);
     return reply;
   }
 
@@ -242,7 +242,7 @@ char *Peers::HandleQuery(const char *str) {
   // {"status" : "armed", "name" : "keypad02"}
   if (query = json["status"]) {
     const char *device_name = json["name"];
-    Serial.printf("Query -> %s (from %s)\n", query, device_name);
+    // Serial.printf("Query -> %s (from %s)\n", query, device_name);
 
     if (strcmp(query, "alarm") == 0) {
       // Example : {"status" : "alarm", "name" : "keypad02", "sensor" : "Kitchen motion detector"}
@@ -339,14 +339,14 @@ void Peers::ServerSocketLoop() {
   if (len) {
     mcsrv.read(packetBuffer, len);
     packetBuffer[len] = 0;
-		    Serial.printf("Received : %s\n", packetBuffer);
+		    // Serial.printf("Received : %s\n", packetBuffer);
 
     char *reply = HandleQuery((char *)packetBuffer);
     if (reply) {
-		    Serial.printf("Replying %s to peer at ", reply ? reply : "(null)");
-		    Serial.print(mcsrv.remoteIP());
-		    Serial.print(":");
-		    Serial.println(mcsrv.remotePort());
+		    // Serial.printf("Replying %s to peer at ", reply ? reply : "(null)");
+		    // Serial.print(mcsrv.remoteIP());
+		    // Serial.print(":");
+		    // Serial.println(mcsrv.remotePort());
 
       mcsrv.beginPacket(mcsrv.remoteIP(), mcsrv.remotePort());
       mcsrv.write((const uint8_t *)reply, strlen(reply)+1);
@@ -377,7 +377,7 @@ void Peers::TrackPeerActivity(IPAddress remote) {
 }
 
 void Peers::SendWeather(const char *json) {
-  Serial.printf("Peers::SendWeather, length %d\n", strlen(json));
+  // Serial.printf("Peers::SendWeather, length %d\n", strlen(json));
   CallPeers((char *)json);
 }
 
@@ -392,7 +392,7 @@ void Peers::SendImage(uint16_t *pic, uint16_t wid, uint16_t ht) {
   // packet format : { "image" : offset, "w" : width, "h" : height, "d" : "xxx" }
   int maxlen = recBufLen / 4 - 60;
 
-  Serial.printf("SendImage: len %d maxlen %d\n", wid * ht, maxlen);
+  // Serial.printf("SendImage: len %d maxlen %d\n", wid * ht, maxlen);
   int i=0;
   for (int ix = 0; ix < wid * ht; ix += maxlen) {
 
@@ -446,8 +446,8 @@ void Peers::ImageFromPeer(const char *query, JsonObject &json) {
   		ht = json["h"];
   const char	*d = json["d"];
 
-  Serial.printf("ImageFromPeer %d (%d x %d)\n", offset, wid, ht);
-  Serial.printf("ImageFromPeer data {%s}\n", d);
+  // Serial.printf("ImageFromPeer %d (%d x %d)\n", offset, wid, ht);
+  // Serial.printf("ImageFromPeer data {%s}\n", d);
 
   uint16_t	num = wid * ht,
   		len = strlen(d) / 4;
@@ -470,12 +470,11 @@ void Peers::ImageFromPeer(const char *query, JsonObject &json) {
     // Serial.printf("stored\n");
   }
 
-#if 1
-  Serial.println("About to call Weather()");
+  // Serial.println("About to call Weather()");
   if (weather)
     weather->ReceiveImageFromPeer(wid, ht, offset, data, len);
-  Serial.printf("Peers::ImageFromPeer back\n"); Serial.flush();
-#endif
+  // Serial.printf("Peers::ImageFromPeer back\n"); Serial.flush();
+
   free(data);
-  Serial.printf("Peers::ImageFromPeer after free\n"); Serial.flush();
+  // Serial.printf("Peers::ImageFromPeer after free\n"); Serial.flush();
 }

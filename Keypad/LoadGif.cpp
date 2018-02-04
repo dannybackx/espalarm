@@ -59,14 +59,14 @@ LoadGif::LoadGif(Oled *oled) {
 LoadGif::~LoadGif() {
   if (buf)
     free(buf);
-				Serial.printf("LoadGif dtor free(%p)\n", buf);
+				// Serial.printf("LoadGif dtor free(%p)\n", buf);
   buf = 0;
 }
 
 void LoadGif::loadGif(const char *url) {
-				Serial.printf("LoadGif(%s)\n", url);
+				// Serial.printf("LoadGif(%s)\n", url);
   if (url && this->url && (strcmp(this->url, url) == 0)) {
-    Serial.printf("Same URL as before (%s)\n", this->url);
+    // Serial.printf("Same URL as before (%s)\n", this->url);
     return;
   }
   if (this->url)
@@ -100,14 +100,14 @@ void LoadGif::loadGif(const char *url) {
 
       // FIXME
       free(buf);
-				Serial.printf("LoadGif return, free buf %p\n", buf);
+				// Serial.printf("LoadGif return, free buf %p\n", buf);
       buf = 0;
 
       return;
     }
   } while (code != GIF_OK);
 
-				Serial.printf("LoadGif free buf %p\n", buf);
+				// Serial.printf("LoadGif free buf %p\n", buf);
   free(buf);		// Frees the buffer allocated in loadGif()
   buf = 0;
 
@@ -117,13 +117,13 @@ void LoadGif::loadGif(const char *url) {
   picw = gif.width;
   pich = gif.height;
 
-				Serial.printf("LoadGif gif_finalise()\n"); Serial.flush();
+				// Serial.printf("LoadGif gif_finalise()\n"); Serial.flush();
   /* clean up */
   gif_finalise(&gif);
 
-				Serial.printf("LoadGif conversion done (%d x %d)\n", picw, pich); Serial.flush();
+				// Serial.printf("LoadGif conversion done (%d x %d)\n", picw, pich); Serial.flush();
 
-  				Serial.printf("LoadGif::pic %p\n", pic); Serial.flush();
+  				// Serial.printf("LoadGif::pic %p\n", pic); Serial.flush();
   if (pic) {
     if (weather)
       weather->drawIcon(pic, picw, pich);	// Weather knows where to draw it
@@ -138,7 +138,7 @@ void LoadGif::loadGif(const char *url) {
   gif_finalise(&gif);
 #endif
 
-				Serial.println("done"); Serial.flush();
+				// Serial.println("done"); Serial.flush();
 				// Serial.printf("After GIF decode : heap %d\n", ESP.getFreeHeap());
 }
 
@@ -147,17 +147,17 @@ void LoadGif::loadGif(const char *url) {
 #define MAX_IMAGE_BYTES (48 * 1024 * 1024)
 
 static void *bitmap_create(int width, int height) {
-				Serial.printf("ESP.getFreeHeap() -> %d\n", ESP.getFreeHeap());
-				Serial.printf("bitmap_create(%d,%d) .. ", width, height);
+				// Serial.printf("ESP.getFreeHeap() -> %d\n", ESP.getFreeHeap());
+				// Serial.printf("bitmap_create(%d,%d) .. ", width, height);
   if (width > 75 || height > 75) {
-				Serial.print(" -> NULL\n");
+				// Serial.print(" -> NULL\n");
     return NULL;
   }
 
   int nb = width * height * BYTES_PER_PIXEL;
   void *r = malloc(nb);
   // void *r = calloc(width * height, BYTES_PER_PIXEL);
-				Serial.printf(" alloc %d -> %08X\n", nb, r); Serial.flush();
+				// Serial.printf(" alloc %d -> %08X\n", nb, r); Serial.flush();
   return r;
 }
 
@@ -181,7 +181,7 @@ static unsigned char *bitmap_get_buffer(void *bitmap)
 
 static void bitmap_destroy(void *bitmap)
 {
-  Serial.printf("bitmap_destroy(%p)\n", bitmap);
+  // Serial.printf("bitmap_destroy(%p)\n", bitmap);
   free(bitmap);
 }
 
@@ -227,7 +227,7 @@ unsigned char *LoadGif::loadGif(const char *url, size_t *data_size) {
 
   query = (char *)malloc(strlen(url) + strlen(host) + strlen(pattern) + 8);
   sprintf(query, pattern, url, host);
-				Serial.printf("Query gif from %s .. ", host);
+				// Serial.printf("Query gif from %s .. ", host);
 
   if (! http.connect(host, 80)) {	// Not connected
     Serial.printf("Could not connect to %s\n", host);
@@ -252,10 +252,10 @@ unsigned char *LoadGif::loadGif(const char *url, size_t *data_size) {
       // Allocate here, based on the header info
       if (buf) {		// Prevent leak
         free(buf);
-					Serial.printf("Free buf %p, pending alloc\n", buf);
+					// Serial.printf("Free buf %p, pending alloc\n", buf);
       }
       buf = (unsigned char *)malloc(buflen);
-      					Serial.printf("Malloc buf(%d) -> %p\n", buflen, buf);
+      					// Serial.printf("Malloc buf(%d) -> %p\n", buflen, buf);
 
       int nb = http.read((uint8_t *)&buf[rl], buflen - rl);
       if (nb > 0) {
@@ -267,7 +267,7 @@ unsigned char *LoadGif::loadGif(const char *url, size_t *data_size) {
 	free(query); query = 0;
 	free(host); host = 0;
 	if (buf) {
-					Serial.printf("Free buf %p\n", buf);
+					// Serial.printf("Free buf %p\n", buf);
 	  free(buf);
 	  buf = 0;
 	}
@@ -281,7 +281,7 @@ unsigned char *LoadGif::loadGif(const char *url, size_t *data_size) {
     }
     delay(100);
   }
-				Serial.printf("reply ok, downloaded %d bytes\n", rl);
+				// Serial.printf("reply ok, downloaded %d bytes\n", rl);
 
   http.stop();
 
@@ -306,10 +306,10 @@ void LoadGif::loop(time_t) {
 uint16_t *LoadGif::Decode2(gif_animation *gif) {
   gif_result code;
 
-				Serial.printf("Decode2 : sz %d (%d x %d)", gif->width * gif->height * 2, gif->width, gif->height);
+				// Serial.printf("Decode2 : sz %d (%d x %d)", gif->width * gif->height * 2, gif->width, gif->height);
 
   uint16_t *outbuf = (uint16_t *)malloc(gif->width * gif->height * 2 + 16);
-				Serial.printf(" -> %p\n", outbuf);
+				// Serial.printf(" -> %p\n", outbuf);
 
   if (outbuf == 0) {
     Serial.printf("LoadGif::Decode2 malloc failed (free heap %d)\n", ESP.getFreeHeap());
@@ -336,7 +336,7 @@ uint16_t *LoadGif::Decode2(gif_animation *gif) {
       }
     }
   }
-  				Serial.printf("Decode2 : done\n");
+  				// Serial.printf("Decode2 : done\n");
   return outbuf;
 }
 

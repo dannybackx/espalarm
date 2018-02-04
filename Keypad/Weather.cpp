@@ -54,6 +54,7 @@ const char *Weather::pattern = "GET /api/%s/conditions/q/%s/%s.json HTTP/1.1\r\n
  */
 Weather::Weather(boolean doit, Oled *oled) {
   Serial.printf("Weather ctor(%s)\n", doit ? "true" : "false");
+
   centralNode = doit;
   this->oled = oled;
 
@@ -473,11 +474,11 @@ void Weather::FromPeer(JsonObject &json) {
  * The image will be offline while being built up.
  */
 void Weather::ReceiveImageFromPeer(uint16_t wid, uint16_t ht, uint16_t offset, uint16_t *data, uint16_t len) {
-#if 0
-  Serial.printf("ReceiveImageFromPeer %dx%d, off %d, len %d: need to alloc\n", wid, ht, offset, len);
-#else
+
+  // Serial.printf("ReceiveImageFromPeer %dx%d, off %d, len %d: need to alloc\n", wid, ht, offset, len);
+
   if ((pic == 0) || (offset == 0 && (picw != wid || pich != ht))) {
-    Serial.printf("ReceiveImageFromPeer %dx%d, off %d, len %d: need to alloc\n", wid, ht, offset, len);
+    // Serial.printf("ReceiveImageFromPeer %dx%d, off %d, len %d: need to alloc\n", wid, ht, offset, len);
     if (pic)
       free(pic);
     picw = wid;
@@ -489,24 +490,23 @@ void Weather::ReceiveImageFromPeer(uint16_t wid, uint16_t ht, uint16_t offset, u
     }
     for (int i=0; i<wid*ht; i++)
       pic[i] = 0;
-    Serial.printf("ReceiveImageFromPeer: alloc-and-inited %d\n", wid * ht);
+    // Serial.printf("ReceiveImageFromPeer: alloc-and-inited %d\n", wid * ht);
   } else {
-    Serial.printf("Weather::ReceiveImageFromPeer %dx%d off %d len %d\n", wid, ht, offset, len);
+    // Serial.printf("Weather::ReceiveImageFromPeer %dx%d off %d len %d\n", wid, ht, offset, len);
   }
 
   // memcpy(pic + offset, data, len);
   for (int i=0; i<len; i++) {
-    Serial.printf("st %d ", i); Serial.flush();
+    // Serial.printf("st %d ", i); Serial.flush();
     pic[offset + i] = data[i];
   }
 
   if (offset + len == wid * ht)
     if (oled) {
-      Serial.printf("Pass picture to OLED\n");
+      // Serial.printf("Pass picture to OLED\n");
       oled->drawIcon(pic, picx, picy, picw, pich);
     }
-  Serial.printf("Weather::ReceiveImageFromPeer return\n");
-#endif
+  // Serial.printf("Weather::ReceiveImageFromPeer return\n");
 }
 
 void Weather::drawIcon(const uint16_t *icon, uint16_t width, uint16_t height) {
