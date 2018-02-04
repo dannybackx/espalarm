@@ -452,7 +452,7 @@ void Peers::ImageFromPeer(const char *query, JsonObject &json) {
   uint16_t	num = wid * ht,
   		len = strlen(d) / 4;
 
-  uint16_t	*data = (uint16_t *)malloc(len);
+  uint16_t	*data = (uint16_t *)malloc(len * 2);
   // Serial.printf("ImageFromPeer len %d malloc -> %p\n", len, data);
   if (data == 0) {
     Serial.println("Peers::ImageFromPeer: malloc failed");
@@ -470,12 +470,12 @@ void Peers::ImageFromPeer(const char *query, JsonObject &json) {
     // Serial.printf("stored\n");
   }
 
-#if 0
+#if 1
   Serial.println("About to call Weather()");
   if (weather)
     weather->ReceiveImageFromPeer(wid, ht, offset, data, len);
   Serial.printf("Peers::ImageFromPeer back\n"); Serial.flush();
+#endif
   free(data);
   Serial.printf("Peers::ImageFromPeer after free\n"); Serial.flush();
-#endif
 }

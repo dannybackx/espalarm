@@ -190,7 +190,7 @@ void loop()
       return;
 
 //				  Serial.printf("X = %4d\tY = %4d\tZ = %4d\n", t_x, t_y, t_z);
-    oled->fillCircle(t_x, t_y, PENRADIUS, ILI9341_RED);
+    // oled->fillCircle(t_x, t_y, PENRADIUS, ILI9341_RED);
 
   }
 }

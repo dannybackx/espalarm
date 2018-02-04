@@ -32,6 +32,7 @@
 
 #include <Oled.h>
 #include <Peers.h>
+#include <Weather.h>
 
 static void *bitmap_create(int width, int height);
 static void bitmap_destroy(void *bitmap);
@@ -124,8 +125,10 @@ void LoadGif::loadGif(const char *url) {
 
   				Serial.printf("LoadGif::pic %p\n", pic); Serial.flush();
   if (pic) {
-    if (oled) 
-      oled->drawIcon(pic, 100, 100, picw, pich);
+    if (weather)
+      weather->drawIcon(pic, picw, pich);	// Weather knows where to draw it
+    // if (oled) 
+    //   oled->drawIcon(pic, picx, picy, picw, pich);
 
     // Pass on to other nodes
     if (peers)

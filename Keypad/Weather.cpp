@@ -65,6 +65,8 @@ Weather::Weather(boolean doit, Oled *oled) {
 
   pic = 0;
   picw = pich = 0;
+  picx = 30;
+  picy = 100;
 
   icon_url = weather = pressure_trend = wind_dir = relative_humidity = 0;
 
@@ -471,7 +473,7 @@ void Weather::FromPeer(JsonObject &json) {
  * The image will be offline while being built up.
  */
 void Weather::ReceiveImageFromPeer(uint16_t wid, uint16_t ht, uint16_t offset, uint16_t *data, uint16_t len) {
-#if 1
+#if 0
   Serial.printf("ReceiveImageFromPeer %dx%d, off %d, len %d: need to alloc\n", wid, ht, offset, len);
 #else
   if ((pic == 0) || (offset == 0 && (picw != wid || pich != ht))) {
@@ -501,8 +503,13 @@ void Weather::ReceiveImageFromPeer(uint16_t wid, uint16_t ht, uint16_t offset, u
   if (offset + len == wid * ht)
     if (oled) {
       Serial.printf("Pass picture to OLED\n");
-      oled->drawIcon(pic, 100, 100, picw, pich);
+      oled->drawIcon(pic, picx, picy, picw, pich);
     }
   Serial.printf("Weather::ReceiveImageFromPeer return\n");
 #endif
+}
+
+void Weather::drawIcon(const uint16_t *icon, uint16_t width, uint16_t height) {
+  if (oled)
+    oled->drawIcon(icon, picx, picy, width, height);
 }
