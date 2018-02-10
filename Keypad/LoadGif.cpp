@@ -127,8 +127,6 @@ void LoadGif::loadGif(const char *url) {
   if (pic) {
     if (weather)
       weather->drawIcon(pic, picw, pich);	// Weather knows where to draw it
-    // if (oled) 
-    //   oled->drawIcon(pic, picx, picy, picw, pich);
 
     // Pass on to other nodes
     if (peers)
@@ -330,9 +328,11 @@ uint16_t *LoadGif::Decode2(gif_animation *gif) {
       for (col = 0; col != gif->width; col++) {
 	size_t z = (row * gif->width + col) * 4;
 	// 5 + 6 + 5 bits coded
-				// Serial.printf("%04x ", (uint16_t)(image[z] << 11 | image[z+1] << 6 | image[z+2]));
 	// k++ is equivalent to (row * gif->width + col)
-	outbuf[k++] = image[z] << 11 | image[z+1] << 6 | image[z+2];
+	// outbuf[k++] = image[z] << 11 | image[z+1] << 6 | image[z+2];
+	outbuf[k++] =	((image[z]  & 0xF8)	<< 8)	// red
+		      | ((image[z+1] & 0xFC)	<< 3)	// green
+		      | ((image[z+2])		>> 3);	// blue
       }
     }
   }

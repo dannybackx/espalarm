@@ -67,7 +67,7 @@ Weather::Weather(boolean doit, Oled *oled) {
   pic = 0;
   picw = pich = 0;
   picx = 30;
-  picy = 100;
+  picy = 90;				// 100 descends too much
 
   icon_url = weather = pressure_trend = wind_dir = relative_humidity = 0;
 
@@ -211,10 +211,10 @@ void Weather::PerformQuery() {
   /*
    * Obtain and convert the corresponding image
    */
-  if (icon_url)
-    Serial.printf("About to load %s\n", icon_url);
-  else
-    Serial.printf("No icon_url yet, not loading anything\n");
+  // if (icon_url)
+  //   Serial.printf("About to load %s\n", icon_url);
+  // else
+  //   Serial.printf("No icon_url yet, not loading anything\n");
 
   if (gif && icon_url)
     gif->loadGif(icon_url);

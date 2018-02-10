@@ -62,7 +62,11 @@ Peers::Peers() {
 
   RestSetup();
   MulticastSetup();
+  ImageServerSetup();
   QueryPeers();
+
+  pic = 0;
+  picw = pich = 0;
 }
 
 Peers::~Peers() {
@@ -104,6 +108,7 @@ void Peers::AddPeer(const char *name, IPAddress ip) {
 void Peers::loop(time_t nowts) {
   RestLoop();
   ServerSocketLoop();
+  ImageServerLoop();
 }
 
 /*********************************************************************************
@@ -197,12 +202,17 @@ void Peers::CallPeer(Peer peer, char *json) {
  *********************************************************************************/
 
 void Peers::RestSetup() {
-  srv = new WiFiServer(portMulti);
-  srv->begin();
+  p2psrv = new WiFiServer(portMulti);
+  p2psrv->begin();
+}
+
+void Peers::ImageServerSetup() {
+  imagesrv = new WiFiServer(portImage);
+  imagesrv->begin();
 }
 
 void Peers::RestLoop() {
-  WiFiClient client = srv->available();
+  WiFiClient client = p2psrv->available();
   if (! client) return;
   while (! client.available())
     delay(1);
@@ -219,6 +229,19 @@ void Peers::RestLoop() {
   // Answer
   if (reply)
     client.println(reply);
+  client.stop();
+}
+
+void Peers::ImageServerLoop() {
+  WiFiClient client = imagesrv->available();
+  if (! client) return;
+  // Serial.printf("Peers::ImageServerLoop : connection %p\n", client);
+  // while (! client.available())
+  //   delay(1);
+
+  // Don't read anything, just send an image
+  int len = client.write((uint8_t *)pic, picw * pich * 2);
+  Serial.printf("Peers::ImageServerLoop : wrote %d (-> %d)\n", picw * pich * 2, len);
   client.stop();
 }
 
@@ -388,7 +411,7 @@ void Peers::SendWeather(const char *json) {
 void Peers::SendImage(uint16_t *pic, uint16_t wid, uint16_t ht) {
   // Any pixel is 16 bits. Transmission as hex string means 4 characters for this, e.g. 0xABCD .
   // To keep below the limit, we'll send JSON max buffer length divided by 4, minus 80.
-
+#if 0
   // packet format : { "image" : offset, "w" : width, "h" : height, "d" : "xxx" }
   int maxlen = recBufLen / 4 - 60;
 
@@ -413,6 +436,19 @@ void Peers::SendImage(uint16_t *pic, uint16_t wid, uint16_t ht) {
     // strcat((char *)packetBuffer, "ABCD");
     // strcat((char *)packetBuffer, "\" }");
   }
+#else
+  // Store the image and its dimensions
+  this->pic = pic;
+  picw = wid;
+  pich = ht;
+
+  // packet format : { "image" : offset, "w" : width, "h" : height, "host" : ip, "port" : port }
+  sprintf((char *)packetBuffer,
+    "{\"image\": %d, \"w\": %d, \"h\": %d, \"host\": %s, \"port\" : %d }",
+    0, wid, ht, local.toString().c_str(), portImage);
+  Serial.printf("SendImage -> %s\n", packetBuffer);
+  CallPeers((char *)packetBuffer);
+#endif
 }
 
 uint16_t x1toi(char x) {
@@ -434,12 +470,22 @@ uint16_t x4toi(const char *s) {
   return r;
 }
 
+void Peers::ImageFromPeer(const char *query, JsonObject &json) {
+  const uint16_t port = json["port"];
+
+  if (port) {
+    ImageFromPeerBinary(query, json, port);
+  } else {
+    ImageFromPeerJSON(query, json);
+  }
+}
+
 /*
  * Just convert from JSON (and hex data) into normal data.
  * The Weather module will handle special cases (first and last block), store into the
  * bitmap, and flag to the UI when the image was completely transmitted.
  */
-void Peers::ImageFromPeer(const char *query, JsonObject &json) {
+void Peers::ImageFromPeerJSON(const char *query, JsonObject &json) {
   // Serial.printf("Peers::ImageFromPeer\n");
   uint16_t	offset = atoi(query);
   uint16_t	wid = json["w"],
@@ -477,4 +523,38 @@ void Peers::ImageFromPeer(const char *query, JsonObject &json) {
 
   free(data);
   // Serial.printf("Peers::ImageFromPeer after free\n"); Serial.flush();
+}
+
+/*
+ * Quick image transfer : just open a TCP connection and transfer it.
+ * The central module posts a TCP port number, client can get the image by connecting and reading.
+ */
+void Peers::ImageFromPeerBinary(const char *query, JsonObject &json, uint16_t port) {
+  uint16_t	wid = json["w"],
+  		ht = json["h"];
+  const char	*host = json["host"];
+
+  Serial.printf("Peers::ImageFromPeerBinary(%s : %d) ... ", host, port);
+
+  WiFiClient	client;
+  int		error;
+  if (! (error = client.connect(host, port))) {
+    client.stop();
+    Serial.printf("failed, error %d\n", error);
+    return;
+  }
+  uint16_t nb = wid * ht * 2;
+  uint8_t *buf = (uint8_t *)malloc(nb);
+  if (buf == 0) {
+    Serial.printf("ImageFromPeerBinary: malloc(%d) failed\n", nb);
+    return;
+  }
+  int cnt = 0, len;
+  while (cnt < nb) {
+    len = client.read(buf+cnt, nb-cnt);
+    cnt += len;
+    delay(50);
+  }
+  client.stop();
+  Serial.printf("done (%d bytes read)\n", len);
 }

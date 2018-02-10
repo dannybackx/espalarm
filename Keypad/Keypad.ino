@@ -74,7 +74,7 @@ void SetupWifi();
 void SetupOTA();
 
 #define OTA_ID		"OTA-KeypadSecure"
-String		ips, gws;
+String			ips, gws;
 
 Config			*config;
 Oled			*oled;

@@ -65,6 +65,8 @@ private:
 
   void RestSetup();
   void RestLoop();
+  void ImageServerSetup();
+  void ImageServerLoop();
   void MulticastSetup();
   void QueryPeers();
   void ServerSocketLoop();
@@ -73,20 +75,25 @@ private:
   void CallPeer(Peer, char *json);
   void TrackPeerActivity(IPAddress remote);
   void ImageFromPeer(const char *query, JsonObject &json);
+  void ImageFromPeerJSON(const char *query, JsonObject &json);
+  void ImageFromPeerBinary(const char *query, JsonObject &json, uint16_t port);
 
   void SetMyName();
   char *MyName;
 
-  WiFiServer	*srv;
+  WiFiServer	*p2psrv, *imagesrv;
 
   const uint16_t portMulti = 23456;		// port number used for all our communication
   byte packetBuffer[512];			// buffer to hold incoming and outgoing packets
   WiFiUDP mcsrv;				// socket for both client and server multicast
   IPAddress ipMulti, local;
+  const uint16_t portImage = 23457;		// contact this to query weather icon
 
   const int recBufLen = 512;
 
   char output[128];
+
+  uint16_t	*pic, picw, pich;
 };
 
 extern Peers *peers;
