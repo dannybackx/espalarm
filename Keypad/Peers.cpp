@@ -556,5 +556,7 @@ void Peers::ImageFromPeerBinary(const char *query, JsonObject &json, uint16_t po
     delay(50);
   }
   client.stop();
-  Serial.printf("done (%d bytes read)\n", len);
+  Serial.printf("done (%d bytes read)\n", cnt);
+
+  if (weather) weather->drawIcon((uint16_t *)buf, wid, ht);
 }

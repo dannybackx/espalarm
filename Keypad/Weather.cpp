@@ -510,6 +510,12 @@ void Weather::ReceiveImageFromPeer(uint16_t wid, uint16_t ht, uint16_t offset, u
 }
 
 void Weather::drawIcon(const uint16_t *icon, uint16_t width, uint16_t height) {
+  if (pic)
+    free(pic);
+  pic = (uint16_t *)icon;
+  picw = width;
+  pich = height;
+
   if (oled)
     oled->drawIcon(icon, picx, picy, width, height);
 }
