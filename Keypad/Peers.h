@@ -74,8 +74,6 @@ private:
   void CallPeers(char *json);
   void CallPeer(Peer, char *json);
   void TrackPeerActivity(IPAddress remote);
-  void ImageFromPeer(const char *query, JsonObject &json);
-  void ImageFromPeerJSON(const char *query, JsonObject &json);
   void ImageFromPeerBinary(const char *query, JsonObject &json, uint16_t port);
 
   void SetMyName();

@@ -2,9 +2,10 @@
  * This module keeps a list of its peer controllers, and serves as messaging platform
  * between the alarm controllers.
  *
- * Two protocols are used :
+ * Three protocols are used :
  * - multicast UDP : device discovery (doesn't work yet)
  * - JSON over TCP (REST calls) to pass messages
+ * - simple TCP transfer of icon images (one TCP port does just that)
  *
  * They exchange information via JSON queries.
  *	Example : {"status" : "armed", "name" : "keypad02"}
@@ -235,9 +236,6 @@ void Peers::RestLoop() {
 void Peers::ImageServerLoop() {
   WiFiClient client = imagesrv->available();
   if (! client) return;
-  // Serial.printf("Peers::ImageServerLoop : connection %p\n", client);
-  // while (! client.available())
-  //   delay(1);
 
   // Don't read anything, just send an image
   int len = client.write((uint8_t *)pic, picw * pich * 2);
@@ -300,7 +298,9 @@ char *Peers::HandleQuery(const char *str) {
   } else if (query = json["weather"]) {
     weather->FromPeer(json);
   } else if (query = json["image"]) {
-    ImageFromPeer(query, json);
+    const uint16_t port = json["port"];
+    if (port)
+      ImageFromPeerBinary(query, json, port);
   } else if (query = json["acknowledge"]) {
     AddPeer(query, mcsrv.remoteIP());
     return 0;
@@ -411,32 +411,7 @@ void Peers::SendWeather(const char *json) {
 void Peers::SendImage(uint16_t *pic, uint16_t wid, uint16_t ht) {
   // Any pixel is 16 bits. Transmission as hex string means 4 characters for this, e.g. 0xABCD .
   // To keep below the limit, we'll send JSON max buffer length divided by 4, minus 80.
-#if 0
-  // packet format : { "image" : offset, "w" : width, "h" : height, "d" : "xxx" }
-  int maxlen = recBufLen / 4 - 60;
 
-  // Serial.printf("SendImage: len %d maxlen %d\n", wid * ht, maxlen);
-  int i=0;
-  for (int ix = 0; ix < wid * ht; ix += maxlen) {
-
-    int len = wid * ht - ix;
-    if (len > maxlen)
-      len = maxlen;
-
-    sprintf((char *)packetBuffer, "{\"image\": %d, \"w\": %d, \"h\": %d, \"d\": \"", ix, wid, ht);
-    char chunk[5];
-    for (int j=0; j<len; j++) {
-      sprintf(chunk, "%04X", pic[i++]);
-      strcat((char *)packetBuffer, chunk);
-    }
-    strcat((char *)packetBuffer, "\" }");
-    CallPeers((char *)packetBuffer);
-
-    // sprintf((char *)packetBuffer, "{\"image\": %d, \"w\": %d, \"h\": %d, \"d\": \"", 0, wid, ht);
-    // strcat((char *)packetBuffer, "ABCD");
-    // strcat((char *)packetBuffer, "\" }");
-  }
-#else
   // Store the image and its dimensions
   this->pic = pic;
   picw = wid;
@@ -448,81 +423,6 @@ void Peers::SendImage(uint16_t *pic, uint16_t wid, uint16_t ht) {
     0, wid, ht, local.toString().c_str(), portImage);
   Serial.printf("SendImage -> %s\n", packetBuffer);
   CallPeers((char *)packetBuffer);
-#endif
-}
-
-uint16_t x1toi(char x) {
-  if (x >= '0' && x <= '9')
-    return x - '0';
-  if (x >= 'A' && x <= 'F')
-    return x - 'A';
-  if (x >= 'a' && x <= 'f')
-    return x - 'a';
-  return 0;
-}
-
-uint16_t x4toi(const char *s) {
-  uint16_t r;
-  r = x1toi(s[3]);
-  r += x1toi(s[2]) << 4;
-  r += x1toi(s[1]) << 8;
-  r += x1toi(s[0]) << 12;
-  return r;
-}
-
-void Peers::ImageFromPeer(const char *query, JsonObject &json) {
-  const uint16_t port = json["port"];
-
-  if (port) {
-    ImageFromPeerBinary(query, json, port);
-  } else {
-    ImageFromPeerJSON(query, json);
-  }
-}
-
-/*
- * Just convert from JSON (and hex data) into normal data.
- * The Weather module will handle special cases (first and last block), store into the
- * bitmap, and flag to the UI when the image was completely transmitted.
- */
-void Peers::ImageFromPeerJSON(const char *query, JsonObject &json) {
-  // Serial.printf("Peers::ImageFromPeer\n");
-  uint16_t	offset = atoi(query);
-  uint16_t	wid = json["w"],
-  		ht = json["h"];
-  const char	*d = json["d"];
-
-  // Serial.printf("ImageFromPeer %d (%d x %d)\n", offset, wid, ht);
-  // Serial.printf("ImageFromPeer data {%s}\n", d);
-
-  uint16_t	num = wid * ht,
-  		len = strlen(d) / 4;
-
-  uint16_t	*data = (uint16_t *)malloc(len * 2);
-  // Serial.printf("ImageFromPeer len %d malloc -> %p\n", len, data);
-  if (data == 0) {
-    Serial.println("Peers::ImageFromPeer: malloc failed");
-    return;
-  }
-
-  for (int i=0; i<len; i++) {
-    uint16_t x;
-
-    x = x4toi(&d[i*4]);
-    // Serial.printf("Pixel %d ", i);
-    // Serial.printf("is %04x ... ", x);
-
-    data[i] = x;
-    // Serial.printf("stored\n");
-  }
-
-  // Serial.println("About to call Weather()");
-  if (weather)
-    weather->ReceiveImageFromPeer(wid, ht, offset, data, len);
-  // Serial.printf("Peers::ImageFromPeer back\n"); Serial.flush();
-
-  free(data);
-  // Serial.printf("Peers::ImageFromPeer after free\n"); Serial.flush();
 }
 
 /*
