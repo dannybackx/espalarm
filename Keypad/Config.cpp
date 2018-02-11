@@ -135,6 +135,7 @@ void Config::ParseConfig(JsonObject &jo) {
     rfid = false;
 
   weather = jo["weather"];
+  secure = jo["secure"];
 }
 
 void Config::HardCodedConfig(const char *mac) {
@@ -173,6 +174,7 @@ void Config::WriteConfig() {
   json["rfidSsPin"] = rfid_ss_pin;
   json["rfidRstPin"] = rfid_rst_pin;
   json["weather"] = weather;
+  json["secure"] = secure;
 
   if (json.printTo(f) == 0) {
     Serial.printf("Failed to write to config file %s\n", PREF_CONFIG_FN);
@@ -200,6 +202,10 @@ boolean Config::haveRfid() {
 
 boolean Config::haveWeather() {
   return weather;
+}
+
+boolean Config::haveSecure() {
+  return secure;
 }
 
 /*

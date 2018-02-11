@@ -52,6 +52,8 @@ public:
   int GetOledLedPin();
   boolean haveWeather();
 
+  boolean haveSecure();
+
 private:
   int siren_pin;
   int radio_pin;
@@ -62,6 +64,8 @@ private:
 
   boolean rfid;
   boolean weather;
+  boolean secure;
+
   const char *rfidType;	// mfrc522 or pn532
   int rfid_rst_pin, rfid_ss_pin;
 

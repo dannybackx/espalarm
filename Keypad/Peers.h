@@ -40,7 +40,7 @@ struct Peer {
   time_t	last_info,	// Time of last update received
  		poll_time;	// Time of our last poll to this peer
   IPAddress	ip;
-  int		radio, siren, secure;
+  boolean	radio, siren, secure, weather, oled;
 };
 
 typedef list<Peer> PeerList;
@@ -50,7 +50,7 @@ public:
   Peers();
   ~Peers();
   void loop(time_t);
-  void AddPeer(const char *name, IPAddress ip);
+  Peer *AddPeer(const char *name, IPAddress ip);
 
   void AlarmSetArmed(AlarmStatus state);
   void AlarmSignal(const char *sensor, AlarmZone zone);
@@ -78,6 +78,7 @@ private:
 
   void SetMyName();
   char *MyName;
+  void Concat(char *query, const char *item);	// For internal use
 
   WiFiServer	*p2psrv, *imagesrv;
 

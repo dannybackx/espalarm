@@ -73,15 +73,16 @@ Peers::Peers() {
 Peers::~Peers() {
 }
 
-void Peers::AddPeer(const char *name, IPAddress ip) {
+Peer *Peers::AddPeer(const char *name, IPAddress ip) {
   if (name == 0 || strlen(name) == 0)
-    return;				// No name ? should not happen
+    return 0;				// No name ? should not happen
 
   Serial.printf("Adding peer controller {%s} %s ... ", name, ip.toString().c_str());
 
   Peer *pp = new Peer();
   pp->ip = ip;
   pp->name = strdup((char *)name);
+  pp->radio = pp->siren = pp->secure = pp->weather = pp->oled = false;
 
   // Remove existing items with same name or IP address
   list<Peer>::iterator node = peerlist.begin();
@@ -101,6 +102,8 @@ void Peers::AddPeer(const char *name, IPAddress ip) {
     node++; count++;
   }
   Serial.printf("now %d peers in the list\n", count);
+
+  return pp;
 }
 
 /*
@@ -287,7 +290,12 @@ char *Peers::HandleQuery(const char *str) {
     // {"announce" : "node-name"}
 
     // Record announced modules
-    AddPeer(query, mcsrv.remoteIP());
+    Peer *p = AddPeer(query, mcsrv.remoteIP());
+    p->oled = json["oled"];
+    p->weather = json["weather"];
+    p->siren = json["siren"];
+    p->radio = json["radio"];
+    p->secure = json["secure"];
 
     // Send : { "acknowledge" : "my name" }
     DynamicJsonBuffer jb2;
@@ -317,9 +325,15 @@ char *Peers::HandleQuery(const char *str) {
  *********************************************************************************/
 // Send out a multicast packet to search peers
 void Peers::QueryPeers() {
-  char query[48];
+  char query[128];
   sprintf(query, "{ \"announce\" : \"%s\" }", config->myName());
   int len = strlen(query);
+
+  if (config->haveOled()) Concat(query, "oled");
+  if (config->haveRadio()) Concat(query, "radio");
+  if (config->haveRfid()) Concat(query, "rfid");
+  if (config->haveWeather()) Concat(query, "weather");
+  if (config->haveSecure()) Concat(query, "secure");
 
 #ifdef ESP8266
   mcsrv.beginPacketMulticast(ipMulti, portMulti, local);
@@ -338,6 +352,15 @@ void Peers::QueryPeers() {
 #endif
   mcsrv.write((const uint8_t *)query, len+1);
   mcsrv.endPacket();
+}
+
+/*
+ * Make something like {"announce" : "me", "weather" : true}
+ */
+void Peers::Concat(char *query, const char *item) {
+  strcat(query, ", \"");
+  strcat(query, item);
+  strcat(query, "\": true ");
 }
 
 void Peers::MulticastSetup() {
