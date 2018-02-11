@@ -119,17 +119,18 @@ void Peers::loop(time_t nowts) {
   // t1 = system_get_time();
 
   if (image_host) {
-    // This is a hack : wait 10 seconds
+    // This is a hack : wait 4 seconds
     static uint32_t it1, it2;
     if (it1 == 0)
       it1 = system_get_time();
     else {
       it2 = system_get_time();
-      if (it2 - it1 > 10000000) {
+      if (it2 - it1 > 4000000) {
 	ImageFromPeerBinaryAsync();
 
 	free(image_host);
 	image_host = 0;
+	it1 = it2 = 0;
       }
     }
     // ImageFromPeerBinaryAsync();
