@@ -424,7 +424,7 @@ void Weather::FromPeer(JsonObject &json) {
     if (relative_humidity) free(relative_humidity);
     relative_humidity = strdup(rh);
   }
-  relative_humidity = (char *)(const char *)json["relative_humidity"];
+
   precip_today_metric = (const int)json["precip_today_metric"];
   precip_today_in = (const int)json["precip_today_in"];
 
@@ -468,7 +468,7 @@ void Weather::FromPeer(JsonObject &json) {
   }
 
   changed = true;
-			Serial.printf("Weather::FromPeer return\n");
+			// Serial.printf("Weather::FromPeer return\n");
 }
 
 /*
