@@ -55,6 +55,8 @@ using namespace std;
 #ifdef ESP8266
 extern "C" {
   #include <sntp.h>
+  // for system_get_time() :
+  #include <user_interface.h>
 }
 #endif
 
@@ -113,16 +115,36 @@ Peer *Peers::AddPeer(const char *name, IPAddress ip) {
  * Report environmental information periodically
  */
 void Peers::loop(time_t nowts) {
-  if (image_host) {
-    ImageFromPeerBinaryAsync();
+  // uint32_t	t1, t2, dt;
+  // t1 = system_get_time();
 
-    free(image_host);
-    image_host = 0;
+  if (image_host) {
+    // This is a hack : wait 10 seconds
+    static uint32_t it1, it2;
+    if (it1 == 0)
+      it1 = system_get_time();
+    else {
+      it2 = system_get_time();
+      if (it2 - it1 > 10000000) {
+	ImageFromPeerBinaryAsync();
+
+	free(image_host);
+	image_host = 0;
+      }
+    }
+    // ImageFromPeerBinaryAsync();
+
+    // free(image_host);
+    // image_host = 0;
   }
 
   RestLoop();
   ServerSocketLoop();
   ImageServerLoop();
+
+  // t2 = system_get_time();
+  // dt = t2 - t1;
+  // if (dt > 200) Serial.printf("Peers::loop %d µs\n", dt);
 }
 
 /*********************************************************************************
