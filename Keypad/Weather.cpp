@@ -151,7 +151,7 @@ void Weather::PerformQuery() {
 	if (rl > buflen)
 	  rl = buflen;
       } else if (nb < 0) {
-        Serial.println("Read error");
+        Serial.printf("Read error %d, already read %d bytes\n", nb, rl);
       }
     }
     delay(300);

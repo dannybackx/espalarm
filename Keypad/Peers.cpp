@@ -201,9 +201,9 @@ void Peers::CallPeers(char *json) {
 }
 
 void Peers::CallPeer(Peer peer, char *json) {
-  Serial.printf("CallPeer(%s ", peer.name);
-  Serial.print(peer.ip);
-  Serial.printf(":%d, %s)\n", portMulti, json);
+  // Serial.printf("CallPeer(%s ", peer.name);
+  // Serial.print(peer.ip);
+  // Serial.printf(":%d, %s)\n", portMulti, json);
 
   WiFiClient client;
 
