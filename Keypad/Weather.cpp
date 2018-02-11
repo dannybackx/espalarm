@@ -211,20 +211,17 @@ void Weather::PerformQuery() {
   /*
    * Obtain and convert the corresponding image
    */
-  // if (icon_url)
-  //   Serial.printf("About to load %s\n", icon_url);
-  // else
-  //   Serial.printf("No icon_url yet, not loading anything\n");
-
   if (gif && icon_url)
     gif->loadGif(icon_url);
 
   /*
    * Put this all in a shorter JSON and send to our peers.
    */
-  const char *wjson = CreatePeerMessage();
-  if (peers) peers->SendWeather(wjson);
-  free((void *)wjson);
+  if (peers) {
+    const char *wjson = CreatePeerMessage();
+    peers->SendWeather(wjson);
+    free((void *)wjson);
+  }
 }
 
 Weather::~Weather() {
@@ -326,12 +323,12 @@ void Weather::strwtime(char *buffer, int buflen, const char *format) {
     // Temperature
     case 'c':				// Celcius
       tc_1 = temp_c;
-      tc_2 = (temp_c - tc_1) * 10;
+      tc_2 = (temp_c < 0) ? (tc_1 - temp_c) * 10 : (temp_c - tc_1) * 10;
       sprintf(tbuf, "%d.%d", tc_1, tc_2);
       break;
     case 'C':				// Fahrenheit
       tc_1 = temp_f;
-      tc_2 = (temp_f - tc_1) * 10;
+      tc_2 = (tc_1 < 0) ? (tc_1 - temp_f) * 10 : (temp_f - tc_1) * 10;
       sprintf(tbuf, "%d.%d", tc_1, tc_2);
       break;
     // Humidity
@@ -408,6 +405,9 @@ char *Weather::CreatePeerMessage() {
   return r;
 }
 
+/*
+ * Decode the JSON we get, both from Wunderground and from peers
+ */
 void Weather::FromPeer(JsonObject &json) {
   temp_c = (const float)json["temp_c"];
   feelslike_c = (const float)json["feelslike_c"];
@@ -466,49 +466,8 @@ void Weather::FromPeer(JsonObject &json) {
 }
 
 /*
- * Receive a chunk of data - to preserve memory and avoid writing yet another transfer protocol,
- * we're reusing the JSON based stuff already in place, and sticking to the buffer size
- * already allocated there.
- *
- * Do (re)allocation at the 0 offset
- * The image will be offline while being built up.
+ * We store the icon here, gets passed either by Peers.cpp or LoadGif.cpp .
  */
-void Weather::ReceiveImageFromPeer(uint16_t wid, uint16_t ht, uint16_t offset, uint16_t *data, uint16_t len) {
-
-  // Serial.printf("ReceiveImageFromPeer %dx%d, off %d, len %d: need to alloc\n", wid, ht, offset, len);
-
-  if ((pic == 0) || (offset == 0 && (picw != wid || pich != ht))) {
-    // Serial.printf("ReceiveImageFromPeer %dx%d, off %d, len %d: need to alloc\n", wid, ht, offset, len);
-    if (pic)
-      free(pic);
-    picw = wid;
-    pich = ht;
-    pic = (uint16_t *)malloc(4 * picw * pich);
-    if (pic == 0) {
-      Serial.printf("Weather::ReceiveImageFromPeer: malloc failed %dx%d\n", wid, ht);
-      return;
-    }
-    for (int i=0; i<wid*ht; i++)
-      pic[i] = 0;
-    // Serial.printf("ReceiveImageFromPeer: alloc-and-inited %d\n", wid * ht);
-  } else {
-    // Serial.printf("Weather::ReceiveImageFromPeer %dx%d off %d len %d\n", wid, ht, offset, len);
-  }
-
-  // memcpy(pic + offset, data, len);
-  for (int i=0; i<len; i++) {
-    // Serial.printf("st %d ", i); Serial.flush();
-    pic[offset + i] = data[i];
-  }
-
-  if (offset + len == wid * ht)
-    if (oled) {
-      // Serial.printf("Pass picture to OLED\n");
-      oled->drawIcon(pic, picx, picy, picw, pich);
-    }
-  // Serial.printf("Weather::ReceiveImageFromPeer return\n");
-}
-
 void Weather::drawIcon(const uint16_t *icon, uint16_t width, uint16_t height) {
   if (pic)
     free(pic);

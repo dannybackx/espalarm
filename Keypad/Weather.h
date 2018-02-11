@@ -34,7 +34,6 @@ public:
   ~Weather();
   void loop(time_t);
   void FromPeer(JsonObject &json);
-  void ReceiveImageFromPeer(uint16_t wid, uint16_t ht, uint16_t offset, uint16_t *data, uint16_t len);
   void drawIcon(const uint16_t *icon, uint16_t width, uint16_t height);
 
 private:
