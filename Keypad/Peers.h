@@ -75,6 +75,7 @@ private:
   void CallPeer(Peer, char *json);
   void TrackPeerActivity(IPAddress remote);
   void ImageFromPeerBinary(const char *query, JsonObject &json, uint16_t port);
+  void ImageFromPeerBinaryAsync();
 
   void SetMyName();
   char *MyName;
@@ -93,6 +94,10 @@ private:
   char output[128];
 
   uint16_t	*pic, picw, pich;
+
+  // If this is inited, need to grab the image
+  uint16_t	image_wid, image_ht, image_port;
+  char		*image_host;
 };
 
 extern Peers *peers;

@@ -68,6 +68,9 @@ Peers::Peers() {
 
   pic = 0;
   picw = pich = 0;
+
+  image_host = 0;
+  image_port = image_wid = image_ht = 0;
 }
 
 Peers::~Peers() {
@@ -110,6 +113,13 @@ Peer *Peers::AddPeer(const char *name, IPAddress ip) {
  * Report environmental information periodically
  */
 void Peers::loop(time_t nowts) {
+  if (image_host) {
+    ImageFromPeerBinaryAsync();
+
+    free(image_host);
+    image_host = 0;
+  }
+
   RestLoop();
   ServerSocketLoop();
   ImageServerLoop();
@@ -169,9 +179,9 @@ void Peers::CallPeers(char *json) {
 }
 
 void Peers::CallPeer(Peer peer, char *json) {
-  // Serial.printf("CallPeer(%s ", peer.name);
-  // Serial.print(peer.ip);
-  // Serial.printf(":%d, %s)\n", portMulti, json);
+  Serial.printf("CallPeer(%s ", peer.name);
+  Serial.print(peer.ip);
+  Serial.printf(":%d, %s)\n", portMulti, json);
 
   WiFiClient client;
 
@@ -449,24 +459,30 @@ void Peers::SendImage(uint16_t *pic, uint16_t wid, uint16_t ht) {
 }
 
 /*
+ * Track what to do and return quickly.
+ */
+void Peers::ImageFromPeerBinary(const char *query, JsonObject &json, uint16_t port) {
+  image_wid = json["w"];
+  image_ht = json["h"];
+  image_host = (json["host"]) ? strdup(json["host"]) : 0;
+  image_port = port;
+}
+
+/*
  * Quick image transfer : just open a TCP connection and transfer it.
  * The central module posts a TCP port number, client can get the image by connecting and reading.
  */
-void Peers::ImageFromPeerBinary(const char *query, JsonObject &json, uint16_t port) {
-  uint16_t	wid = json["w"],
-  		ht = json["h"];
-  const char	*host = json["host"];
-
-  Serial.printf("Peers::ImageFromPeerBinary(%s : %d) ... ", host, port);
+void Peers::ImageFromPeerBinaryAsync() {
+  Serial.printf("Peers::ImageFromPeerBinaryAsync(%s : %d) ... ", image_host, image_port);
 
   WiFiClient	client;
   int		error;
-  if (! (error = client.connect(host, port))) {
+  if (! (error = client.connect(image_host, image_port))) {
     client.stop();
     Serial.printf("failed, error %d\n", error);
     return;
   }
-  uint16_t nb = wid * ht * 2;
+  uint16_t nb = image_wid * image_ht * 2;
   uint8_t *buf = (uint8_t *)malloc(nb);
   if (buf == 0) {
     Serial.printf("ImageFromPeerBinary: malloc(%d) failed\n", nb);
@@ -481,5 +497,5 @@ void Peers::ImageFromPeerBinary(const char *query, JsonObject &json, uint16_t po
   client.stop();
   Serial.printf("done (%d bytes read)\n", cnt);
 
-  if (weather) weather->drawIcon((uint16_t *)buf, wid, ht);
+  if (weather) weather->drawIcon((uint16_t *)buf, image_wid, image_ht);
 }
