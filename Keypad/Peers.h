@@ -66,7 +66,6 @@ private:
   void RestSetup();
   void RestLoop();
   void ImageServerSetup();
-  void ImageServerLoop();
   void MulticastSetup();
   void QueryPeers();
   void ServerSocketLoop();
@@ -81,19 +80,17 @@ private:
   char *MyName;
   void Concat(char *query, const char *item);	// For internal use
 
-  WiFiServer	*p2psrv, *imagesrv;
+  WiFiServer	*p2psrv;
 
   const uint16_t portMulti = 23456;		// port number used for all our communication
   byte packetBuffer[512];			// buffer to hold incoming and outgoing packets
   WiFiUDP mcsrv;				// socket for both client and server multicast
   IPAddress ipMulti, local;
-  const uint16_t portImage = 23457;		// contact this to query weather icon
 
   const int recBufLen = 512;
 
   char output[128];
 
-  uint16_t	*pic, picw, pich;
   void StoreImage(uint16_t *pic, uint16_t wid, uint16_t ht);
 
   // If this is inited, need to grab the image

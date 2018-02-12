@@ -6,6 +6,7 @@
  * - multicast UDP : device discovery (doesn't work yet)
  * - JSON over TCP (REST calls) to pass messages
  * - simple TCP transfer of icon images (one TCP port does just that)
+ *   The server for this (on ESP32) is in a separate task.
  *
  * They exchange information via JSON queries.
  *	Example : {"status" : "armed", "name" : "keypad02"}
@@ -60,17 +61,19 @@ extern "C" {
 }
 #endif
 
+// These used to be in the class, but need to be global for the background task
+const uint16_t portImage = 23457;		// contact this to query weather icon
+uint16_t	*tskPic, tskWid, tskHt;
+
 #ifdef ESP32
 #include <task.h>
 
+// These need to be local variables because the function called is not a method
 TaskHandle_t	imageTask;
 WiFiServer	*imageTaskSrv;
 #endif
 
 Peers::Peers() {
-  pic = 0;
-  picw = pich = 0;
-
   image_host = 0;
   image_port = image_wid = image_ht = 0;
 
@@ -81,7 +84,9 @@ Peers::Peers() {
   local = WiFi.localIP();
   RestSetup();
   MulticastSetup();
+#ifdef ESP32
   ImageServerSetup();
+#endif
   QueryPeers();
 }
 
@@ -125,49 +130,15 @@ Peer *Peers::AddPeer(const char *name, IPAddress ip) {
  * Report environmental information periodically
  */
 void Peers::loop(time_t nowts) {
-  // uint32_t	t1, t2, dt;
-  // t1 = system_get_time();
-#if 0
-  if (image_host) {
-    // This is a hack : wait 4 seconds
-    static uint32_t it1, it2;
-    if (it1 == 0)
-      it1 = system_get_time();
-    else {
-      it2 = system_get_time();
-      if (it2 - it1 > 4000000) {
-	ImageFromPeerBinaryAsync();
-
-	free(image_host);
-	image_host = 0;
-	it1 = it2 = 0;
-      }
-    }
-    // ImageFromPeerBinaryAsync();
-
-    // free(image_host);
-    // image_host = 0;
-  }
-#else
-  // Immediately !
   if (image_host) {
     ImageFromPeerBinaryAsync();
 
     free(image_host);
     image_host = 0;
   }
-#endif
 
   RestLoop();
   ServerSocketLoop();
-#ifdef ESP32
-  if (imageTask == 0)
-#endif
-    ImageServerLoop();
-
-  // t2 = system_get_time();
-  // dt = t2 - t1;
-  // if (dt > 200) Serial.printf("Peers::loop %d µs\n", dt);
 }
 
 /*********************************************************************************
@@ -286,33 +257,12 @@ void Peers::RestLoop() {
   client.stop();
 }
 
-#if 0
-void Peers::ImageServerSetup() {
-  imagesrv = new WiFiServer(portImage);
-  imagesrv->begin();
-}
-
-void Peers::ImageServerLoop() {
-  WiFiClient client = imagesrv->available();
-  if (! client) return;
-
-  // Don't read anything, just send an image
-  int len = client.write((uint8_t *)pic, picw * pich * 2);
-  Serial.printf("Peers::ImageServerLoop : wrote %d (-> %d)\n", picw * pich * 2, len);
-  client.stop();
-}
-
-void Peers::StoreImage(uint16_t *pic, uint16_t wid, uint16_t ht) {
-  this->pic = pic;
-  picw = wid;
-  pich = ht;
-}
-#else
-# ifdef ESP32
-uint16_t	*tskPic, tskWid, tskHt;
-// Background task
+#ifdef ESP32
+/*
+ * Background task to serve the image transfer
+ * As this can't be a class method, the variables are global.
+ */
 void ImageTaskLoop(void *ptr) {
-  const uint16_t portImage = 23457;		// contact this to query weather icon
   imageTaskSrv = new WiFiServer(portImage);
   imageTaskSrv->begin();
 
@@ -331,31 +281,13 @@ void ImageTaskLoop(void *ptr) {
 void Peers::ImageServerSetup() {
   xTaskCreate(ImageTaskLoop, "image task", 10000, 0, tskIDLE_PRIORITY, &imageTask);
 }
+#endif
 
 void Peers::StoreImage(uint16_t *pic, uint16_t wid, uint16_t ht) {
   tskPic = pic;
   tskWid = wid;
   tskHt = ht;
 }
-
-// Empty
-void Peers::ImageServerLoop() {
-}
-# else
-  // ESP8266 but in the "task" version
-void Peers::StoreImage(uint16_t *pic, uint16_t wid, uint16_t ht) {
-  this->pic = pic;
-  picw = wid;
-  pich = ht;
-}
-
-void Peers::ImageServerSetup() {
-}
-
-void Peers::ImageServerLoop() {
-}
-# endif
-#endif
 
 /*
  * Handle incoming notifications
@@ -548,9 +480,6 @@ void Peers::SendImage(uint16_t *pic, uint16_t wid, uint16_t ht) {
 
   // Store the image and its dimensions
   StoreImage(pic, wid, ht);
-  // this->pic = pic;
-  // picw = wid;
-  // pich = ht;
 
   // packet format : { "image" : offset, "w" : width, "h" : height, "host" : ip, "port" : port }
   sprintf((char *)packetBuffer,
