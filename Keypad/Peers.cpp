@@ -272,7 +272,7 @@ void ImageTaskLoop(void *ptr) {
       delay(250);
     } else {
       int len = client.write((uint8_t *)tskPic, tskWid * tskHt * 2);
-      Serial.printf("Peers::ImageTaskLoop: wrote %d (free heap %d)\n", len, ESP.getFreeHeap());
+      Serial.printf("Peers::ImageTaskLoop: wrote %d\n", len);
       client.stop();
     }
   }
@@ -485,7 +485,7 @@ void Peers::SendImage(uint16_t *pic, uint16_t wid, uint16_t ht) {
   sprintf((char *)packetBuffer,
     "{\"image\": %d, \"w\": %d, \"h\": %d, \"host\": %s, \"port\" : %d }",
     0, wid, ht, local.toString().c_str(), portImage);
-  Serial.printf("SendImage -> %s\n", packetBuffer);
+  // Serial.printf("SendImage -> %s\n", packetBuffer);
   CallPeers((char *)packetBuffer);
 }
 
