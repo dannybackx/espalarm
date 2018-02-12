@@ -94,6 +94,7 @@ private:
   char output[128];
 
   uint16_t	*pic, picw, pich;
+  void StoreImage(uint16_t *pic, uint16_t wid, uint16_t ht);
 
   // If this is inited, need to grab the image
   uint16_t	image_wid, image_ht, image_port;

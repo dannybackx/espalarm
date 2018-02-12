@@ -60,19 +60,29 @@ extern "C" {
 }
 #endif
 
+#ifdef ESP32
+#include <task.h>
+
+TaskHandle_t	imageTask;
+WiFiServer	*imageTaskSrv;
+#endif
+
 Peers::Peers() {
-  local = WiFi.localIP();
-
-  RestSetup();
-  MulticastSetup();
-  ImageServerSetup();
-  QueryPeers();
-
   pic = 0;
   picw = pich = 0;
 
   image_host = 0;
   image_port = image_wid = image_ht = 0;
+
+#ifdef ESP32
+  imageTask = 0;
+#endif
+
+  local = WiFi.localIP();
+  RestSetup();
+  MulticastSetup();
+  ImageServerSetup();
+  QueryPeers();
 }
 
 Peers::~Peers() {
@@ -117,7 +127,7 @@ Peer *Peers::AddPeer(const char *name, IPAddress ip) {
 void Peers::loop(time_t nowts) {
   // uint32_t	t1, t2, dt;
   // t1 = system_get_time();
-
+#if 0
   if (image_host) {
     // This is a hack : wait 4 seconds
     static uint32_t it1, it2;
@@ -138,10 +148,22 @@ void Peers::loop(time_t nowts) {
     // free(image_host);
     // image_host = 0;
   }
+#else
+  // Immediately !
+  if (image_host) {
+    ImageFromPeerBinaryAsync();
+
+    free(image_host);
+    image_host = 0;
+  }
+#endif
 
   RestLoop();
   ServerSocketLoop();
-  ImageServerLoop();
+#ifdef ESP32
+  if (imageTask == 0)
+#endif
+    ImageServerLoop();
 
   // t2 = system_get_time();
   // dt = t2 - t1;
@@ -243,11 +265,6 @@ void Peers::RestSetup() {
   p2psrv->begin();
 }
 
-void Peers::ImageServerSetup() {
-  imagesrv = new WiFiServer(portImage);
-  imagesrv->begin();
-}
-
 void Peers::RestLoop() {
   WiFiClient client = p2psrv->available();
   if (! client) return;
@@ -269,6 +286,12 @@ void Peers::RestLoop() {
   client.stop();
 }
 
+#if 0
+void Peers::ImageServerSetup() {
+  imagesrv = new WiFiServer(portImage);
+  imagesrv->begin();
+}
+
 void Peers::ImageServerLoop() {
   WiFiClient client = imagesrv->available();
   if (! client) return;
@@ -278,6 +301,61 @@ void Peers::ImageServerLoop() {
   Serial.printf("Peers::ImageServerLoop : wrote %d (-> %d)\n", picw * pich * 2, len);
   client.stop();
 }
+
+void Peers::StoreImage(uint16_t *pic, uint16_t wid, uint16_t ht) {
+  this->pic = pic;
+  picw = wid;
+  pich = ht;
+}
+#else
+# ifdef ESP32
+uint16_t	*tskPic, tskWid, tskHt;
+// Background task
+void ImageTaskLoop(void *ptr) {
+  const uint16_t portImage = 23457;		// contact this to query weather icon
+  imageTaskSrv = new WiFiServer(portImage);
+  imageTaskSrv->begin();
+
+  while (1) {
+    WiFiClient client = imageTaskSrv->available();
+    if (! client) {
+      delay(250);
+    } else {
+      int len = client.write((uint8_t *)tskPic, tskWid * tskHt * 2);
+      Serial.printf("Peers::ImageTaskLoop: wrote %d (free heap %d)\n", len, ESP.getFreeHeap());
+      client.stop();
+    }
+  }
+}
+
+void Peers::ImageServerSetup() {
+  xTaskCreate(ImageTaskLoop, "image task", 10000, 0, tskIDLE_PRIORITY, &imageTask);
+}
+
+void Peers::StoreImage(uint16_t *pic, uint16_t wid, uint16_t ht) {
+  tskPic = pic;
+  tskWid = wid;
+  tskHt = ht;
+}
+
+// Empty
+void Peers::ImageServerLoop() {
+}
+# else
+  // ESP8266 but in the "task" version
+void Peers::StoreImage(uint16_t *pic, uint16_t wid, uint16_t ht) {
+  this->pic = pic;
+  picw = wid;
+  pich = ht;
+}
+
+void Peers::ImageServerSetup() {
+}
+
+void Peers::ImageServerLoop() {
+}
+# endif
+#endif
 
 /*
  * Handle incoming notifications
@@ -469,9 +547,10 @@ void Peers::SendImage(uint16_t *pic, uint16_t wid, uint16_t ht) {
   // To keep below the limit, we'll send JSON max buffer length divided by 4, minus 80.
 
   // Store the image and its dimensions
-  this->pic = pic;
-  picw = wid;
-  pich = ht;
+  StoreImage(pic, wid, ht);
+  // this->pic = pic;
+  // picw = wid;
+  // pich = ht;
 
   // packet format : { "image" : offset, "w" : width, "h" : height, "host" : ip, "port" : port }
   sprintf((char *)packetBuffer,
