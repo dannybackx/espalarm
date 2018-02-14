@@ -246,17 +246,40 @@ Weather::~Weather() {
 }
 
 /*
- * Loop function : deal with timeout, and slowly dimming the backlight.
+ * Loop function
  */
 void Weather::loop(time_t nowts) {
   uint32_t n = (uint32_t)nowts;
 
+  if (n >= 0 && n < 1000)			// Wait until we know the time
+    return;
+
   if (centralNode) {
-    if (n >= 0 && n < 1000)			// Wait until we know the time
-      return;
     if (last_query == 0 || (n - last_query > the_delay)) {
       PerformQuery();
       last_query = nowts;
+    }
+  } else if (oled && weather == 0) {		// Non-central node with display
+    // By now we know the time, so query the weather node
+    Peer *wn = peers->FindWeatherNode();
+    if (wn) {
+      Serial.printf("Weather node is %s\n", wn->ip.toString().c_str());
+
+      char *json = peers->CallPeer(wn, (char *)"{ \"query\" : \"weather\" }");
+      Serial.printf("Weather JSON %s\n", json);
+
+      DynamicJsonBuffer jb;
+      JsonObject &root = jb.parseObject(json);
+      if (root.success()) {
+        FromPeer(root);
+      }
+
+      if (json)
+        free(json);
+#if 0
+    } else {
+      Serial.printf("Weather node not found\n");
+#endif
     }
   }
 

@@ -93,37 +93,25 @@ Peers::Peers() {
 Peers::~Peers() {
 }
 
-Peer *Peers::AddPeer(const char *name, IPAddress ip) {
-  if (name == 0 || strlen(name) == 0)
-    return 0;				// No name ? should not happen
-
-  Serial.printf("Adding peer controller {%s} %s ... ", name, ip.toString().c_str());
-
-  Peer *pp = new Peer();
-  pp->ip = ip;
-  pp->name = strdup((char *)name);
-  pp->radio = pp->siren = pp->secure = pp->weather = pp->oled = false;
-
+void Peers::AddPeer(Peer *p) {
   // Remove existing items with same name or IP address
   list<Peer>::iterator node = peerlist.begin();
   while (node != peerlist.end()) {
-    if (strcmp(node->name, name) == 0 || node->ip == ip)
+    if (strcmp(node->name, p->name) == 0 || node->ip == p->ip)
       node = peerlist.erase(node);
     else
       node++;
   }
 
   // Add at the end of the list
-  peerlist.push_back(*pp);
+  peerlist.push_back(*p);
 
   int count = 0;
   node = peerlist.begin();
   while (node != peerlist.end()) {
     node++; count++;
   }
-  Serial.printf("now %d peers in the list\n", count);
-
-  return pp;
+  Serial.printf("-> %d known peers\n", count);
 }
 
 /*
@@ -191,21 +179,21 @@ void Peers::AlarmSignal(const char *sensor, AlarmZone zone) {
 
 void Peers::CallPeers(char *json) {
   for (Peer peer : peerlist)
-    CallPeer(peer, json);
+    CallPeer0(&peer, json);
 }
 
-void Peers::CallPeer(Peer peer, char *json) {
-  // Serial.printf("CallPeer(%s ", peer.name);
-  // Serial.print(peer.ip);
+void Peers::CallPeer0(Peer *peer, char *json) {
+  // Serial.printf("CallPeer(%s ", peer->name);
+  // Serial.print(peer->ip);
   // Serial.printf(":%d, %s)\n", portMulti, json);
 
   WiFiClient client;
 
-  if (! client.connect(peer.ip, portMulti)) {
+  if (! client.connect(peer->ip, portMulti)) {
     client.stop();
-    Serial.printf("Connect to %s failed\n", peer.name);
+    Serial.printf("Connect to %s failed\n", peer->name);
     Serial.print("  ");
-    Serial.print(peer.ip);
+    Serial.print(peer->ip);
     Serial.print(" : ");
     Serial.println(portMulti);
     return;
@@ -214,7 +202,7 @@ void Peers::CallPeer(Peer peer, char *json) {
   unsigned long timeout = millis();		// Check for timeouts
   while (client.available() == 0) {
     if (millis() - timeout > 5000) {
-      Serial.printf("Timeout talking to peer %s\n", peer.name);
+      Serial.printf("Timeout talking to peer %s\n", peer->name);
       client.stop();
       return;
     }
@@ -222,6 +210,38 @@ void Peers::CallPeer(Peer peer, char *json) {
   String line = client.readStringUntil('\r');
   client.stop();
   // Serial.printf("Received from peer : %s\n", line.c_str());
+}
+
+char *Peers::CallPeer(Peer *peer, char *json) {
+  // Serial.printf("CallPeer(%s ", peer->name);
+  // Serial.print(peer->ip);
+  // Serial.printf(":%d, %s)\n", portMulti, json);
+
+  WiFiClient client;
+
+  if (! client.connect(peer->ip, portMulti)) {
+    client.stop();
+    Serial.printf("Connect to %s failed\n", peer->name);
+    Serial.print("  ");
+    Serial.print(peer->ip);
+    Serial.print(" : ");
+    Serial.println(portMulti);
+    return 0;
+  }
+  client.print(json);
+  unsigned long timeout = millis();		// Check for timeouts
+  while (client.available() == 0) {
+    if (millis() - timeout > 5000) {
+      Serial.printf("Timeout talking to peer %s\n", peer->name);
+      client.stop();
+      return 0;
+    }
+  }
+  String line = client.readStringUntil('\r');
+  client.stop();
+  // Serial.printf("Received from peer : %s\n", line.c_str());
+
+  return strdup(line.c_str());
 }
 
 /*********************************************************************************
@@ -272,7 +292,7 @@ void ImageTaskLoop(void *ptr) {
       delay(250);
     } else {
       int len = client.write((uint8_t *)tskPic, tskWid * tskHt * 2);
-      Serial.printf("Peers::ImageTaskLoop: wrote %d\n", len);
+      // Serial.printf("Peers::ImageTaskLoop: wrote %d\n", len);
       client.stop();
     }
   }
@@ -333,28 +353,69 @@ char *Peers::HandleQuery(const char *str) {
     // {"announce" : "node-name"}
 
     // Record announced modules
-    Peer *p = AddPeer(query, mcsrv.remoteIP());
+    Peer *p = new Peer();
+    p->ip = mcsrv.remoteIP();
+    p->name = strdup((char *)query);
+
+    p->oled = json["oled"];
+    p->weather = json["weather"];
+    p->siren = json["siren"];
+    p->radio = json["radio"];
+    p->secure = json["secure"];
+    AddPeer(p);
+
+    Serial.printf("\to %d w %d r %d s %d sec %d\n",
+      p->oled ? 1 : 0,
+      p->weather ? 1 : 0,
+      p->radio ? 1 : 0,
+      p->siren ? 1 : 0,
+      p->secure ? 1 : 0);
+
+    // Send : { "acknowledge" : "my name" }
+    DynamicJsonBuffer jb2;
+    JsonObject &j2 = jb2.createObject();
+    j2["acknowledge"] = config->myName();
+    if (config->haveOled()) j2["oled"] = true;
+    if (config->haveRadio()) j2["radio"] = true;
+    if (config->haveRfid()) j2["rfid"] = true;
+    if (config->haveWeather()) j2["weather"] = true;
+    if (config->haveSecure()) j2["secure"] = true;
+    j2.printTo(output, sizeof(output));
+    Serial.printf("JSON %s\n", output);
+    return output;
+  } else if (query = json["image"]) {
+    const uint16_t port = json["port"];
+    if (port)
+      ImageFromPeerBinary(query, json, port);
+  } else if (query = json["acknowledge"]) {
+    Serial.printf("HandleQuery %s -> ", str);
+    Peer *p = new Peer();
+    p->ip = mcsrv.remoteIP();
+    p->name = strdup((char *)query);
+
     p->oled = json["oled"];
     p->weather = json["weather"];
     p->siren = json["siren"];
     p->radio = json["radio"];
     p->secure = json["secure"];
 
-    // Send : { "acknowledge" : "my name" }
-    DynamicJsonBuffer jb2;
-    JsonObject &j2 = jb2.createObject();
-    j2["acknowledge"] = config->myName();
-    j2.printTo(output, sizeof(output));
-    return output;
+    AddPeer(p);
+
+    Serial.printf("\to %d w %d r %d s %d sec %d\n",
+      p->oled ? 1 : 0,
+      p->weather ? 1 : 0,
+      p->radio ? 1 : 0,
+      p->siren ? 1 : 0,
+      p->secure ? 1 : 0);
+    return 0;
+  } else if (query = json["query"]) {		// Client requests weather info from central node
+    IPAddress remote = mcsrv.remoteIP();
+    char *json = weather->CreatePeerMessage();
+    strcpy((char *)packetBuffer, json);
+    free(json);
+    return (char *)packetBuffer;
   } else if (query = json["weather"]) {
     weather->FromPeer(json);
-  } else if (query = json["image"]) {
-    const uint16_t port = json["port"];
-    if (port)
-      ImageFromPeerBinary(query, json, port);
-  } else if (query = json["acknowledge"]) {
-    AddPeer(query, mcsrv.remoteIP());
-    return 0;
   }
 
   return (char *)"{ \"reply\" : \"success\", \"message\" : \"Ok\" }";
@@ -526,7 +587,33 @@ void Peers::ImageFromPeerBinaryAsync() {
     delay(50);
   }
   client.stop();
-  Serial.printf("done (%d bytes read)\n", cnt);
+
+  Serial.printf("done\n");
+  // Serial.printf("done (%d bytes read)\n", cnt);
 
   if (weather) weather->drawIcon((uint16_t *)buf, image_wid, image_ht);
+}
+
+int cnt = 3;
+
+Peer *Peers::FindWeatherNode() {
+  list<Peer>::iterator node = peerlist.begin();
+  while (node != peerlist.end()) {
+    if (cnt-- > 0) {
+      Serial.printf("FindWeatherNode %s w %d r %d o %d s %d sec %d\n",
+        node->name,
+	node->weather ? 1 : 0,
+	node->radio ? 1 : 0,
+	node->oled ? 1 : 0,
+	node->siren ? 1 : 0,
+	node->secure ? 1 : 0);
+    }
+    if (node->weather) {
+      Peer *p = &*node;
+      // Peer *p = (Peer *)node;
+      return p;
+    } else
+      node++;
+  }
+  return 0;
 }

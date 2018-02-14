@@ -43,14 +43,12 @@ struct Peer {
   boolean	radio, siren, secure, weather, oled;
 };
 
-typedef list<Peer> PeerList;
-
 class Peers {
 public:
   Peers();
   ~Peers();
   void loop(time_t);
-  Peer *AddPeer(const char *name, IPAddress ip);
+  void AddPeer(Peer *p);
 
   void AlarmSetArmed(AlarmStatus state);
   void AlarmSignal(const char *sensor, AlarmZone zone);
@@ -59,6 +57,9 @@ public:
 
   void SendWeather(const char *json);
   void SendImage(uint16_t *pic, uint16_t wid, uint16_t ht);
+  Peer *FindWeatherNode();
+  char *CallPeer(Peer *, char *json);
+  void CallPeer0(Peer *, char *json);
 
 private:
   list<Peer>		peerlist;
@@ -71,7 +72,6 @@ private:
   void ServerSocketLoop();
   char *HandleQuery(const char *str);
   void CallPeers(char *json);
-  void CallPeer(Peer, char *json);
   void TrackPeerActivity(IPAddress remote);
   void ImageFromPeerBinary(const char *query, JsonObject &json, uint16_t port);
   void ImageFromPeerBinaryAsync();

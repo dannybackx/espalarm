@@ -35,12 +35,12 @@ public:
   void loop(time_t);
   void FromPeer(JsonObject &json);
   void drawIcon(const uint16_t *icon, uint16_t width, uint16_t height);
+  char *CreatePeerMessage();
 
 private:
   void PerformQuery();
   void draw();
   void strwtime(char *buffer, int buflen, const char *format);
-  char *CreatePeerMessage();
 
   char		*query;
   WiFiClient	*http;
