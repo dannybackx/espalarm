@@ -263,10 +263,10 @@ void Weather::loop(time_t nowts) {
     // By now we know the time, so query the weather node
     Peer *wn = peers->FindWeatherNode();
     if (wn) {
-      Serial.printf("Weather node is %s\n", wn->ip.toString().c_str());
+      // Serial.printf("Weather node is %s\n", wn->ip.toString().c_str());
 
       char *json = peers->CallPeer(wn, (char *)"{ \"query\" : \"weather\" }");
-      Serial.printf("Weather JSON %s\n", json);
+      // Serial.printf("Weather JSON %s\n", json);
 
       DynamicJsonBuffer jb;
       JsonObject &root = jb.parseObject(json);
@@ -276,10 +276,8 @@ void Weather::loop(time_t nowts) {
 
       if (json)
         free(json);
-#if 0
     } else {
-      Serial.printf("Weather node not found\n");
-#endif
+      // Serial.printf("Weather node not found\n");
     }
   }
 

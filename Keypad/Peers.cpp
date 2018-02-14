@@ -94,6 +94,8 @@ Peers::~Peers() {
 }
 
 void Peers::AddPeer(Peer *p) {
+  Serial.printf("Adding peer controller \"%s\" %s ...", p->name, p->ip.toString().c_str());
+
   // Remove existing items with same name or IP address
   list<Peer>::iterator node = peerlist.begin();
   while (node != peerlist.end()) {
@@ -111,6 +113,7 @@ void Peers::AddPeer(Peer *p) {
   while (node != peerlist.end()) {
     node++; count++;
   }
+
   Serial.printf("-> %d known peers\n", count);
 }
 
@@ -364,12 +367,9 @@ char *Peers::HandleQuery(const char *str) {
     p->secure = json["secure"];
     AddPeer(p);
 
-    Serial.printf("\to %d w %d r %d s %d sec %d\n",
-      p->oled ? 1 : 0,
-      p->weather ? 1 : 0,
-      p->radio ? 1 : 0,
-      p->siren ? 1 : 0,
-      p->secure ? 1 : 0);
+    // Serial.printf("\to %d w %d r %d s %d sec %d\n", p->oled ? 1 : 0,
+    //   p->weather ? 1 : 0, p->radio ? 1 : 0,
+    //   p->siren ? 1 : 0, p->secure ? 1 : 0);
 
     // Send : { "acknowledge" : "my name" }
     DynamicJsonBuffer jb2;
@@ -381,14 +381,14 @@ char *Peers::HandleQuery(const char *str) {
     if (config->haveWeather()) j2["weather"] = true;
     if (config->haveSecure()) j2["secure"] = true;
     j2.printTo(output, sizeof(output));
-    Serial.printf("JSON %s\n", output);
+    // Serial.printf("JSON %s\n", output);
     return output;
   } else if (query = json["image"]) {
     const uint16_t port = json["port"];
     if (port)
       ImageFromPeerBinary(query, json, port);
   } else if (query = json["acknowledge"]) {
-    Serial.printf("HandleQuery %s -> ", str);
+    // Serial.printf("HandleQuery %s -> ", str);
     Peer *p = new Peer();
     p->ip = mcsrv.remoteIP();
     p->name = strdup((char *)query);
@@ -401,12 +401,9 @@ char *Peers::HandleQuery(const char *str) {
 
     AddPeer(p);
 
-    Serial.printf("\to %d w %d r %d s %d sec %d\n",
-      p->oled ? 1 : 0,
-      p->weather ? 1 : 0,
-      p->radio ? 1 : 0,
-      p->siren ? 1 : 0,
-      p->secure ? 1 : 0);
+    // Serial.printf("\to %d w %d r %d s %d sec %d\n", p->oled ? 1 : 0,
+    //   p->weather ? 1 : 0, p->radio ? 1 : 0,
+    //   p->siren ? 1 : 0, p->secure ? 1 : 0);
     return 0;
   } else if (query = json["query"]) {		// Client requests weather info from central node
     IPAddress remote = mcsrv.remoteIP();
@@ -600,13 +597,9 @@ Peer *Peers::FindWeatherNode() {
   list<Peer>::iterator node = peerlist.begin();
   while (node != peerlist.end()) {
     if (cnt-- > 0) {
-      Serial.printf("FindWeatherNode %s w %d r %d o %d s %d sec %d\n",
-        node->name,
-	node->weather ? 1 : 0,
-	node->radio ? 1 : 0,
-	node->oled ? 1 : 0,
-	node->siren ? 1 : 0,
-	node->secure ? 1 : 0);
+      // Serial.printf("FindWeatherNode %s w %d r %d o %d s %d sec %d\n", node->name,
+      //   node->weather ? 1 : 0, node->radio ? 1 : 0, node->oled ? 1 : 0,
+      //   node->siren ? 1 : 0, node->secure ? 1 : 0);
     }
     if (node->weather) {
       Peer *p = &*node;
