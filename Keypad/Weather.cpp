@@ -174,9 +174,28 @@ void Weather::PerformQuery() {
 
   // Serial.printf("Heap (before JSON) %d\n", ESP.getFreeHeap());
 
+  boolean fail = true;
   DynamicJsonBuffer jb;
   JsonObject &root = jb.parseObject(buf);
-  if (! root.success()) {
+  if (root.success()) {
+    JsonObject &current = root["current_observation"];
+    if (current.success()) {
+      FromPeer(current);
+      fail = false;
+    }
+  } else {
+    // Recover ?
+    char *ptr = SkipHeaders(buf);
+    JsonObject &root2 = jb.parseObject(ptr);
+    if (root2.success()) {
+      JsonObject &current = root["current_observation"];
+      if (current.success()) {
+        FromPeer(current);
+        fail = false;
+      }
+    }
+  }
+  if (fail) {
     Serial.println("Failed to parse JSON");
     Serial.printf("Response received, length %d\n", rl);
     Serial.printf("\n\n%s\n\n", buf);
@@ -184,19 +203,6 @@ void Weather::PerformQuery() {
     the_delay = error_delay;				// Shorter retry
     return;
   }
-
-  JsonObject &current = root["current_observation"];
-  if (! current.success()) {
-    Serial.println("Failed to parse current in JSON");
-
-    the_delay = error_delay;				// Shorter retry
-    return;
-  }
-
-  /*
-   * Grab the info we want from the lengthy Wunderground message
-   */
-  FromPeer(current);
 #if 0
 				  int	temp_c_a = (int)temp_c,
 					temp_c_b = (temp_c - temp_c_a) * 10;
@@ -204,6 +210,7 @@ void Weather::PerformQuery() {
 					temp_c_a, temp_c_b, pressure_mb, wind_kph);
 				  Serial.printf("Weather %s, pic %s\n", weather, icon_url);
 #endif
+
   free(buf);
   buf = 0;
 
@@ -500,8 +507,13 @@ void Weather::FromPeer(JsonObject &json) {
   }
 
   // Image
-  picw = json["w"];
-  pich = json["h"];
+  // Don't overwrite the picw/pich variables if this is a Wunderground message.
+  // This data only gets transferred if from peer to peer.
+  int x;
+  x = json["w"];
+  if (x) picw = x;
+  x = json["h"];
+  if (x) pich = x;
 
   changed = true;
 			// Serial.printf("Weather::FromPeer return\n");
@@ -511,6 +523,7 @@ void Weather::FromPeer(JsonObject &json) {
  * We store the icon here, gets passed either by Peers.cpp or LoadGif.cpp .
  */
 void Weather::drawIcon(const uint16_t *icon, uint16_t width, uint16_t height) {
+  Serial.printf("Weather::drawIcon(%p, %d, %d)\n", icon, width, height);
   if (pic)
     free(pic);
   pic = (uint16_t *)icon;
@@ -519,4 +532,34 @@ void Weather::drawIcon(const uint16_t *icon, uint16_t width, uint16_t height) {
 
   if (oled)
     oled->drawIcon(icon, picx, picy, width, height);
+}
+
+/*
+ * Skip HTML headers
+ */
+char *Weather::SkipHeaders(char *buf) {
+  char *r = buf, *p, *q;
+
+  while (r && *r) {
+    bool skip = false;
+
+    // Look for next line
+    p = strchr(r, '\n');
+    if (p[1] == '\r')
+      p += 2;	// Skip \n\r
+    else
+      p++;	// Just skip \n
+
+    if (strncmp(r, "HTTP/", 5) == 0)
+      skip = true;
+    q = strchr(r, ':');
+    if (q && q < p)
+      skip = true;
+
+    if (! skip)
+      return r;
+
+    // Go to next line
+    r = p;
+  }
 }

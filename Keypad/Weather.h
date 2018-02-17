@@ -41,6 +41,7 @@ private:
   void PerformQuery();
   void draw();
   void strwtime(char *buffer, int buflen, const char *format);
+  char *SkipHeaders(char *buf);
 
   char		*query;
   WiFiClient	*http;

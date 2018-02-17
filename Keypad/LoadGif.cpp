@@ -120,7 +120,7 @@ void LoadGif::loadGif(const char *url) {
   /* clean up */
   gif_finalise(&gif);
 
-				// Serial.printf("LoadGif conversion done (%d x %d)\n", picw, pich); Serial.flush();
+				// Serial.printf("LoadGif conversion done (%d x %d)\n", picw, pich);
 
 				// Serial.printf("LoadGif::pic %p weather %p peers %p\n", pic, weather, peers);
   if (pic) {

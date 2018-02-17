@@ -114,7 +114,7 @@ void Peers::AddPeer(Peer *p) {
     node++; count++;
   }
 
-  Serial.printf("-> %d known peers\n", count);
+  Serial.printf(" %d known peers\n", count);
 }
 
 /*
@@ -596,7 +596,7 @@ void Peers::ImageFromPeerBinaryAsync() {
   }
   client.stop();
 
-  Serial.printf("done\n");
+  // Serial.printf("done\n");
   // Serial.printf("done (%d bytes read)\n", cnt);
 
   if (weather) weather->drawIcon((uint16_t *)buf, image_wid, image_ht);
