@@ -523,7 +523,7 @@ void Weather::FromPeer(JsonObject &json) {
  * We store the icon here, gets passed either by Peers.cpp or LoadGif.cpp .
  */
 void Weather::drawIcon(const uint16_t *icon, uint16_t width, uint16_t height) {
-  Serial.printf("Weather::drawIcon(%p, %d, %d)\n", icon, width, height);
+  // Serial.printf("Weather::drawIcon(%p, %d, %d)\n", icon, width, height);
   if (pic)
     free(pic);
   pic = (uint16_t *)icon;
