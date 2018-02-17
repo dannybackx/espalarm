@@ -82,6 +82,8 @@ private:
 
   //
   uint16_t	*pic, picw, pich, picx, picy;
+
+  const int peer_message_maxlen = 400;
 };
 
 extern Weather *weather;

@@ -186,7 +186,7 @@ void Peers::CallPeers(char *json) {
 }
 
 void Peers::CallPeer0(Peer *peer, char *json) {
-  // Serial.printf("CallPeer(%s ", peer->name);
+  // Serial.printf("CallPeer0(%s ", peer->name);
   // Serial.print(peer->ip);
   // Serial.printf(":%d, %s)\n", portMulti, json);
 
@@ -205,7 +205,7 @@ void Peers::CallPeer0(Peer *peer, char *json) {
   unsigned long timeout = millis();		// Check for timeouts
   while (client.available() == 0) {
     if (millis() - timeout > 5000) {
-      Serial.printf("Timeout talking to peer %s\n", peer->name);
+      Serial.printf("Timeout (CallPeer0) talking to peer %s\n", peer->name);
       client.stop();
       return;
     }
@@ -412,6 +412,7 @@ char *Peers::HandleQuery(const char *str) {
     free(json);
     return (char *)packetBuffer;
   } else if (query = json["weather"]) {
+    // Receive a short JSON from a peer with weather info (summary from Wunderground.com).
     weather->FromPeer(json);
   }
 
@@ -549,6 +550,8 @@ void Peers::SendImage(uint16_t *pic, uint16_t wid, uint16_t ht) {
 
 /*
  * Track what to do and return quickly.
+ * In theory there's a leak in each of these (non-null image_host).
+ * The loop function should always run between two invocations and take care of this.
  */
 void Peers::ImageFromPeerBinary(const char *query, JsonObject &json, uint16_t port) {
   image_wid = json["w"];
@@ -557,12 +560,20 @@ void Peers::ImageFromPeerBinary(const char *query, JsonObject &json, uint16_t po
   image_port = port;
 }
 
+// port is not used
+void Peers::ImageFromPeerBinary(IPAddress ip, uint16_t port, uint16_t wid, uint16_t ht) {
+  image_wid = wid;
+  image_ht = ht;
+  image_host = strdup(ip.toString().c_str());
+  image_port = portImage;
+}
+
 /*
  * Quick image transfer : just open a TCP connection and transfer it.
  * The central module posts a TCP port number, client can get the image by connecting and reading.
  */
 void Peers::ImageFromPeerBinaryAsync() {
-  Serial.printf("Peers::ImageFromPeerBinaryAsync(%s : %d) ... ", image_host, image_port);
+  // Serial.printf("Peers::ImageFromPeerBinaryAsync(%s : %d) ... ", image_host, image_port);
 
   WiFiClient	client;
   int		error;

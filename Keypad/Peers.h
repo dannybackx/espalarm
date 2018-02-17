@@ -60,6 +60,7 @@ public:
   Peer *FindWeatherNode();
   char *CallPeer(Peer *, char *json);
   void CallPeer0(Peer *, char *json);
+  void ImageFromPeerBinary(IPAddress ip, uint16_t port, uint16_t wid, uint16_t ht);
 
 private:
   list<Peer>		peerlist;

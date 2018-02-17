@@ -276,6 +276,9 @@ void Weather::loop(time_t nowts) {
 
       if (json)
         free(json);
+
+      // Arrange download of the image
+      peers->ImageFromPeerBinary(wn->ip, 0, picw, pich);
     } else {
       // Serial.printf("Weather node not found\n");
     }
@@ -402,7 +405,7 @@ void Weather::strwtime(char *buffer, int buflen, const char *format) {
  * Caller must free memory
  */
 char *Weather::CreatePeerMessage() {
-  char *r = (char *)malloc(300);
+  char *r = (char *)malloc(peer_message_maxlen);
 
   DynamicJsonBuffer jb;
   JsonObject &jo = jb.createObject();
@@ -423,7 +426,13 @@ char *Weather::CreatePeerMessage() {
   jo["pressure_mb"] = pressure_mb;
   jo["pressure_in"] = pressure_in;
   jo["pressure_trend"] = pressure_trend;
-  jo.printTo(r, 300);
+
+  // Image info
+  jo["w"] = picw;
+  jo["h"] = pich;
+
+  // Send output
+  jo.printTo(r, peer_message_maxlen);
 
   return r;
 }
@@ -489,6 +498,10 @@ void Weather::FromPeer(JsonObject &json) {
     if (icon_url) free(icon_url);
     icon_url = strdup(iurl);
   }
+
+  // Image
+  picw = json["w"];
+  pich = json["h"];
 
   changed = true;
 			// Serial.printf("Weather::FromPeer return\n");

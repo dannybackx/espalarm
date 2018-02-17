@@ -111,7 +111,6 @@ void LoadGif::loadGif(const char *url) {
   free(buf);		// Frees the buffer allocated in loadGif()
   buf = 0;
 
-#if 1
   // Converted picture
   pic = Decode2(&gif);
   picw = gif.width;
@@ -123,7 +122,7 @@ void LoadGif::loadGif(const char *url) {
 
 				// Serial.printf("LoadGif conversion done (%d x %d)\n", picw, pich); Serial.flush();
 
-  				// Serial.printf("LoadGif::pic %p\n", pic); Serial.flush();
+				// Serial.printf("LoadGif::pic %p weather %p peers %p\n", pic, weather, peers);
   if (pic) {
     if (weather)
       weather->drawIcon(pic, picw, pich);	// Weather knows where to draw it
@@ -132,9 +131,6 @@ void LoadGif::loadGif(const char *url) {
     if (peers)
       peers->SendImage(pic, picw, pich);
   }
-#else
-  gif_finalise(&gif);
-#endif
 
 				// Serial.println("done"); Serial.flush();
 				// Serial.printf("After GIF decode : heap %d\n", ESP.getFreeHeap());
