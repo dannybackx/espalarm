@@ -73,7 +73,6 @@ int	s1, s2;
 void SetupWifi();
 void SetupOTA();
 
-#define OTA_ID		"OTA-KeypadSecure"
 String			ips, gws;
 
 Config			*config;
@@ -107,11 +106,9 @@ void setup(void) {
 				Serial.printf("Free heap : %d\n", ESP.getFreeHeap());
 				Serial.print("Starting WiFi "); 
   SetupWifi();
-				Serial.printf("Set up OTA (id %s) ..", OTA_ID);
-  SetupOTA();
-				Serial.print(" done\nInitializing .. \n");
   config = new Config();
-  Serial.printf("My name is %s, have :", config->myName());
+  SetupOTA();
+  				Serial.printf("\nMy name is %s, have :", config->myName());
   if (config->haveOled()) Serial.print(" oled");
   if (config->haveRadio()) Serial.print(" radio");
   if (config->haveRfid()) Serial.print(" rfid");
@@ -121,9 +118,9 @@ void setup(void) {
   if (config->haveOled()) {
     oled = new Oled();
     oled->begin();
-    backlight = new BackLight(config->GetOledLedPin());	// led_pin, D3 is GPIO0 on D1 mini
-    backlight->SetStatus(BACKLIGHT_TEMP_ON);	// Display on
-    backlight->SetTimeout(10);			// Hardcoded timeout in seconds
+    backlight = new BackLight(config->GetOledLedPin());		// led_pin, D3 is GPIO0 on D1 mini
+    backlight->SetStatus(BACKLIGHT_TEMP_ON);			// Display on
+    backlight->SetTimeout(PREF_BACKLIGHT_TIMEOUT);		// Hardcoded timeout in seconds
 
     screen1.buttonText = xxx;
     screen1.buttonHandler = yyy;
@@ -133,10 +130,10 @@ void setup(void) {
 
   }
 
-  gif = new LoadGif(oled);		// THIS DANNY
+  gif = new LoadGif(oled);
   _clock = new Clock(oled);
 
-  // We always have a local weather module if we have an OLED
+  // We always have a local weather module
   // Only one of us actually does wunderground queries
   weather = new Weather(config->haveWeather(), oled);
 
@@ -199,15 +196,23 @@ void loop()
  * Prepare OTA with minimal verbosity (messages on the console)
  */
 void SetupOTA() {
-  ArduinoOTA.setHostname(OTA_ID);
+  int nlen = strlen(config->myName()) + 5;
+  char *ota_id = (char *)malloc(nlen);
+  sprintf(ota_id, "OTA-%s", config->myName());
+  for (int i=0; i<nlen; i++)
+    if (ota_id[i] == ' ') ota_id[i] = '_';
+				Serial.printf("Set up OTA (id %s) ..", ota_id);
+  ArduinoOTA.setHostname(ota_id);
 #ifdef ESP32
   ArduinoOTA.setPort(3232);
-  WiFi.setHostname(OTA_ID);
+  WiFi.setHostname(ota_id);
 #else
   ArduinoOTA.setPort(8266);
-  WiFi.hostname(OTA_ID);
+  WiFi.hostname(ota_id);
 #endif
   ArduinoOTA.begin();
+
+  free(ota_id);
 }
 
 struct mywifi {
