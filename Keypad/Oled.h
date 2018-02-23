@@ -111,5 +111,7 @@ class OledButton : public TFT_eSPI_Button {
 		uint16_t outline, uint16_t fill,
 		uint16_t textcolor, char *label, uint8_t textsize);
   boolean contains(int16_t x, int16_t y);
+
+  void setFillColor(uint16_t);
 };
 #endif

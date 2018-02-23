@@ -6,7 +6,8 @@
  *
  * This is a layer above Bodmer's TFT_eSPI,
  * which adds functionality to turn on/off the LED,
- * and screens.
+ * screens,
+ * and additional functionality to the {TFT_/Oled}Button function.
  *
  * Copyright (c) 2017, 2018 Danny Backx
  *
@@ -298,5 +299,12 @@ void Oled::fontSize(int i) {
   case 2:	setFreeFont(&FreeSans12pt7b); break;
   case 3:	setFreeFont(&FreeSans18pt7b); break;
   case 4:	setFreeFont(&FreeSans24pt7b); break;
+  }
+}
+
+void OledButton::setFillColor(uint16_t newfc) {
+  if (newfc != _fillcolor) {
+    _fillcolor = newfc;
+    drawButton(false);
   }
 }
