@@ -173,28 +173,19 @@ void Weather::PerformQuery() {
   Serial.println("ok");
 
   // Serial.printf("Heap (before JSON) %d\n", ESP.getFreeHeap());
-
   boolean fail = true;
+
   DynamicJsonBuffer jb;
-  JsonObject &root = jb.parseObject(buf);
+  char *ptr = SkipHeaders(buf);
+  JsonObject &root = jb.parseObject(ptr);
   if (root.success()) {
     JsonObject &current = root["current_observation"];
     if (current.success()) {
       FromPeer(current);
       fail = false;
     }
-  } else {
-    // Recover ?
-    char *ptr = SkipHeaders(buf);
-    JsonObject &root2 = jb.parseObject(ptr);
-    if (root2.success()) {
-      JsonObject &current = root["current_observation"];
-      if (current.success()) {
-        FromPeer(current);
-        fail = false;
-      }
-    }
   }
+
   if (fail) {
     Serial.println("Failed to parse JSON");
     Serial.printf("Response received, length %d\n", rl);
@@ -203,13 +194,6 @@ void Weather::PerformQuery() {
     the_delay = error_delay;				// Shorter retry
     return;
   }
-#if 0
-				  int	temp_c_a = (int)temp_c,
-					temp_c_b = (temp_c - temp_c_a) * 10;
-				  Serial.printf("Current observation : %d.%d °C, pressure %d, wind %d km/h\n",
-					temp_c_a, temp_c_b, pressure_mb, wind_kph);
-				  Serial.printf("Weather %s, pic %s\n", weather, icon_url);
-#endif
 
   free(buf);
   buf = 0;
