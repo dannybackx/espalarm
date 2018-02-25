@@ -299,7 +299,7 @@ void Weather::draw() {
       first[i] = 0;
 
       // Print the weather info format-based : we don't have a function for that
-      strwtime(buffer[i], sizeof(buffer[i]), format[i]);
+      strfweather(buffer[i], sizeof(buffer[i]), format[i]);
 
 				// Serial.printf("%d %s,", i, buffer[i]);
 
@@ -312,20 +312,8 @@ void Weather::draw() {
 
 /*
  * Perform a strftime-like translation
- *
-  char		*icon_url,
-  		*weather,
-  		*pressure_trend,
-		*wind_dir,
-		*relative_humidity;
-  float		feelslike_c,
-  		temp_c;
-  int		wind_kph,
-		pressure_mb,
-		observation_epoch,
-		precip_today_metric;
  */
-void Weather::strwtime(char *buffer, int buflen, const char *format) {
+void Weather::strfweather(char *buffer, int buflen, const char *format) {
   char	*endp = buffer + buflen;
   char	tbuf[16];
   int	tc_1, tc_2;
@@ -334,6 +322,7 @@ void Weather::strwtime(char *buffer, int buflen, const char *format) {
     tbuf[0] = 0;
     if (*format != '%') {
       *buffer++ = *format;
+      *buffer = 0;
       continue;
     }
     switch (*++format) {
@@ -385,6 +374,7 @@ void Weather::strwtime(char *buffer, int buflen, const char *format) {
       if (buffer + i < endp - 1) {
         strcpy(buffer, tbuf);
 	buffer += i;
+	*buffer = 0;
       } else
         return;
     }
