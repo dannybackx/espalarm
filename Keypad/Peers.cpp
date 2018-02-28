@@ -414,6 +414,13 @@ char *Peers::HandleQuery(const char *str) {
   } else if (query = json["weather"]) {
     // Receive a short JSON from a peer with weather info (summary from Wunderground.com).
     weather->FromPeer(json);
+  } else if (query = json["pin"]) {
+    // Example : {"pin" : 17, "state" : 1 }
+    int pin = json["pin"];
+    int state = json["state"];
+
+    pinMode(pin, OUTPUT);
+    digitalWrite(pin, state);
   }
 
   return (char *)"{ \"reply\" : \"success\", \"message\" : \"Ok\" }";
