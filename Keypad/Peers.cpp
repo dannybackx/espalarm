@@ -597,8 +597,9 @@ void Peers::ImageFromPeerBinaryAsync() {
   }
   int cnt = 0, len;
   while (cnt < nb) {
+    // Serial.printf("Reading %d\n", nb-cnt);
     len = client.read(buf+cnt, nb-cnt);
-    cnt += len;
+    if (len >= 0) cnt += len;
     delay(50);
   }
   client.stop();
