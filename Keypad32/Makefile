@@ -85,6 +85,7 @@ TOOLS_ROOT = $(ESP_ROOT)/tools
 TOOLS_BIN = $(TOOLS_ROOT)/xtensa-esp32-elf/bin
 SDK_ROOT = $(ESP_ROOT)/tools/sdk
 LWIP_SDK_ROOT = $(ESP_ROOT)/tools/sdk/lwip
+ESPTOOLS_BIN = $(ESP_ROOT)/tools/sdk/bin
 
 # Directory for intermedite build files
 OBJ_DIR = $(BUILD_ROOT)/obj
@@ -219,15 +220,13 @@ $(MAIN_EXE): $(CORE_LIB) $(USER_OBJ)
 	perl -e 'print "Build complete. Elapsed time: ", time()-$(START_TIME),  " seconds\n\n"'
 
 upload: all
-	# $(ESP_TOOL) $(UPLOAD_VERB) -cd nodemcu -cb $(UPLOAD_SPEED) -cp $(UPLOAD_PORT) -ca 0x00000 -cf $(MAIN_EXE)
 	python $(ESP_TOOL) --chip esp32 --port $(UPLOAD_PORT) --baud $(UPLOAD_SPEED) \
 	--before default_reset --after hard_reset write_flash -z --flash_mode dio \
 	--flash_freq 80m --flash_size detect \
-	0xe000 /home/danny/src/arduino/arduino-1.8.5/hardware/espressif/esp32/tools/partitions/boot_app0.bin \
-	0x1000 /home/danny/src/arduino/arduino-1.8.5/hardware/espressif/esp32/tools/sdk/bin/bootloader.bin \
+	0xe000 ${TOOLS_ROOT}/partitions/boot_app0.bin \
+	0x1000 ${ESPTOOLS_BIN}/bootloader_dio_80m.bin \
 	0x10000 $(MAIN_EXE) \
 	0x8000 $(SKETCH).partitions.bin
-
 
 run:	upload
 	miniterm.py ${UPLOAD_PORT} 115200
