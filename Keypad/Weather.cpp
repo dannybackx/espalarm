@@ -121,6 +121,8 @@ void Weather::PerformQuery() {
     http = new WiFiClient();
 
   Serial.printf("Querying %s .. ", PREF_WUNDERGROUND_API_SRV);
+  // More verbose :
+  // Serial.printf("Querying %s {%s} .. ", PREF_WUNDERGROUND_API_SRV, query);
 
   if (! http->connect(PREF_WUNDERGROUND_API_SRV, 80)) {	// Not connected
     Serial.println("Could not connect");
