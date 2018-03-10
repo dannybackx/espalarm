@@ -140,7 +140,7 @@ void Weather::PerformQuery() {
 
   buf[0] = 0;
   boolean skip = true;
-  int rl = 0;
+  int rl = 0, nerrors = 0;
   while (http && (http->connected() || http->available())) {
     if (skip) {
       String line = http->readStringUntil('\n');
@@ -154,6 +154,14 @@ void Weather::PerformQuery() {
 	  rl = buflen;
       } else if (nb < 0) {
         Serial.printf("Read error %d, already read %d bytes\n", nb, rl);
+
+	nerrors++;
+	if (nerrors > 5) {
+	  free(buf);
+	  buf = 0;
+	  the_delay = error_delay;				// Shorter retry
+	  return;
+	}
       }
     }
     delay(300);
