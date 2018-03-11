@@ -143,39 +143,48 @@ void Weather::PerformQuery() {
   buf[0] = 0;
   boolean skip = true;
   int rl = 0, nerrors = 0;
-  while (http && (http->connected() || http->available())) {
-    if (skip) {
+
+  /*
+   * Cut this into two separate loops for clarity
+   * This first loop skips the HTTP headers
+   */
+  while (skip && http && (http->connected() || http->available())) {
       String line = http->readStringUntil('\n');
+      // Serial.println(line);
       if (line.length() <= 1)
         skip = false;
-    } else {
+  }
+  /*
+   * Second loop reads the JSON
+   */
+  while (http && (http->connected() || http->available())) {
       int nb = http->read((uint8_t *)&buf[rl], buflen - rl);
       if (nb > 0) {
         rl += nb;
+					Serial.printf(" --> read %d, total %d\n", nb, rl);
 	if (rl > buflen)
 	  rl = buflen;
       } else if (nb < 0) {
-        Serial.printf("Read error %d, already read %d bytes\n", nb, rl);
-
+        // Serial.printf("Read error %d, already read %d bytes\n", nb, rl);
 	nerrors++;
+        delay(300);
+
 	if (nerrors > 5) {
+          Serial.printf("Quit due to read error %d\n", nb);
+
 	  free(buf);
 	  buf = 0;
 	  the_delay = error_delay;				// Shorter retry
 	  return;
 	}
       }
-    }
-    delay(300);
   }
-#if 0
-  http->stop();
-  delete http;
-  http = 0;
-#endif
 
   if (rl >= buflen) {
     Serial.println("buffer overflow");
+    free(buf);
+    buf = 0;
+    the_delay = error_delay;				// Shorter retry
     return;
   }
   buf[rl++] = 0;
