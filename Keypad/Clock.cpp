@@ -23,6 +23,7 @@
 
 #include <Clock.h>
 #include <TimeLib.h>
+#include <Config.h>
 #include <stdarg.h>
 
 extern "C" {
@@ -101,6 +102,22 @@ void Clock::loop(time_t nowts) {
   }
 #endif
 
+  if (nowts < 1000)
+    return;
+
+#ifdef ESP32
+  // Simplistic timezone handling
+  bool dst = IsDST(day(the_time), month(the_time), dayOfWeek(the_time), hour(the_time));
+
+  // static int cnt = 0;
+  // if (cnt++ < 3) Serial.printf("IsDST(%d,%d,%d) -> %s\n", day(the_time), month(the_time), dayOfWeek(the_time), dst ? "yes" : "no");
+
+  if (dst)
+    the_time += (PREF_TIMEZONE + 1) * 3600;
+  else
+    the_time += PREF_TIMEZONE * 3600;
+#endif
+
   // Only do this once per second or so (given the delay 100)
   if (counter++ % 10 == 0) {
     counter = 0;
@@ -146,7 +163,17 @@ void Clock::draw() {
     oled->fontSize(1);
 }
 
-bool Clock::IsDST(int day, int month, int dow)
+bool Clock::IsDST(int day, int month, int dow, int hr) {
+  if (config->DSTEurope()) {
+    return IsDSTEurope(day, month, dow, hr);
+  }
+  if (config->DSTEurope()) {
+    return IsDSTUSA(day, month, dow, hr);
+  }
+  return false;
+}
+
+bool Clock::IsDSTUSA(int day, int month, int dow, int hr)
 {
   dow--;	// Convert this to POSIX convention (Day Of Week = 0-6, Sunday = 0)
 
@@ -160,13 +187,44 @@ bool Clock::IsDST(int day, int month, int dow)
 
   int previousSunday = day - dow;
 
-  // In march, we are DST if our previous sunday was on or after the 8th.
+  // USA : in March, we are DST if our previous sunday was on or after the 8th.
   if (month == 3)
     return previousSunday >= 8;
 
   // In november we must be before the first sunday to be dst.
   // That means the previous sunday must be before the 1st.
   return previousSunday <= 0;
+}
+
+// Europe
+bool Clock::IsDSTEurope(int day, int mon, int dow, int hr) {
+
+  // Isolate March and October
+  if (mon < 3 || mon > 10) return false;
+  if (mon > 3 && mon < 10) return true;
+
+  int previousSunday = day - dow;
+
+  if (mon == 10) {
+    if (previousSunday < 25)
+      return true;
+    if (dow > 0)
+      return false;
+    if (hr < 2)
+      return true;
+    return false;
+  }
+  if (mon == 3) {
+    if (previousSunday < 25)
+      return false;
+    if (dow > 0)
+      return true;
+    if (hr < 2)
+      return false;
+    return true;
+  }
+
+  return true;
 }
 
 #ifdef ESP8266
@@ -184,7 +242,7 @@ void Clock::HandleDST1() {
     return;
 
   // DST handling
-  if (IsDST(day(t), month(t), dayOfWeek(t))) {
+  if (IsDST(day(t), month(t), dayOfWeek(t), hour(t))) {
     _isdst = 1;
 
     // Set TZ again

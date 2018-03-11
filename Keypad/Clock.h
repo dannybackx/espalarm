@@ -56,7 +56,9 @@ private:
   void HandleDST1();
   void HandleDST2();
 
-  bool IsDST(int day, int month, int dow);
+  bool IsDST(int day, int month, int dow, int hr);
+  bool IsDSTEurope(int day, int month, int dow, int hr);
+  bool IsDSTUSA(int day, int month, int dow, int hr);
   int _isdst = 0;
   void Debug(const char *format, ...);
   time_t mySntpInit();

@@ -54,6 +54,9 @@ public:
 
   boolean haveSecure();
 
+  boolean DSTEurope();
+  boolean DSTUSA();
+
 private:
   int siren_pin;
   int radio_pin;

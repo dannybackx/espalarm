@@ -228,3 +228,11 @@ struct config Config::configs[] = {
 const char *Config::myName(void) {
   return name;
 }
+
+boolean Config::DSTEurope() {
+  return true;
+}
+
+boolean Config::DSTUSA() {
+  return false;
+}
