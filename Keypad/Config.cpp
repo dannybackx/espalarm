@@ -40,6 +40,7 @@
 #include <preferences.h>
 
 Config::Config() {
+  name = 0;
 #ifdef	USE_SPIFFS
   SPIFFS.begin();
 #endif
@@ -119,12 +120,9 @@ void Config::ParseConfig(JsonObject &jo) {
   oled_led_pin = jo["oledLedPin"] | -1;
 
   name = jo["name"];
+  // Note the missing else case gets treated in Config::myName()
   if (name) {
     name = strdup(name);	// Storage from JSON library doesn't last
-  } else {
-    name = (char *)malloc(40);
-    String mac = WiFi.macAddress();
-    sprintf((char *)name, "Controller %s", mac.c_str());
   }
 
   const char *rfidType = jo["rfidType"];
@@ -145,6 +143,7 @@ void Config::HardCodedConfig(const char *mac) {
       ReadConfig(configs[i].config);
       return;
     }
+  Serial.printf("No hardcoded config for %s\n", mac);
 }
 
 void Config::WriteConfig() {
@@ -226,6 +225,11 @@ struct config Config::configs[] = {
 };
 
 const char *Config::myName(void) {
+  if (name == 0) {
+    name = (char *)malloc(40);
+    String mac = WiFi.macAddress();
+    sprintf((char *)name, "Controller %s", mac.c_str());
+  }
   return name;
 }
 
