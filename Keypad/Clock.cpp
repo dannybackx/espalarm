@@ -196,8 +196,14 @@ bool Clock::IsDSTUSA(int day, int month, int dow, int hr)
   return previousSunday <= 0;
 }
 
+// int dstcnt = 3;
+
 // Europe
 bool Clock::IsDSTEurope(int day, int mon, int dow, int hr) {
+
+  dow--;	// Convert this to POSIX convention (Day Of Week = 0-6, Sunday = 0)
+
+  // if (dstcnt-- > 0) Serial.printf("IsDSTEurope(%d,%d,%d,%d)\n", day, mon, dow, hr);
 
   // Isolate March and October
   if (mon < 3 || mon > 10) return false;
