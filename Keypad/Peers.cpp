@@ -288,7 +288,7 @@ void mqttCallback(char *topic, byte *payload, unsigned int length) {
   strncpy(pl, (const char *)payload, length);
   pl[length] = 0;
 
-  Serial.printf("MQTT topic %s payload %s\n", topic, pl);
+  Serial.printf("MQTT topic %s {%s}\n", topic, pl);
   if (strcmp(topic, "/query") == 0) {
     ;
   }

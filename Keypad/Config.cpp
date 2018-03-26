@@ -45,13 +45,11 @@ Config::Config() {
   SPIFFS.begin();
 #endif
 
-#if defined(ESP32)
-  radio_pin = 2;
-#elif defined(ESP8266)
-  radio_pin = D2;
-#endif
+  radio_pin = -1;
   siren_pin = -1;
   oled = false;
+  rfid = false;
+  secure = false;
 
   String mac = WiFi.macAddress();
   HardCodedConfig(mac.c_str());
@@ -115,7 +113,7 @@ void Config::ReadConfig(const char *js) {
 
 void Config::ParseConfig(JsonObject &jo) {
   siren_pin = jo["sirenPin"] | -1;
-  radio_pin = jo["radioPin"] | A0;
+  radio_pin = jo["radioPin"] | -1;
   oled = jo["haveOled"] | false;
   oled_led_pin = jo["oledLedPin"] | -1;
 

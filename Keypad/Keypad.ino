@@ -109,8 +109,8 @@ void setup(void) {
   config = new Config();
   SetupOTA();
   				Serial.printf("\nMy name is %s, have :", config->myName());
-  if (config->haveOled()) Serial.print(" oled");
-  if (config->haveRadio()) Serial.print(" radio");
+  if (config->haveOled()) Serial.printf(" oled (pin %d)", config->GetOledLedPin());
+  if (config->haveRadio()) Serial.printf(" radio (pin %d)", config->GetRadioPin());
   if (config->haveRfid()) Serial.print(" rfid");
   if (config->haveWeather()) Serial.print(" weather");
   Serial.println();
@@ -119,7 +119,8 @@ void setup(void) {
     oled = new Oled();
     oled->begin();
     backlight = new BackLight(config->GetOledLedPin());		// led_pin, D3 is GPIO0 on D1 mini
-    backlight->SetStatus(BACKLIGHT_TEMP_ON);			// Display on
+    // backlight->SetStatus(BACKLIGHT_ON);				// Display on
+    backlight->SetStatus(BACKLIGHT_TEMP_ON);			// Display on, fades after timeout
     backlight->SetTimeout(PREF_BACKLIGHT_TIMEOUT);		// Hardcoded timeout in seconds
 
     screen1.buttonText = xxx;
@@ -132,6 +133,7 @@ void setup(void) {
 
   gif = new LoadGif(oled);
   _clock = new Clock(oled);
+  peers = new Peers();
 
   // We always have a local weather module
   // Only one of us actually does wunderground queries
@@ -145,8 +147,7 @@ void setup(void) {
     rfid = new Rfid();
   }
 
-  _alarm = new Alarm();
-  peers = new Peers();
+  _alarm = new Alarm(oled);
 
   Serial.println("Ready");
 }
@@ -196,9 +197,14 @@ void loop()
  * Prepare OTA with minimal verbosity (messages on the console)
  */
 void SetupOTA() {
+  const char *n = config->myName();
+  if (n == 0) {
+    Serial.printf("SetupOTA: no name\n");
+    return;
+  }
   int nlen = strlen(config->myName()) + 5;
   char *ota_id = (char *)malloc(nlen);
-  sprintf(ota_id, "OTA-%s", config->myName());
+  sprintf(ota_id, "%s", config->myName());
   for (int i=0; i<nlen; i++)
     if (ota_id[i] == ' ') ota_id[i] = '_';
 				Serial.printf("Set up OTA (id %s) ..", ota_id);

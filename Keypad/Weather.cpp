@@ -69,7 +69,7 @@ Weather::Weather(boolean doit, Oled *oled) {
   picx = 30;
   picy = 90;				// 100 descends too much
 
-  icon_url = weather = pressure_trend = wind_dir = relative_humidity = 0;
+  icon_txt = icon_url = weather = pressure_trend = wind_dir = relative_humidity = 0;
 
   if (oled) {
     // Specify default clock
@@ -161,7 +161,7 @@ void Weather::PerformQuery() {
       int nb = http->read((uint8_t *)&buf[rl], buflen - rl);
       if (nb > 0) {
         rl += nb;
-					Serial.printf(" --> read %d, total %d\n", nb, rl);
+					// Serial.printf(" --> read %d, total %d\n", nb, rl);
 	if (rl > buflen)
 	  rl = buflen;
       } else if (nb < 0) {
@@ -233,6 +233,14 @@ void Weather::PerformQuery() {
     const char *wjson = CreatePeerMessage();
     peers->SendWeather(wjson);
     free((void *)wjson);
+
+    char msg[80], msg2[80];
+    if (icon_txt)
+      sprintf(msg, "Weather temp %%c °C pres %%p mb %%w km/u %%r mm, %s", icon_txt);
+    else
+      sprintf(msg, "Weather temp %%c °C pres %%p mb %%w km/u %%r mm");
+    strfweather(msg2, sizeof(msg2), msg);
+    peers->Report(msg2);
   }
 }
 
@@ -497,6 +505,11 @@ void Weather::FromPeer(JsonObject &json) {
   if (iurl) {
     if (icon_url) free(icon_url);
     icon_url = strdup(iurl);
+  }
+  const char *itxt = json["icon"];
+  if (itxt) {
+    if (icon_txt) free(icon_txt);
+    icon_txt = strdup(itxt);
   }
 
   // Image

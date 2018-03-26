@@ -20,6 +20,8 @@
  *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#include <Oled.h>
+
 #ifndef	_ALARM_STATE_H_
 #define	_ALARM_STATE_H_
 
@@ -43,7 +45,7 @@ enum AlarmZone {
 
 class Alarm {
 public:
-  Alarm();
+  Alarm(Oled *oled);
   ~Alarm();
   void loop(time_t);
 
@@ -57,7 +59,11 @@ public:
 
 private:
   enum AlarmStatus	armed;	// Armed or not
-  boolean alert;
+  boolean		alert;
+  Oled			*oled;
+
+  OledButton		*alarmButton;
+  void			AlarmButtonPressed();
 };
 
 extern Alarm *_alarm;

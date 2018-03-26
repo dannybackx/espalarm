@@ -23,45 +23,43 @@
 #include <Arduino.h>
 #include <BackLight.h>
 
-#ifdef ESP32
-extern "C" {
-  void analogWrite(int pin, int value) {
-    ledcWrite(pin, value);
-  }
-
-  const int ledChannel = 0;
-  const int resolution = 8;
-  const int freq = 5000;
-  const int PWMRANGE = 2 ^ resolution;
-}
-#endif
-
 BackLight::BackLight(int pin) {
-  led_pin = pin;
+  channel = 0;
+  resolution = 8;
+  freq = 5000;
+  pwmrange = (uint16_t) exp2(resolution);
 
   SetBrightness(70);
   bright_low = 10;
   bright_high = 70;
+
+  led_pin = pin;
   timeout = 10;
 				// Initialize LED control pin
   pinMode(led_pin, OUTPUT);
-  analogWrite(led_pin, 0);	// Display off
 
-  status = BACKLIGHT_NONE;
-
-#ifdef ESP32
-  ledcSetup(ledChannel, freq, resolution);
-  ledcAttachPin(led_pin, ledChannel);
+#if defined(ESP32)
+  ledcSetup(channel, freq, resolution);
+  ledcAttachPin(led_pin, channel);
 #endif
+
+  // Serial.printf("BackLight(pin %d)\n", led_pin);
+
+  // Display off
+  status = BACKLIGHT_NONE;
+  ledcWrite(channel, 0);
 }
 
 void BackLight::SetStatus(BackLightStatus ns) {
   status = ns;
 
-  if (status == BACKLIGHT_ON || status == BACKLIGHT_TEMP_ON)
-    analogWrite(led_pin, brightness);
-  else if (status == BACKLIGHT_NONE || status == BACKLIGHT_TEMP_OFF)
-    analogWrite(led_pin, 0);
+  if (status == BACKLIGHT_ON || status == BACKLIGHT_TEMP_ON) {
+    // Serial.printf("BackLight::SetStatus %d\n", brightness);
+    ledcWrite(channel, brightness);
+  } else if (status == BACKLIGHT_NONE || status == BACKLIGHT_TEMP_OFF) {
+    // Serial.printf("BackLight::SetStatus %d\n", 0);
+    ledcWrite(channel, 0);
+  }
 
   if (status == BACKLIGHT_TEMP_ON || status == BACKLIGHT_TEMP_OFF)
     trigger_ts = now();
@@ -69,7 +67,9 @@ void BackLight::SetStatus(BackLightStatus ns) {
 
 void BackLight::SetBrightness(int pctage) {
   percentage = pctage;
-  brightness = percentage * PWMRANGE / 100;
+  brightness = percentage * pwmrange / 100;
+
+  // Serial.printf("BackLight %d %%\n", percentage);
 }
 
 void BackLight::Trigger(time_t ts) {
@@ -77,7 +77,7 @@ void BackLight::Trigger(time_t ts) {
     status = BACKLIGHT_TEMP_ON;		// Change status, keep track of time, light on
     trigger_ts = ts;
 
-    analogWrite(led_pin, brightness);
+    ledcWrite(channel, brightness);
   } else if (status == BACKLIGHT_TEMP_ON) {
     trigger_ts = ts;			// Only update our time
   } else {
@@ -95,7 +95,7 @@ void BackLight::SetTimeout(int s) {
 void BackLight::loop(time_t nowts) {
   if (status == BACKLIGHT_TEMP_ON) {
     if (trigger_ts + timeout < nowts) {
-      analogWrite(led_pin, 0);
+      ledcWrite(channel, 0);
       status = BACKLIGHT_TEMP_CHANGING;
       trigger_ts = 0;
       slow = 0;
@@ -109,17 +109,21 @@ void BackLight::loop(time_t nowts) {
       if (slow == 0)
         percentage--;					// Slow this down ?
       SetBrightness(percentage);
-      analogWrite(led_pin, brightness);
+
+      ledcWrite(channel, brightness);
     }
   }
 }
 
 void BackLight::touched(time_t nowts) {
+  // Serial.println("BackLight::touched");
+
   trigger_ts = nowts;
   if (status == BACKLIGHT_TEMP_OFF || status == BACKLIGHT_TEMP_CHANGING)
     status = BACKLIGHT_TEMP_ON;
   if (status == BACKLIGHT_TEMP_ON) {
     SetBrightness(bright_high);
-    analogWrite(led_pin, brightness);
+
+    ledcWrite(channel, brightness);
   }
 }

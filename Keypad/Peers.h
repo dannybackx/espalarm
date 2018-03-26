@@ -62,6 +62,7 @@ public:
   char *CallPeer(Peer *, char *json);
   void CallPeer0(Peer *, char *json);
   void ImageFromPeerBinary(IPAddress ip, uint16_t port, uint16_t wid, uint16_t ht);
+  void Report(const char *msg);
 
 private:
   list<Peer>		peerlist;
@@ -95,7 +96,6 @@ private:
 
   // void mqttCallback(char *topic, byte *payload, unsigned int length);
   void mqttReconnect();
-  void Report(const char *msg);
 
   void StoreImage(uint16_t *pic, uint16_t wid, uint16_t ht);
 

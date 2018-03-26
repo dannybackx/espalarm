@@ -62,6 +62,7 @@ private:
 
   // Fields from the JSON query
   char		*icon_url,
+		*icon_txt,
   		*weather,
   		*pressure_trend,
 		*wind_dir,

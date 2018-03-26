@@ -52,6 +52,8 @@ private:
   int bright_low, bright_high;	// brightness for passive and active states
   int timeout,			// number of seconds for backlight to stay lit
       slow;			// Counter to slow down dimming
+
+  uint16_t pwmrange, resolution, channel, freq;
 };
 
 extern BackLight *backlight;

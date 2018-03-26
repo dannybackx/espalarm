@@ -31,9 +31,23 @@
 #include <Peers.h>
 #include <secrets.h>
 
-Alarm::Alarm() {
+Alarm::Alarm(Oled *oled) {
+  this->oled = oled;
+
   armed = ALARM_OFF;
   alert = false;
+  alarmButton = 0;
+
+  if (oled) {
+    alarmButton = new OledButton();
+    alarmButton->initButton(oled,
+      120,					// x
+      90,					// y
+      180, 120,					// w, h
+      TFT_WHITE, TFT_DARKGREEN, TFT_WHITE,	// outline, fill, text colours
+      (char *)"Uit", 3);			// text, size
+    alarmButton->drawButton();
+  }
 }
 
 Alarm::~Alarm() {
@@ -41,10 +55,21 @@ Alarm::~Alarm() {
 
 void Alarm::SetArmed(AlarmStatus s) {
   armed = s;
+  switch (s) {
+  case ALARM_OFF:
+    alarmButton->setFillColor(TFT_GREEN);
+    alarmButton->setText("Uit");
+    break;
+  case ALARM_ON:
+    alarmButton->setFillColor(TFT_RED);
+    alarmButton->setText("Aan");
+    break;
+  }
 }
 
 void Alarm::SetArmed(AlarmStatus s, AlarmZone zone) {
-  armed = s;
+  SetArmed(s);
+
   if (zone != ZONE_FROMPEER) {
     peers->AlarmSetArmed(s);
   }
@@ -99,7 +124,38 @@ void Alarm::Reset(time_t nowts, const char *user) {
 }
 
 /*
- * Report environmental information periodically
+ *
  */
 void Alarm::loop(time_t nowts) {
+#if 0
+  // Silly test code for the setFillColor method
+  if ((nowts % 6) == 0)
+    alarmButton->setFillColor(TFT_RED);
+  else if ((nowts % 6) == 3)
+    alarmButton->setFillColor(TFT_GREEN);
+#endif
+
+  if (oled) {
+    uint16_t tx, ty;
+    (void) oled->getTouchRaw(&tx, &ty);
+
+    if (oled->getTouchRawZ() > 500 && alarmButton->contains(tx, 320 - ty)) {
+      AlarmButtonPressed();
+    }
+  }
+}
+
+boolean _t = false;
+int _cnt = 0;
+
+void Alarm::AlarmButtonPressed() {
+#if 1
+  if (_cnt++ < 5) Serial.printf("AlarmButtonPressed(%s)\n", _t ? "true" : "false");
+  _t = ! _t;
+#else
+  if (armed == ALARM_OFF)
+    SetArmed(ALARM_ON);
+  else
+    SetArmed(ALARM_OFF);
+#endif
 }

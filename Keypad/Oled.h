@@ -113,5 +113,6 @@ class OledButton : public TFT_eSPI_Button {
   boolean contains(int16_t x, int16_t y);
 
   void setFillColor(uint16_t);
+  void setText(const char *);
 };
 #endif
