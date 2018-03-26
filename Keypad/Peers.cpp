@@ -34,6 +34,7 @@
  */
 
 #include <Arduino.h>
+
 #ifdef ESP8266
 #include <ESP8266WiFi.h>
 #else
@@ -51,6 +52,7 @@ using namespace std;
 #include <Alarm.h>
 #include <Weather.h>
 
+#include <PubSubClient.h>
 #include <RCSwitch.h>
 
 #ifdef ESP8266
@@ -64,6 +66,11 @@ extern "C" {
 // These used to be in the class, but need to be global for the background task
 const uint16_t portImage = 23457;		// contact this to query weather icon
 uint16_t	*tskPic, tskWid, tskHt;
+
+// For MQTT
+WiFiClient	wifiClient;
+PubSubClient	mqtt(wifiClient);
+void mqttCallback(char *topic, byte *payload, unsigned int length);
 
 #ifdef ESP32
 #include <task.h>
@@ -88,6 +95,23 @@ Peers::Peers() {
   ImageServerSetup();
 #endif
   QueryPeers();
+
+  Serial.printf("Initializing MQTT ");
+  mqtt.setServer(MQTT_HOST, MQTT_PORT);
+
+  while (! mqtt.connected()) {
+    if (! mqtt.connect("esp32 alarm")) {
+      Serial.printf(".");
+    }
+  }
+  Serial.printf(" connected\n");
+
+  mqtt.setCallback(mqttCallback);
+  mqtt.subscribe("/alarm");
+
+  char msg[80];
+  sprintf(msg, "Alarm controller {%s} start", config->myName());
+  Report(msg);
 }
 
 Peers::~Peers() {
@@ -130,6 +154,11 @@ void Peers::loop(time_t nowts) {
 
   RestLoop();
   ServerSocketLoop();
+
+  // MQTT
+  if (! mqtt.connected())
+    mqttReconnect();
+  mqtt.loop();
 }
 
 /*********************************************************************************
@@ -248,6 +277,40 @@ char *Peers::CallPeer(Peer *peer, char *json) {
 }
 
 /*********************************************************************************
+ *
+ * MQTT
+ *
+ *********************************************************************************/
+void mqttCallback(char *topic, byte *payload, unsigned int length) {
+  char reply[80], pl[80];
+
+  strncpy(pl, (const char *)payload, length);
+  pl[length] = 0;
+
+  Serial.printf("MQTT topic %s payload %s\n", topic, pl);
+  if (strcmp(topic, "/query") == 0) {
+    ;
+  }
+}
+
+void Peers::mqttReconnect() {
+  Serial.printf("MQTT reconnect ");
+  while (! mqtt.connected()) {
+    if (! mqtt.connect("esp32 alarm")) {
+      Serial.printf(".");
+    }
+  }
+  Serial.printf(" connected\n");
+
+  mqtt.setCallback(mqttCallback);
+  mqtt.subscribe("/alarm");
+}
+
+void Peers::Report(const char *msg) {
+  mqtt.publish("/alarm", msg);
+}
+
+/*********************************************************************************
  * This bit of code implements a server that receives, handles, and answers
  * incoming queries.
  * This provides status updates from other devices.
@@ -292,7 +355,7 @@ void ImageTaskLoop(void *ptr) {
   while (1) {
     WiFiClient client = imageTaskSrv->available();
     if (! client) {
-      delay(250);
+      delay(50);
     } else {
       int len = client.write((uint8_t *)tskPic, tskWid * tskHt * 2);
       // Serial.printf("Peers::ImageTaskLoop: wrote %d\n", len);

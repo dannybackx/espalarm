@@ -31,6 +31,7 @@
 #include <WiFiUdp.h>
 #include <Alarm.h>
 #include <ArduinoJson.h>
+#include <PubSubClient.h>
 
 #include <list>
 using namespace std;
@@ -91,6 +92,10 @@ private:
   const int recBufLen = 512;
 
   char output[128];
+
+  // void mqttCallback(char *topic, byte *payload, unsigned int length);
+  void mqttReconnect();
+  void Report(const char *msg);
 
   void StoreImage(uint16_t *pic, uint16_t wid, uint16_t ht);
 
