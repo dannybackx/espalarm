@@ -2,11 +2,12 @@
  * This module keeps a list of its peer controllers, and serves as messaging platform
  * between the alarm controllers.
  *
- * Three protocols are used :
+ * Four protocols are used :
  * - multicast UDP : device discovery (doesn't work yet)
  * - JSON over TCP (REST calls) to pass messages
  * - simple TCP transfer of icon images (one TCP port does just that)
  *   The server for this (on ESP32) is in a separate task.
+ * - MQTT, via the PubSubClient library
  *
  * They exchange information via JSON queries.
  *	Example : {"status" : "armed", "name" : "keypad02"}
