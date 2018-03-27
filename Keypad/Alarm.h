@@ -51,6 +51,7 @@ public:
 
   void SetArmed(AlarmStatus);
   void SetArmed(AlarmStatus s, AlarmZone zone);
+  AlarmStatus GetArmed();
 
   void Signal(const char *sensor, AlarmZone zone);	// Still to decide based on zone
   void SoundAlarm(const char *sensor);			// We've decided : just start yelling

@@ -55,6 +55,10 @@ Alarm::~Alarm() {
 
 void Alarm::SetArmed(AlarmStatus s) {
   armed = s;
+
+  if (alarmButton == 0)
+    return;
+
   switch (s) {
   case ALARM_OFF:
     alarmButton->setFillColor(TFT_GREEN);
@@ -73,6 +77,10 @@ void Alarm::SetArmed(AlarmStatus s, AlarmZone zone) {
   if (zone != ZONE_FROMPEER) {
     peers->AlarmSetArmed(s);
   }
+}
+
+AlarmStatus Alarm::GetArmed() {
+  return armed;
 }
 
 /*
@@ -129,10 +137,11 @@ void Alarm::Reset(time_t nowts, const char *user) {
 void Alarm::loop(time_t nowts) {
 #if 0
   // Silly test code for the setFillColor method
-  if ((nowts % 6) == 0)
-    alarmButton->setFillColor(TFT_RED);
-  else if ((nowts % 6) == 3)
-    alarmButton->setFillColor(TFT_GREEN);
+  if ((nowts % 6) == 0) {
+    if (alarmButton) alarmButton->setFillColor(TFT_RED);
+  } else if ((nowts % 6) == 3) {
+    if (alarmButton) alarmButton->setFillColor(TFT_GREEN);
+  }
 #endif
 
   if (oled) {
