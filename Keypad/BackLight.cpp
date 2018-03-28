@@ -47,7 +47,11 @@ BackLight::BackLight(int pin) {
 
   // Display off
   status = BACKLIGHT_NONE;
+#if defined(ESP32)
   ledcWrite(channel, 0);
+#else
+  analogWrite(led_pin, 0);
+#endif
 }
 
 void BackLight::SetStatus(BackLightStatus ns) {
@@ -55,10 +59,18 @@ void BackLight::SetStatus(BackLightStatus ns) {
 
   if (status == BACKLIGHT_ON || status == BACKLIGHT_TEMP_ON) {
     // Serial.printf("BackLight::SetStatus %d\n", brightness);
+#ifdef ESP32
     ledcWrite(channel, brightness);
+#else
+    analogWrite(led_pin, percentage);
+#endif
   } else if (status == BACKLIGHT_NONE || status == BACKLIGHT_TEMP_OFF) {
     // Serial.printf("BackLight::SetStatus %d\n", 0);
+#ifdef ESP32
     ledcWrite(channel, 0);
+#else
+    analogWrite(led_pin, 0);
+#endif
   }
 
   if (status == BACKLIGHT_TEMP_ON || status == BACKLIGHT_TEMP_OFF)
@@ -77,7 +89,11 @@ void BackLight::Trigger(time_t ts) {
     status = BACKLIGHT_TEMP_ON;		// Change status, keep track of time, light on
     trigger_ts = ts;
 
+#ifdef ESP32
     ledcWrite(channel, brightness);
+#else
+    analogWrite(led_pin, percentage);
+#endif
   } else if (status == BACKLIGHT_TEMP_ON) {
     trigger_ts = ts;			// Only update our time
   } else {
@@ -95,7 +111,11 @@ void BackLight::SetTimeout(int s) {
 void BackLight::loop(time_t nowts) {
   if (status == BACKLIGHT_TEMP_ON) {
     if (trigger_ts + timeout < nowts) {
+#ifdef ESP32
       ledcWrite(channel, 0);
+#else
+      analogWrite(led_pin, 0);
+#endif
       status = BACKLIGHT_TEMP_CHANGING;
       trigger_ts = 0;
       slow = 0;
@@ -110,7 +130,11 @@ void BackLight::loop(time_t nowts) {
         percentage--;					// Slow this down ?
       SetBrightness(percentage);
 
+#ifdef ESP32
       ledcWrite(channel, brightness);
+#else
+      analogWrite(led_pin, percentage);
+#endif
     }
   }
 }
@@ -124,6 +148,10 @@ void BackLight::touched(time_t nowts) {
   if (status == BACKLIGHT_TEMP_ON) {
     SetBrightness(bright_high);
 
+#ifdef ESP32
     ledcWrite(channel, brightness);
+#else
+    analogWrite(led_pin, percentage);
+#endif
   }
 }

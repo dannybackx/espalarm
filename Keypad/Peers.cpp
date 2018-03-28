@@ -97,11 +97,11 @@ Peers::Peers() {
 #endif
   QueryPeers();
 
-  Serial.printf("Initializing MQTT ");
+  Serial.printf("Initializing MQTT .");
   mqtt.setServer(MQTT_HOST, MQTT_PORT);
 
   while (! mqtt.connected()) {
-    if (! mqtt.connect("esp32 alarm")) {
+    if (! mqtt.connect(config->myName())) {
       Serial.printf(".");
     }
   }
@@ -295,9 +295,11 @@ void mqttCallback(char *topic, byte *payload, unsigned int length) {
 }
 
 void Peers::mqttReconnect() {
-  Serial.printf("MQTT reconnect ");
+  const char *name = config->myName();	// Can not return NULL
+
+  Serial.printf("MQTT reconnect .");
   while (! mqtt.connected()) {
-    if (! mqtt.connect("esp32 alarm")) {
+    if (! mqtt.connect(name)) {
       Serial.printf(".");
     }
   }
@@ -439,13 +441,20 @@ char *Peers::HandleQuery(const char *str) {
     DynamicJsonBuffer jb2;
     JsonObject &j2 = jb2.createObject();
     j2["acknowledge"] = config->myName();
+
+    // Also send info about our configuration
     if (config->haveOled()) j2["oled"] = true;
     if (config->haveRadio()) j2["radio"] = true;
     if (config->haveRfid()) j2["rfid"] = true;
     if (config->haveWeather()) j2["weather"] = true;
     if (config->haveSecure()) j2["secure"] = true;
+
+    // And our notion of the alarm status .. a node just coming online should pick this up
+    const char *as = _alarm->GetArmedString();
+    j2["alarm"] = as;				// Don't call this status
+
     j2.printTo(output, sizeof(output));
-    // Serial.printf("JSON %s\n", output);
+    Serial.printf("JSON sent : %s\n", output);
     return output;
   } else if (query = json["image"]) {
     const uint16_t port = json["port"];
@@ -464,6 +473,11 @@ char *Peers::HandleQuery(const char *str) {
     p->secure = json["secure"];
 
     AddPeer(p);
+
+    // We get info from the peer about alarm status, let's set ourselves to this value
+    const char *as = json["alarm"];
+    Serial.printf("Setting alarm to [%s], info from %s\n", as, p->name);
+    _alarm->SetArmed(as);
 
     // Serial.printf("\to %d w %d r %d s %d sec %d\n", p->oled ? 1 : 0,
     //   p->weather ? 1 : 0, p->radio ? 1 : 0,

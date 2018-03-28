@@ -50,8 +50,10 @@ public:
   void loop(time_t);
 
   void SetArmed(AlarmStatus);
+  void SetArmed(const char *);
   void SetArmed(AlarmStatus s, AlarmZone zone);
   AlarmStatus GetArmed();
+  const char *GetArmedString();
 
   void Signal(const char *sensor, AlarmZone zone);	// Still to decide based on zone
   void SoundAlarm(const char *sensor);			// We've decided : just start yelling

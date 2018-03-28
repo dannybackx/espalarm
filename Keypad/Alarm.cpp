@@ -53,6 +53,17 @@ Alarm::Alarm(Oled *oled) {
 Alarm::~Alarm() {
 }
 
+void Alarm::SetArmed(const char *ss) {
+  if (strcasecmp(ss, "armed") == 0)
+    SetArmed(ALARM_ON);
+  else if (strcasecmp(ss, "disarmed") == 0)
+    SetArmed(ALARM_OFF);
+  else if (strcasecmp(ss, "night") == 0)
+    SetArmed(ALARM_NIGHT);
+  else
+    ;	// FIX ME
+}
+
 void Alarm::SetArmed(AlarmStatus s) {
   armed = s;
 
@@ -81,6 +92,15 @@ void Alarm::SetArmed(AlarmStatus s, AlarmZone zone) {
 
 AlarmStatus Alarm::GetArmed() {
   return armed;
+}
+
+const char *Alarm::GetArmedString() {
+  switch (armed) {
+    case ALARM_ON: return "armed";
+    case ALARM_OFF: return "disarmed";
+    case ALARM_NIGHT: return "night";
+    default: return 0;
+  }
 }
 
 /*
