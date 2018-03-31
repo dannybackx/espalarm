@@ -36,6 +36,7 @@ class Clock {
 public:
   Clock(Oled *);
   void loop(time_t);
+  void timeString(char *, int);
 
 protected:
 
@@ -67,4 +68,6 @@ private:
   int		oldminute, newminute, oldhour, newhour;
   time_t	the_time;
 };
+
+extern Clock *_clock;
 #endif

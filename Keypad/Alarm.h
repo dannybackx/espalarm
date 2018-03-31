@@ -67,6 +67,8 @@ private:
 
   OledButton		*alarmButton;
   void			AlarmButtonPressed();
+  void			AlarmButtonUnpressed();
+  uint32_t		lasttime;
 };
 
 extern Alarm *_alarm;

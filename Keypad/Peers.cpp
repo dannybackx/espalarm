@@ -47,6 +47,7 @@
 using namespace std;
 
 #include <Peers.h>
+#include <Clock.h>
 #include <secrets.h>
 #include <Config.h>
 #include <ArduinoJson.h>
@@ -289,8 +290,16 @@ void mqttCallback(char *topic, byte *payload, unsigned int length) {
   pl[length] = 0;
 
   Serial.printf("MQTT topic %s {%s}\n", topic, pl);
-  if (strcmp(topic, "/query") == 0) {
-    ;
+  if (strcmp(pl, "time") == 0) {
+    if (_clock) {
+      char msg[64];
+      _clock->timeString(msg, sizeof(msg));
+      mqtt.publish("/alarm", msg);
+    }
+  } else if (strcmp(pl, "arm") == 0) {
+      _alarm->SetArmed(ALARM_ON, ZONE_FROMPEER);
+  } else if (strcmp(pl, "disarm") == 0) {
+      _alarm->SetArmed(ALARM_OFF, ZONE_FROMPEER);
   }
 }
 

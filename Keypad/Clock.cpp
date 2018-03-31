@@ -136,6 +136,23 @@ void Clock::loop(time_t nowts) {
   }
 }
 
+void Clock::timeString(char *buffer, int len) {
+  time_t now = time(0);
+
+#ifdef ESP32
+  // Simplistic timezone handling
+  bool dst = IsDST(day(now), month(now), dayOfWeek(now), hour(now));
+
+  if (dst)
+    now += (PREF_TIMEZONE + 1) * 3600;
+  else
+    now += PREF_TIMEZONE * 3600;
+#endif
+
+  struct tm *the_time = localtime(&now);
+  strftime(buffer, len, "%F %R", the_time);
+}
+
 void Clock::draw() {
   if (oled == 0)
     return;

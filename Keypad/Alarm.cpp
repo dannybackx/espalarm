@@ -38,6 +38,8 @@ Alarm::Alarm(Oled *oled) {
   alert = false;
   alarmButton = 0;
 
+  lasttime = 0;
+
   if (oled) {
     alarmButton = new OledButton();
     alarmButton->initButton(oled,
@@ -170,7 +172,8 @@ void Alarm::loop(time_t nowts) {
 
     if (oled->getTouchRawZ() > 500 && alarmButton->contains(tx, 320 - ty)) {
       AlarmButtonPressed();
-    }
+    } else
+      AlarmButtonUnpressed();
   }
 }
 
@@ -178,7 +181,20 @@ boolean _t = false;
 int _cnt = 0;
 
 void Alarm::AlarmButtonPressed() {
-#if 1
+  // Do separate query to get subsecond time indication
+  struct timeval tv;
+  gettimeofday(&tv, NULL);
+
+  uint32_t	ttt = tv.tv_sec * 1000000 + tv.tv_usec;
+
+  // Debounce
+  if (lasttime == 0 || ttt - lasttime > 200000) {
+    lasttime = ttt;
+  } else
+    return;
+
+  Serial.printf("AlarmButtonPressed(%d)\n", lasttime);
+#if 0
   if (_cnt++ < 5) Serial.printf("AlarmButtonPressed(%s)\n", _t ? "true" : "false");
   _t = ! _t;
 #else
@@ -187,4 +203,10 @@ void Alarm::AlarmButtonPressed() {
   else
     SetArmed(ALARM_OFF);
 #endif
+}
+
+void Alarm::AlarmButtonUnpressed() {
+  if (lasttime > 0)
+    Serial.printf("AlarmButtonUnpressed()\n");
+  lasttime = 0;
 }
