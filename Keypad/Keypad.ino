@@ -33,6 +33,7 @@
 #include <Rfid.h>
 #include <Weather.h>
 #include <LoadGif.h>
+#include <Wire.h>
 
 extern "C" {
 #include <sntp.h>
@@ -114,6 +115,9 @@ void setup(void) {
   if (config->haveRfid()) Serial.print(" rfid");
   if (config->haveWeather()) Serial.print(" weather");
   Serial.println();
+
+  // i2c
+  Wire.begin(5, 26);
 
   if (config->haveOled()) {
     oled = new Oled();
