@@ -116,6 +116,8 @@ void Config::ParseConfig(JsonObject &jo) {
   radio_pin = jo["radioPin"] | -1;
   oled = jo["haveOled"] | false;
   oled_led_pin = jo["oledLedPin"] | -1;
+  i2c_sda_pin = jo["i2cSdaPin"] | -1;
+  i2c_scl_pin = jo["i2cSclPin"] | -1;
 
   name = jo["name"];
   // Note the missing else case gets treated in Config::myName()
@@ -238,3 +240,12 @@ boolean Config::DSTEurope() {
 boolean Config::DSTUSA() {
   return false;
 }
+
+int Config::GetI2cSdaPin() {
+  return i2c_sda_pin;
+}
+
+int Config::GetI2cSclPin() {
+  return i2c_scl_pin;
+}
+

@@ -57,6 +57,9 @@ public:
   boolean DSTEurope();
   boolean DSTUSA();
 
+  int GetI2cSdaPin();
+  int GetI2cSclPin();
+
 private:
   int siren_pin;
   int radio_pin;
@@ -71,6 +74,9 @@ private:
 
   const char *rfidType;	// mfrc522 or pn532
   int rfid_rst_pin, rfid_ss_pin;
+
+  // i2c
+  int i2c_sda_pin, i2c_scl_pin;
 
   int dirty;
   void ReadConfig();
