@@ -25,13 +25,14 @@ EXTRA_SRC	= Alarm.cpp Config.cpp Peers.cpp ThingSpeakLogger.cpp \
 		  BackLight.cpp Sensors.cpp Weather.cpp \
 		  lzw.c libnsgif.c LoadGif.cpp mostlycloudy.c
 
-UPLOAD_AVAHI_NAME = OTA-Controller.local
+UPLOAD_AVAHI_NAME = ESP32_Prototype.local
 
 ALARMLIBS = $(HOME)/src/sketchbook/esp8266/Alarm/libraries
 MYLIBS = $(HOME)/src/sketchbook/esp8266/libraries
 
 LIBS =	$(ESP_LIBS)/WiFi \
 	$(ESP_LIBS)/SPI \
+	$(ESP_LIBS)/Wire \
 	$(ESP_LIBS)/FS \
 	$(ESP_LIBS)/SPIFFS \
 	$(ESP_LIBS)/ArduinoOTA \
@@ -62,7 +63,7 @@ UPLOAD_PORT ?= /dev/ttyUSB0
 UPLOAD_VERB ?= -vv
 UPLOAD_AVAHI_NAME ?= esp8266
 UPLOAD_AVAHI_IP = $(shell avahi-resolve-host-name $(UPLOAD_AVAHI_NAME) | awk '{print $$2;}')
-UPLOAD_AVAHI_PORT ?= 8266
+UPLOAD_AVAHI_PORT ?= 3232
 UPLOAD_OTA_TOOL = python $(TOOLS_ROOT)/espota.py
 
 #====================================================================================
