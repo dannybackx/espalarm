@@ -64,6 +64,8 @@ public:
   void ImageFromPeerBinary(IPAddress ip, uint16_t port, uint16_t wid, uint16_t ht);
   void Report(const char *msg);
 
+  void StopTask();
+
 private:
   list<Peer>		peerlist;
 

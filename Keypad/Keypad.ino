@@ -86,6 +86,8 @@ Peers			*peers = 0;
 Rfid			*rfid = 0;
 Weather			*weather = 0;
 LoadGif			*gif = 0;
+boolean			in_ota = false;
+int			OTAprogress = 0;
 
 time_t			nowts;
 
@@ -117,7 +119,11 @@ void setup(void) {
   Serial.println();
 
   // i2c
-  Wire.begin(5, 26);
+  if (config->GetI2cSdaPin() > 0 && config->GetI2cSclPin() > 0) {
+    Serial.printf("Initialize i2c (sda %d, scl %d)\n", config->GetI2cSdaPin(),
+      config->GetI2cSclPin());
+    Wire.begin(config->GetI2cSdaPin(), config->GetI2cSclPin());	// on the PCB : 5, 26
+  }
 
   if (config->haveOled()) {
     oled = new Oled();
@@ -164,6 +170,12 @@ void loop()
   uint8_t	pressed;
 
   ArduinoOTA.handle();
+
+  // Speed things up
+  if (in_ota) {
+    if (peers) peers->StopTask();
+    return;
+  }
 
 #ifdef ESP32
   nowts = time(0);
@@ -216,6 +228,28 @@ void SetupOTA() {
 #ifdef ESP32
   ArduinoOTA.setPort(3232);
   WiFi.setHostname(ota_id);
+
+  ArduinoOTA.onStart([]() {
+    Serial.print("OTA start ");
+    in_ota = true;
+  });
+
+  ArduinoOTA.onEnd([]() {
+    Serial.println("OTA done");
+    in_ota = false;
+  });
+
+  ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
+    OTAprogress = (progress / (total / 50));
+    // Serial.print(".");
+    Serial.printf("%d ", OTAprogress);
+  });
+
+  ArduinoOTA.onError([](ota_error_t error) {
+    Serial.printf("OTA Error, was at %d%%\n", OTAprogress);
+    in_ota = false;
+  });
+
 #else
   ArduinoOTA.setPort(8266);
   WiFi.hostname(ota_id);

@@ -379,6 +379,12 @@ void ImageTaskLoop(void *ptr) {
 void Peers::ImageServerSetup() {
   xTaskCreate(ImageTaskLoop, "image task", 10000, 0, tskIDLE_PRIORITY, &imageTask);
 }
+
+void Peers::StopTask() {
+  if (imageTask)
+    vTaskDelete(imageTask);
+  imageTask = 0;
+}
 #endif
 
 void Peers::StoreImage(uint16_t *pic, uint16_t wid, uint16_t ht) {
