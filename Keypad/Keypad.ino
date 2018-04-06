@@ -122,7 +122,7 @@ void setup(void) {
   if (config->GetI2cSdaPin() > 0 && config->GetI2cSclPin() > 0) {
     Serial.printf("Initialize i2c (sda %d, scl %d)\n", config->GetI2cSdaPin(),
       config->GetI2cSclPin());
-    Wire.begin(config->GetI2cSdaPin(), config->GetI2cSclPin());	// on the PCB : 5, 26
+    Wire.begin(config->GetI2cSdaPin(), config->GetI2cSclPin());	// on the PCB : 26, 27
   }
 
   if (config->haveOled()) {
