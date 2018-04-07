@@ -31,7 +31,7 @@ SKETCH		= $(HOME)/src/sketchbook/esp8266/Alarm/Keypad/Keypad.ino
 EXTRA_SRC	= Alarm.cpp Config.cpp Peers.cpp ThingSpeakLogger.cpp \
 		  Oled.cpp Clock.cpp Siren.cpp Rfid.cpp \
 		  BackLight.cpp Sensors.cpp Weather.cpp \
-		  lzw.c libnsgif.c LoadGif.cpp mostlycloudy.c
+		  lzw.c libnsgif.c LoadGif.cpp
 
 UPLOAD_AVAHI_NAME = OTA-KeypadSecure.local
 

@@ -288,13 +288,7 @@ unsigned char *LoadGif::loadGif(const char *url, size_t *data_size) {
   return buf;
 }
 
-extern unsigned char mostlycloudy_gif[];
-extern int mostlycloudy_len;
-
 void LoadGif::loop(time_t) {
-  // if (mostlycloudy_len)
-  //   TestIt(mostlycloudy_gif, mostlycloudy_len);
-  // mostlycloudy_len = 0;
 }
 
 uint16_t *LoadGif::Decode2(gif_animation *gif) {
