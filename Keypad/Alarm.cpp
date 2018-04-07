@@ -166,6 +166,7 @@ void Alarm::loop(time_t nowts) {
   }
 #endif
 
+#ifdef ESP32
   if (oled) {
     uint16_t tx, ty;
     (void) oled->getTouchRaw(&tx, &ty);
@@ -175,8 +176,10 @@ void Alarm::loop(time_t nowts) {
     } else
       AlarmButtonUnpressed();
   }
+#endif
 }
 
+#ifdef ESP32
 boolean _t = false;
 int _cnt = 0;
 
@@ -210,3 +213,4 @@ void Alarm::AlarmButtonUnpressed() {
     Serial.printf("AlarmButtonUnpressed()\n");
   lasttime = 0;
 }
+#endif

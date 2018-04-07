@@ -171,11 +171,13 @@ void loop()
 
   ArduinoOTA.handle();
 
+#ifdef ESP32
   // Speed things up
   if (in_ota) {
     if (peers) peers->StopTask();
     return;
   }
+#endif
 
 #ifdef ESP32
   nowts = time(0);
