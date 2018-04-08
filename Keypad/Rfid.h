@@ -41,7 +41,5 @@ class Rfid {
 
   private:
     MFRC522	*mfrc522;
-    int		rst_pin;
-    int		ss_pin;
     list<rfidcard> cardlist;
 };

@@ -49,6 +49,7 @@ Config::Config() {
   siren_pin = -1;
   oled = false;
   rfid = false;
+  rfidType = 0;
   secure = false;
 
   String mac = WiFi.macAddress();
@@ -126,6 +127,9 @@ void Config::ParseConfig(JsonObject &jo) {
   }
 
   const char *rfidType = jo["rfidType"];
+  if (rfidType)
+    rfidType = strdup(rfidType);	// Storage from JSON library doesn't last
+    Serial.printf("RFID %s\n", rfidType);
   rfid = (rfidType != 0);
   rfid_rst_pin = jo["rfidRstPin"] | -1;
   rfid_ss_pin = jo["rfidSsPin"] | -1;
@@ -195,10 +199,6 @@ boolean Config::haveRadio() {
   return (radio_pin >= 0);
 }
 
-boolean Config::haveRfid() {
-  return rfid;
-}
-
 boolean Config::haveWeather() {
   return weather;
 }
@@ -249,3 +249,18 @@ int Config::GetI2cSclPin() {
   return i2c_scl_pin;
 }
 
+boolean Config::haveRfid() {
+  return rfid;
+}
+
+int Config::GetRfidRstPin() {
+  return rfid_rst_pin;
+}
+
+int Config::GetRfidSsPin() {
+  return rfid_ss_pin;
+}
+
+const char *Config::GetRfidType() {
+  return rfidType;
+}

@@ -23,38 +23,75 @@
  *   License along with this library; if not, write to the Free Software
  *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
+#ifdef ESP8266
 #warning "This hardware setup seems to interfere with the rest. ESP8266 + RFID-RC522 reader won't talk to another ESP over the network, CallPeer() fails to make connection."
+#endif
 
 #include <Rfid.h>
 #include <SPI.h>
 #include <MFRC522.h>
 #include <secrets.h>
 #include <Alarm.h>
+#include <Config.h>
 
 Rfid::Rfid() {
-  // FIXME this must move into secrets.h
-#if defined(ESP8266)
-  rst_pin = D3;
-  ss_pin = D8;
-#elif defined(ESP32)
-  rst_pin = 22;
-  ss_pin = 21;
-#endif
-
   // Serial.println("Before MFRC522 CTOR"); delay(200);
-  mfrc522 = new MFRC522(ss_pin, rst_pin);
+  mfrc522 = new MFRC522(config->GetRfidSsPin(), config->GetRfidRstPin());
   // Serial.println("After MFRC522 CTOR"); delay(200);
 
   if (mfrc522)
     mfrc522->PCD_Init();
   // Serial.println("After PCD_Init"); delay(200);
 
+#if defined(RFID_1_ID) && defined(RFID_1_NAME)
   AddCard(RFID_1_ID, RFID_1_NAME);
+#endif
+#if defined(RFID_2_ID) && defined(RFID_2_NAME)
   AddCard(RFID_2_ID, RFID_2_NAME);
+#endif
+#if defined(RFID_3_ID) && defined(RFID_3_NAME)
   AddCard(RFID_3_ID, RFID_3_NAME);
+#endif
+#if defined(RFID_4_ID) && defined(RFID_4_NAME)
   AddCard(RFID_4_ID, RFID_4_NAME);
+#endif
+#if defined(RFID_5_ID) && defined(RFID_5_NAME)
   AddCard(RFID_5_ID, RFID_5_NAME);
+#endif
+#if defined(RFID_6_ID) && defined(RFID_6_NAME)
   AddCard(RFID_6_ID, RFID_6_NAME);
+#endif
+#if defined(RFID_7_ID) && defined(RFID_7_NAME)
+  AddCard(RFID_7_ID, RFID_7_NAME);
+#endif
+#if defined(RFID_8_ID) && defined(RFID_8_NAME)
+  AddCard(RFID_8_ID, RFID_8_NAME);
+#endif
+#if defined(RFID_9_ID) && defined(RFID_9_NAME)
+  AddCard(RFID_9_ID, RFID_9_NAME);
+#endif
+#if defined(RFID_10_ID) && defined(RFID_10_NAME)
+  AddCard(RFID_10_ID, RFID_10_NAME);
+#endif
+#if defined(RFID_11_ID) && defined(RFID_11_NAME)
+  AddCard(RFID_11_ID, RFID_11_NAME);
+#endif
+#if defined(RFID_12_ID) && defined(RFID_12_NAME)
+  AddCard(RFID_12_ID, RFID_12_NAME);
+#endif
+#if defined(RFID_13_ID) && defined(RFID_13_NAME)
+  AddCard(RFID_13_ID, RFID_13_NAME);
+#endif
+#if defined(RFID_14_ID) && defined(RFID_14_NAME)
+  AddCard(RFID_14_ID, RFID_14_NAME);
+#endif
+#if defined(RFID_15_ID) && defined(RFID_15_NAME)
+  AddCard(RFID_15_ID, RFID_15_NAME);
+#endif
+#if defined(RFID_16_ID) && defined(RFID_16_NAME)
+  AddCard(RFID_16_ID, RFID_16_NAME);
+#endif
+
   // Serial.println("After 6x AddCard"); delay(200);
 
   int count = 0;
@@ -98,6 +135,10 @@ void Rfid::loop(time_t nowts) {
 #endif
 }
 
+/*
+ * Add a card to our known cards list
+ * Cope with NULL or "" (these are arguments to ignore)
+ */
 void Rfid::AddCard(const char *id, const char *name) {
   if (id == 0 || strlen(id) == 0) return;
   if (name == 0 || strlen(name) == 0) return;
@@ -106,6 +147,9 @@ void Rfid::AddCard(const char *id, const char *name) {
   cardlist.push_back(*card);
 }
 
+/*
+ * Add a card
+ */
 rfidcard::rfidcard(const char *id, const char *name) {
   const char	*ptr = id;
   int		n = 3, r;

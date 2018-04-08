@@ -114,7 +114,7 @@ void setup(void) {
   				Serial.printf("\nMy name is %s, have :", config->myName());
   if (config->haveOled()) Serial.printf(" oled (pin %d)", config->GetOledLedPin());
   if (config->haveRadio()) Serial.printf(" radio (pin %d)", config->GetRadioPin());
-  if (config->haveRfid()) Serial.print(" rfid");
+  if (config->haveRfid()) Serial.printf(" rfid(%s, ss %d, rst %d)", config->GetRfidType() ? config->GetRfidType() : "?", config->GetRfidSsPin(), config->GetRfidRstPin());
   if (config->haveWeather()) Serial.print(" weather");
   Serial.println();
 

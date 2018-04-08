@@ -47,7 +47,6 @@ public:
 
   boolean haveOled();
   const char *myName();
-  boolean haveRfid();
   boolean haveRadio();
   int GetOledLedPin();
   boolean haveWeather();
@@ -59,6 +58,11 @@ public:
 
   int GetI2cSdaPin();
   int GetI2cSclPin();
+
+  boolean haveRfid();
+  int GetRfidRstPin();
+  int GetRfidSsPin();
+  const char *GetRfidType();
 
 private:
   int siren_pin;
