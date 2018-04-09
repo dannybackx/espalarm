@@ -127,9 +127,10 @@ void Config::ParseConfig(JsonObject &jo) {
   }
 
   const char *rfidType = jo["rfidType"];
-  if (rfidType)
+  if (rfidType) {
     rfidType = strdup(rfidType);	// Storage from JSON library doesn't last
     Serial.printf("RFID %s\n", rfidType);
+  }
   rfid = (rfidType != 0);
   rfid_rst_pin = jo["rfidRstPin"] | -1;
   rfid_ss_pin = jo["rfidSsPin"] | -1;
