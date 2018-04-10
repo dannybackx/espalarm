@@ -120,7 +120,7 @@ void Rfid::loop(time_t nowts) {
      && memcmp(card.uid.uidByte, mfrc522->uid.uidByte, card.uid.size) == 0) {
       Serial.printf("Card recognized : %s\n", card.user);
 
-      _alarm->Reset(nowts, card.user);
+      _alarm->Toggle(nowts, card.user);
     }
   }
 

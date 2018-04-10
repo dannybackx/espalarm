@@ -168,6 +168,7 @@ void Peers::loop(time_t nowts) {
  *
  *********************************************************************************/
 void Peers::AlarmSetArmed(AlarmStatus state) {
+  // Serial.printf("Peers::AlarmSetArmed(%d)\n", state);
   const char *s;
   switch (state) {
   case ALARM_ON:
@@ -188,6 +189,7 @@ void Peers::AlarmSetArmed(AlarmStatus state) {
   CallPeers(output);
 }
 
+// Turn off sirens etc
 void Peers::AlarmReset(const char *user) {
   // Send : {"status" : "reset", "name" : "keypad02"}
   DynamicJsonBuffer jb;
@@ -212,6 +214,7 @@ void Peers::AlarmSignal(const char *sensor, AlarmZone zone) {
 }
 
 void Peers::CallPeers(char *json) {
+  // Serial.printf("CallPeers(%s)\n", json);
   for (Peer peer : peerlist)
     CallPeer0(&peer, json);
 }
@@ -413,7 +416,7 @@ char *Peers::HandleQuery(const char *str) {
   // {"status" : "armed", "name" : "keypad02"}
   if (query = json["status"]) {
     const char *device_name = json["name"];
-    // Serial.printf("Query -> %s (from %s)\n", query, device_name);
+    Serial.printf("Query -> %s (from %s)\n", query, device_name);
 
     if (strcmp(query, "alarm") == 0) {
       // Example : {"status" : "alarm", "name" : "keypad02", "sensor" : "Kitchen motion detector"}

@@ -41,6 +41,7 @@ enum AlarmZone {
   			// Controllers require authentication before accepting actions
   ZONE_ALWAYS,		// Sensors that always trigger alarm (e.g. fire)
   ZONE_FROMPEER,	// Already evaluated, this is a real alarm passed from a peer controller
+  ZONE_HID,		// Human interface : an rfid card, someone entered his pin, ...
 };
 
 class Alarm {
@@ -59,6 +60,7 @@ public:
   void SoundAlarm(const char *sensor);			// We've decided : just start yelling
   void Reset(const char *module);			// From a peer controller
   void Reset(time_t nowts, const char *user);		// Local
+  void Toggle(time_t nowts, const char *user);		// Local
 
 private:
   enum AlarmStatus	armed;	// Armed or not

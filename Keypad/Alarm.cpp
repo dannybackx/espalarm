@@ -1,6 +1,7 @@
 /*
  * This module manages Alarm state and signaling
  *	Alarms need to be passed to peer controllers
+ *	Similar for alarm state (armed, disarmed, night)
  *	Alarms passed from peer controllers don't need to be forwarded
  *	Sirens (which may be flash lights as well as audible devices) need triggering.
  *	We could potentially connect/messsage to a smartphone app
@@ -151,6 +152,30 @@ void Alarm::Reset(time_t nowts, const char *user) {
   alert = false;
 
   peers->AlarmReset(user);
+}
+
+/*
+ * FIX ME
+ *
+ * Assumption is you don't turn the alarm in "night" this way.
+ * Only full arm or disarm.
+ */
+void Alarm::Toggle(time_t nowts, const char *user) {
+  struct tm *tmp = localtime(&nowts); char t[16]; strftime(t, sizeof(t), "%T", tmp);
+  Serial.printf("Alarm::Toggle(%s, %s), armed : %s\n", t, user,
+    (armed == ALARM_ON) ? "on" : (armed == ALARM_OFF) ? "off" :
+    (armed == ALARM_NIGHT) ? "nite" : "?");
+  switch (armed) {
+  case ALARM_ON:
+  case ALARM_NIGHT:
+    SetArmed(ALARM_OFF, ZONE_HID);
+    break;
+  case ALARM_OFF:
+    SetArmed(ALARM_ON, ZONE_HID);
+    break;
+  default:
+    ;	// FIX ME
+  }
 }
 
 /*

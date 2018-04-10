@@ -104,6 +104,9 @@ private:
   // If this is inited, need to grab the image
   uint16_t	image_wid, image_ht, image_port;
   char		*image_host;
+
+  //
+  void AlarmSetReset(const char *state, const char *user);
 };
 
 extern Peers *peers;

@@ -312,4 +312,5 @@ void OledButton::setFillColor(uint16_t newfc) {
 void OledButton::setText(const char *txt) {
   strncpy(_label, txt, sizeof(_label)-1);
   _label[sizeof(_label)-1] = 0;
+  drawButton(false);
 }
