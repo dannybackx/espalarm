@@ -227,7 +227,20 @@ upload: all
 	0xe000 ${TOOLS_ROOT}/partitions/boot_app0.bin \
 	0x1000 ${ESPTOOLS_BIN}/bootloader_dio_80m.bin \
 	0x10000 $(MAIN_EXE) \
+	0x150000 $(MAIN_EXE) \
 	0x8000 $(SKETCH).partitions.bin
+
+# # Espressif ESP32 Partition Table
+# # Name, Type, SubType, Offset, Size, Flags
+# nvs,data,nvs,0x9000,20K,
+# otadata,data,ota,0xe000,8K,
+# app0,app,ota_0,0x10000,1280K,
+# app1,app,ota_1,0x150000,1280K,
+# eeprom,data,153,0x290000,4K,
+# spiffs,data,spiffs,0x291000,1468K,
+
+show_partitions: ${SKETCH}.partitions.bin
+	python $(GEN_PART) ${SKETCH}.partitions.bin
 
 run:	upload
 	miniterm.py ${UPLOAD_PORT} 115200
