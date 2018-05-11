@@ -98,6 +98,7 @@ private:
 
   // void mqttCallback(char *topic, byte *payload, unsigned int length);
   void mqttReconnect();
+  void mqttSubscribe();
 
   void StoreImage(uint16_t *pic, uint16_t wid, uint16_t ht);
 

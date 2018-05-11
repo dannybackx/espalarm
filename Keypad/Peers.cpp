@@ -108,8 +108,7 @@ Peers::Peers() {
   }
   Serial.printf(" connected\n");
 
-  mqtt.setCallback(mqttCallback);
-  mqtt.subscribe("/alarm");
+  mqttSubscribe();
 
   char msg[80];
   sprintf(msg, "Alarm controller {%s} start", config->myName());
@@ -292,17 +291,26 @@ void mqttCallback(char *topic, byte *payload, unsigned int length) {
   strncpy(pl, (const char *)payload, length);
   pl[length] = 0;
 
-  Serial.printf("MQTT topic %s {%s}\n", topic, pl);
-  if (strcmp(pl, "time") == 0) {
-    if (_clock) {
-      char msg[64];
-      _clock->timeString(msg, sizeof(msg));
-      mqtt.publish("/alarm", msg);
+  if (strcmp(topic, "/alarm") == 0) {
+    Serial.printf("MQTT topic %s {%s}\n", topic, pl);
+    if (strcmp(pl, "time") == 0) {
+      if (_clock) {
+        char msg[64];
+        _clock->timeString(msg, sizeof(msg));
+        mqtt.publish("/alarm", msg);
+      }
+    } else if (strcmp(pl, "arm") == 0) {
+        _alarm->SetArmed(ALARM_ON, ZONE_FROMPEER);
+    } else if (strcmp(pl, "disarm") == 0) {
+        _alarm->SetArmed(ALARM_OFF, ZONE_FROMPEER);
     }
-  } else if (strcmp(pl, "arm") == 0) {
-      _alarm->SetArmed(ALARM_ON, ZONE_FROMPEER);
-  } else if (strcmp(pl, "disarm") == 0) {
-      _alarm->SetArmed(ALARM_OFF, ZONE_FROMPEER);
+  } else if (strcmp(topic, "/weather") == 0) {
+    Serial.printf("MQTT topic %s {%s}\n", topic, pl);
+    // Format /weather 2018-05-03 03:15, indoor 21.5°C, 1009 hPa
+
+  } else if (strcmp(topic, "kippen") == 0) {
+    Serial.printf("MQTT topic %s {%s}\n", topic, pl);
+    // Format kippen 20:42:44 02/05/2018 22.70,1003,17
   }
 }
 
@@ -317,8 +325,14 @@ void Peers::mqttReconnect() {
   }
   Serial.printf(" connected\n");
 
+  mqttSubscribe();
+}
+
+void Peers::mqttSubscribe() {
   mqtt.setCallback(mqttCallback);
   mqtt.subscribe("/alarm");
+  mqtt.subscribe("/weather");		// Just the announcements
+  mqtt.subscribe("kippen");		// Just the announcements
 }
 
 void Peers::Report(const char *msg) {
@@ -704,6 +718,7 @@ void Peers::ImageFromPeerBinaryAsync() {
   // Serial.printf("done (%d bytes read)\n", cnt);
 
   if (weather) weather->drawIcon((uint16_t *)buf, image_wid, image_ht);
+  // Don't free(buf) here, this is used&freed in Weather::drawIcon.
 }
 
 int cnt = 3;

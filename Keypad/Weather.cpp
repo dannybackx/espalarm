@@ -127,6 +127,7 @@ void Weather::PerformQuery() {
   if (! http->connect(PREF_WUNDERGROUND_API_SRV, 80)) {	// Not connected
     Serial.println("Could not connect");
     the_delay = error_delay;
+    free(query); query = 0;
     return;
   }
   http->print(query);
@@ -211,6 +212,7 @@ void Weather::PerformQuery() {
     Serial.printf("\n\n%s\n\n", buf);
 
     the_delay = error_delay;				// Shorter retry
+    free(buf); buf = 0;
     return;
   }
 
