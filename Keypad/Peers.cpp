@@ -284,12 +284,29 @@ char *Peers::CallPeer(Peer *peer, char *json) {
  *
  * MQTT
  *
+ * Note : per-node queries have topic /alarm/node/%node-name%, e.g. /alarm/node/kitchen
+ *
  *********************************************************************************/
 void mqttCallback(char *topic, byte *payload, unsigned int length) {
   char reply[80], pl[80];
+  extern void mqttMyNodeCallback(char *);
 
   strncpy(pl, (const char *)payload, length);
   pl[length] = 0;
+
+  // Build node name string to compare to
+  int nodelen = strlen(config->myName());
+  char *myNodeTopic = (char *)malloc(nodelen + 16);
+  sprintf(myNodeTopic, "/alarm/node/%s", config->myName());
+  // Serial.printf("My node topic %s\n", myNodeTopic);
+
+  if (strcmp(topic, myNodeTopic) == 0) {
+    mqttMyNodeCallback(pl);
+    free(myNodeTopic);
+    return;
+  }
+  free(myNodeTopic);
+  myNodeTopic = 0;
 
   if (strcmp(topic, "/alarm") == 0) {
     Serial.printf("MQTT topic %s {%s}\n", topic, pl);
@@ -303,6 +320,13 @@ void mqttCallback(char *topic, byte *payload, unsigned int length) {
         _alarm->SetArmed(ALARM_ON, ZONE_FROMPEER);
     } else if (strcmp(pl, "disarm") == 0) {
         _alarm->SetArmed(ALARM_OFF, ZONE_FROMPEER);
+    } else if (strcmp(pl, "network") == 0) {
+      IPAddress ip = WiFi.localIP();
+      String ips = ip.toString();
+      IPAddress gw = WiFi.gatewayIP();
+      String gws = gw.toString();
+      sprintf(reply, "Alarm node %s, ip %s gw %s", config->myName(), ips.c_str(), gws.c_str());
+      mqtt.publish("/alarm", reply);
     }
   } else if (strcmp(topic, "/weather") == 0) {
     Serial.printf("MQTT topic %s {%s}\n", topic, pl);
@@ -311,7 +335,17 @@ void mqttCallback(char *topic, byte *payload, unsigned int length) {
   } else if (strcmp(topic, "kippen") == 0) {
     Serial.printf("MQTT topic %s {%s}\n", topic, pl);
     // Format kippen 20:42:44 02/05/2018 22.70,1003,17
+  // } else if (strcmp(topic, "/alarm/query") == 0) {
+  } else {
   }
+}
+
+/*
+ * Process commands for this node only
+ * Note : payload is null-terminated here.
+ */
+void mqttMyNodeCallback(char *payload) {
+  Serial.printf("mqttMyNodeCallback(%s)\n", payload);
 }
 
 void Peers::mqttReconnect() {

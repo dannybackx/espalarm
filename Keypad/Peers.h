@@ -96,7 +96,9 @@ private:
 
   char output[128];
 
+// Global functions, can't be private
   // void mqttCallback(char *topic, byte *payload, unsigned int length);
+  // void mqttMyNodeCallback(char *payload);
   void mqttReconnect();
   void mqttSubscribe();
 
