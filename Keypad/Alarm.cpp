@@ -31,6 +31,7 @@
 #include <Alarm.h>
 #include <Peers.h>
 #include <secrets.h>
+#include <time.h>
 
 Alarm::Alarm(Oled *oled) {
   this->oled = oled;
