@@ -89,7 +89,7 @@ LoadGif			*gif = 0;
 boolean			in_ota = false;
 int			OTAprogress = 0;
 
-time_t			nowts;
+time_t			nowts, boot_time;
 
 // Size of the color selection boxes and the paintbrush size
 #define BOXSIZE		40
@@ -184,6 +184,10 @@ void loop()
 #else
   nowts = sntp_get_current_timestamp();
 #endif
+
+  // Record boot time
+  if (boot_time == 0 && nowts > 1000)
+    boot_time = nowts;
 
   if (weather) weather->loop(nowts);
   if (config->haveOled()) {
