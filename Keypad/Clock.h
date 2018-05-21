@@ -37,6 +37,7 @@ public:
   Clock(Oled *);
   void loop(time_t);
   void timeString(char *, int);
+  void timeString(time_t, char *, int);
 
 protected:
 
