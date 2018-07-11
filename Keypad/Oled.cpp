@@ -68,7 +68,7 @@ void Oled::setRotation(uint8_t r) {
 }
 
 void Oled::drawCircle(int32_t x0, int32_t y0, int32_t r, uint32_t color) {
-  if (verbose) Serial.printf("drawCircle(%d,%d,%d,%d, %08x)\n", x0, 320 - y0, r, color);
+  if (verbose) Serial.printf("drawCircle(%d,%d,%d, %08x)\n", x0, 320 - y0, r, color);
   if (ctrx)
     TFT_eSPI::drawCircle(x0, 320 - y0, r, color);
   else
@@ -76,7 +76,7 @@ void Oled::drawCircle(int32_t x0, int32_t y0, int32_t r, uint32_t color) {
 }
 
 void Oled::fillCircle(int32_t x0, int32_t y0, int32_t r, uint32_t color) {
-  if (verbose) Serial.printf("fillCircle(%d,%d,%d,%d, %08x)\n", x0, 320 - y0, r, color);
+  if (verbose) Serial.printf("fillCircle(%d,%d,%d, %08x)\n", x0, 320 - y0, r, color);
   if (ctrx)
     TFT_eSPI::fillCircle(x0, 320 - y0, r, color);
   else

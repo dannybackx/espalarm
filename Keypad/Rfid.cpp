@@ -157,7 +157,7 @@ rfidcard::rfidcard(const char *id, const char *name) {
   for (int i=0; i<sizeof(uid.uidByte); i++)
     uid.uidByte[i] = 0;
   for (int i=0; true; i++) {
-    char x;
+    unsigned int x;
     r = sscanf(ptr, "%02x %n", &x, &n);
     uid.size = i;
 

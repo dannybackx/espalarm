@@ -197,7 +197,7 @@ const char *LoadGif::pattern = "GET %s HTTP/1.1\r\n"
 // FIX ME this needs to handle slow connections better
 // Return points to a buffer which the caller needs to free.
 unsigned char *LoadGif::loadGif(const char *url, size_t *data_size) {
-  char		*query, *host;
+  char		*query, *host = 0;
   WiFiClient	http;
 
   char *proto = strstr(url, "://");

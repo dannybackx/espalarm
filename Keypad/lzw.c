@@ -225,7 +225,7 @@ static lzw_result lzw__clear_codes(
 		struct lzw_ctx *ctx,
 		const uint8_t ** const stack_pos_out)
 {
-	uint32_t code;
+	uint32_t code = 0;	// Initialize to keep compiler happy
 	uint8_t *stack_pos;
 
 	/* Reset dictionary building context */
@@ -302,7 +302,7 @@ lzw_result lzw_decode(struct lzw_ctx *ctx,
 		const uint8_t ** const stack_pos_out)
 {
 	lzw_result res;
-	uint32_t code_new;
+	uint32_t code_new = 0;	// Initialize to keep compiler happy
 	uint32_t code_out;
 	uint8_t last_value;
 	uint8_t *stack_pos = ctx->stack_base;
