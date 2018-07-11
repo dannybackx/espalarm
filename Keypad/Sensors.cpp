@@ -105,7 +105,7 @@ void Sensors::loop(time_t nowts) {
   if (radio && radio->available()) {
     sv = radio->getReceivedValue();
 
-    // Serial.printf("Received %d (0x%08X) / %d bit, protocol %d\n",
+    // Serial.printf("Received %d (0x%08X) / %d bit, protocol %ld\n",
     //   sv, sv, radio->getReceivedBitlength(), radio->getReceivedProtocol());
 
     radio->resetAvailable();
